@@ -2,6 +2,12 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 
 import viteConfig from './vite.config';
 
+/**
+ * Run every test in a timezone with daylight saving time, so date math that
+ * accidentally depends on local hours fails locally and in CI alike.
+ */
+process.env.TZ = 'America/New_York';
+
 export default mergeConfig(
   viteConfig,
   defineConfig({
