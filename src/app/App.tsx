@@ -1,13 +1,14 @@
 import { CalendarRange } from 'lucide-react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { HORIZON_META } from '@/features/projects/constants';
 import { HORIZONS } from '@/types/project';
 
 export function App() {
   return (
     <div className="flex h-svh flex-col overflow-hidden">
-      <AppHeader />
+      <AppHeader actions={<ThemeToggle />} />
 
       <main className="relative flex min-h-0 flex-1 flex-col bg-surface-sunken">
         <section aria-label="Horizontes" className="border-b">

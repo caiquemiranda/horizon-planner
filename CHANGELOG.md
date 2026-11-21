@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- App shell with header, brand mark, version badge and the three horizon lanes.
+- Dark theme by default, light theme and "system" mode, persisted and applied before first paint.
 - Project scaffold with Vite 7, React 19 and TypeScript in strict mode.
 - Tailwind CSS v4 design tokens (dark and light themes), shadcn/ui configuration and Geist typography.
 - ESLint (type-aware), Prettier, Husky, Commitlint and lint-staged.
