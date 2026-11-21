@@ -10,6 +10,23 @@
     />
     <meta name="theme-color" content="#09090b" />
     <title>Horizon</title>
+    <script>
+      // Applies the saved theme before first paint (no flash).
+      // Mirrors readStoredTheme + resolveTheme in src/lib/theme.ts — keep in sync.
+      (function () {
+        var preference = 'dark';
+        try {
+          var stored = localStorage.getItem('horizon-planner:theme');
+          if (stored === 'dark' || stored === 'light' || stored === 'system') preference = stored;
+        } catch (error) {}
+        var isDark =
+          preference === 'dark' ||
+          (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        root.classList.toggle('dark', isDark);
+        root.style.colorScheme = isDark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
