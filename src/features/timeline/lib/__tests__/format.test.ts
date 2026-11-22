@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
+import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
 
-import { formatDate, formatDateRange, formatDuration, formatVisibleRange } from '../format';
+import {
+  describeProject,
+  formatDate,
+  formatDateRange,
+  formatDuration,
+  formatVisibleRange,
+} from '../format';
 import { isoDateToDay } from '../time';
 
 const iso = (value: string) => value as ISODate;
@@ -59,5 +66,29 @@ describe('formatVisibleRange', () => {
 
   it('treats the end as exclusive', () => {
     expect(formatVisibleRange(day('2026-03-02'), day('2026-04-01'))).toBe('mar 2026');
+  });
+});
+
+describe('describeProject', () => {
+  it('summarizes status, dates and progress', () => {
+    const project = makeProject({
+      status: 'in_progress',
+      startDate: iso('2026-03-11'),
+      endDate: iso('2026-03-20'),
+      progress: 45,
+    });
+
+    expect(describeProject(project)).toBe('Em andamento, 11 – 20 mar 2026, 45% concluído');
+  });
+
+  it('counts completed milestones', () => {
+    const milestone = { id: 'a', title: 'A', date: iso('2026-03-05'), completed: true };
+    const one = makeProject({ milestones: [milestone] });
+    const two = makeProject({
+      milestones: [milestone, { ...milestone, id: 'b', completed: false }],
+    });
+
+    expect(describeProject(one)).toMatch(/1 de 1 marco concluído$/);
+    expect(describeProject(two)).toMatch(/1 de 2 marcos concluídos$/);
   });
 });
