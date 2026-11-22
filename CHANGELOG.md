@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Design system guidelines (`docs/design.md`) with refined color, elevation and motion tokens.
+- Visible date range in the header, weekend shading at day zoom and synced hover between the sidebar and the bars.
 - Timeline with a two-level time ruler, grid lines and collapsible horizon lanes.
 - Project bars showing progress, status and milestones, plus hover tooltips with dates and duration.
 - "Today" indicator and a button to center the timeline on the current date.
@@ -21,5 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI running format check, lint, type-check, tests and build on every pull request.
 - Issue templates (bug report, feature request) and a pull request template.
 - README, contributing guide, MIT license, architecture decision records and screenshot capture guide.
+
+### Fixed
+
+- The timeline canvas no longer drifts away from the ruler when a project bar receives focus.
 
 [Unreleased]: https://github.com/caiquemiranda/horizon-planner/commits/develop
