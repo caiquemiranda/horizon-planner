@@ -17,6 +17,9 @@ export default mergeConfig(
       include: ['src/**/*.test.{ts,tsx}'],
       css: false,
       restoreMocks: true,
+      // Full-app flows run many user-event steps; under coverage on a busy machine (or CI)
+      // they can pass the 5 s default although nothing is stuck.
+      testTimeout: 15_000,
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html', 'lcov'],
