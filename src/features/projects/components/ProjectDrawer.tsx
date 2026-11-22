@@ -30,7 +30,7 @@ export function ProjectDrawer({
   children,
   footer,
 }: ProjectDrawerProps) {
-  const panelRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   return (
     <Dialog.Root
@@ -58,7 +58,11 @@ export function ProjectDrawer({
                 }
               }}
             >
-              <motion.aside
+              {/*
+               * A plain `div`: the dialog role is not allowed on `aside`, and inside a
+               * dialog `header`/`footer` would become duplicate page landmarks.
+               */}
+              <motion.div
                 ref={panelRef}
                 initial={{ x: '100%', opacity: 0.4 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -66,7 +70,7 @@ export function ProjectDrawer({
                 transition={{ duration: DURATION.slow, ease: [...EASE_OUT_EXPO] }}
                 className="fixed top-(--header-height) right-0 bottom-0 z-40 flex w-full flex-col border-l bg-background shadow-popover outline-none sm:w-(--drawer-width)"
               >
-                <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+                <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
                   <Dialog.Title className="min-w-0 flex-1 truncate text-sm font-semibold">
                     {title}
                   </Dialog.Title>
@@ -76,16 +80,16 @@ export function ProjectDrawer({
                       <X />
                     </Button>
                   </Dialog.Close>
-                </header>
+                </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
 
                 {footer ? (
-                  <footer className="flex shrink-0 items-center gap-2 border-t px-4 py-3">
+                  <div className="flex shrink-0 items-center gap-2 border-t px-4 py-3">
                     {footer}
-                  </footer>
+                  </div>
                 ) : null}
-              </motion.aside>
+              </motion.div>
             </Dialog.Content>
           </Dialog.Portal>
         ) : null}
