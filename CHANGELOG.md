@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Side drawer to create, edit and delete projects, with edits synced live to the timeline and saved automatically.
+- Project form with horizon suggestion from the dates, progress, category suggestions, color picker and milestones editor.
+- Projects store with optimistic updates and automatic recovery when saving fails.
+- `N` shortcut and "Novo projeto" button, plus a call to action in the empty timeline.
 - Zoom anchored on the cursor with `Ctrl` + wheel, trackpad pinch and touch pinch, with smooth transitions.
 - Drag to pan, `Shift` + wheel and horizontal trackpad swipes to move through time.
 - Zoom controls with presets (years to days) and "fit all projects".
