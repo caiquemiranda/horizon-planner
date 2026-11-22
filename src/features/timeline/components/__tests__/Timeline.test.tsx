@@ -148,4 +148,13 @@ describe('Timeline', () => {
     await user.unhover(bar);
     expect(row).not.toHaveAttribute('data-highlighted');
   });
+
+  it('clips the canvas without making it scrollable', () => {
+    renderTimeline();
+
+    // A scrollable canvas drifts away from the ruler when a bar receives focus.
+    const canvas = screen.getByRole('region', { name: 'Linha do tempo' });
+    expect(canvas).toHaveClass('overflow-clip');
+    expect(canvas).not.toHaveClass('overflow-hidden');
+  });
 });
