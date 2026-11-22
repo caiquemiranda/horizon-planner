@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { ISODate } from '@/types/project';
 
-import { formatDate, formatDateRange, formatDuration } from '../format';
+import { formatDate, formatDateRange, formatDuration, formatVisibleRange } from '../format';
+import { isoDateToDay } from '../time';
 
 const iso = (value: string) => value as ISODate;
 
@@ -42,5 +43,21 @@ describe('formatDuration', () => {
     ['2026-01-01', '2028-12-31', '3 anos'],
   ])('%s → %s = %s', (start, end, expected) => {
     expect(formatDuration(iso(start), iso(end))).toBe(expected);
+  });
+});
+
+describe('formatVisibleRange', () => {
+  const day = (value: string) => isoDateToDay(iso(value));
+
+  it('shows the first and last visible months', () => {
+    expect(formatVisibleRange(day('2026-11-10'), day('2027-03-05'))).toBe('nov 2026 – mar 2027');
+  });
+
+  it('collapses a range inside one month', () => {
+    expect(formatVisibleRange(day('2026-03-02'), day('2026-03-20'))).toBe('mar 2026');
+  });
+
+  it('treats the end as exclusive', () => {
+    expect(formatVisibleRange(day('2026-03-02'), day('2026-04-01'))).toBe('mar 2026');
   });
 });

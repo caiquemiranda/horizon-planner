@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import type { ISODate } from '@/types/project';
+import type { DayNumber } from '@/types/timeline';
 
 import { dayToLocalDate, isoDateToDay, isoRangeToDays } from './time';
 
@@ -50,4 +51,12 @@ export function formatDuration(startDate: ISODate, endDate: ISODate): string {
 
   const years = Math.round((days / DAYS_PER_YEAR) * 2) / 2;
   return `${decimalFormat.format(years)} ${years < 2 ? 'ano' : 'anos'}`;
+}
+
+/** Visible window of the timeline, e.g. `nov 2026 – mar 2027` or `mar 2026` for a single month. */
+export function formatVisibleRange(from: DayNumber, to: DayNumber): string {
+  const start = format(dayToLocalDate(from), 'MMM yyyy', { locale: ptBR });
+  // `to` is exclusive: the last visible moment belongs to the previous day at most.
+  const end = format(dayToLocalDate(Math.max(from, to - 1e-6)), 'MMM yyyy', { locale: ptBR });
+  return start === end ? start : `${start} – ${end}`;
 }
