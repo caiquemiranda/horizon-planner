@@ -10,12 +10,17 @@ import {
   Search,
   Trash2,
 } from 'lucide-react';
+import { LocateFixed } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getChildren } from '@/features/schedule/lib/tree';
+import { ZoomControls } from '@/features/timeline/components/ZoomControls';
+import { formatVisibleRange } from '@/features/timeline/lib/format';
+import { getVisibleRange } from '@/features/timeline/lib/scale';
+import { useViewportStoreApi } from '@/features/timeline/store/viewportContext';
 import type { UUID } from '@/types/project';
 
 import type { WorkspaceModel } from '../hooks/useWorkspaceModel';
@@ -23,6 +28,8 @@ import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 
 interface WorkspaceToolbarProps {
   model: WorkspaceModel;
+  /** Whole schedule, for the chart's "fit" button. */
+  fitExtent: { start: number; end: number } | null;
   selectedId: UUID | null;
   onAddTask: () => void;
   onAddSubtask: () => void;
@@ -69,6 +76,7 @@ function ToolButton({
 /** Commands that act on the selected task, plus expansion and the text filter. */
 export function WorkspaceToolbar({
   model,
+  fitExtent,
   selectedId,
   onAddTask,
   onAddSubtask,
@@ -81,6 +89,13 @@ export function WorkspaceToolbar({
   const collapseAll = useWorkspaceUiStore((state) => state.collapseAll);
   const filterText = useWorkspaceUiStore((state) => state.filterText);
   const setFilterText = useWorkspaceUiStore((state) => state.setFilterText);
+  const viewport = useViewportStoreApi();
+  const goToToday = viewport((state) => state.goToToday);
+  const rangeLabel = viewport((state) => {
+    if (state.viewport.widthPx <= 0) return '';
+    const { from, to } = getVisibleRange(state.viewport);
+    return formatVisibleRange(from, to);
+  });
 
   const selected = selectedId ? model.index.byId.get(selectedId) : undefined;
   const siblings = selected ? getChildren(model.index, selected.parentId) : [];
@@ -163,6 +178,17 @@ export function WorkspaceToolbar({
       >
         <Trash2 />
       </ToolButton>
+
+      <Separator orientation="vertical" className="mx-1 h-5!" />
+      <ToolButton label="Ir para hoje" shortcut="T" onClick={goToToday}>
+        <LocateFixed />
+      </ToolButton>
+      <ZoomControls fitExtent={fitExtent} fitLabel="Ajustar ao projeto" />
+      {rangeLabel ? (
+        <span className="ml-1 hidden text-sm whitespace-nowrap text-muted-foreground capitalize xl:inline">
+          {rangeLabel}
+        </span>
+      ) : null}
 
       <label className="ml-auto flex h-8 min-w-40 items-center gap-1.5 rounded-md border bg-background px-2 text-sm focus-within:border-ring">
         <Search aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />

@@ -15,12 +15,19 @@ export const WORKSPACE_PREFS_PREFIX = 'horizon-planner:workspace:';
 
 interface StoredPrefs {
   collapsedIds: UUID[];
+  /** Width of the table pane, in px. */
+  splitWidth?: number;
 }
+
+export const DEFAULT_SPLIT_WIDTH = 620;
 
 export interface WorkspaceUiState {
   projectId: UUID | null;
   collapsedIds: ReadonlySet<UUID>;
   selectedId: UUID | null;
+  /** Row under the pointer, highlighted in both panes. */
+  hoveredId: UUID | null;
+  splitWidth: number;
   filterText: string;
 
   /** Resets the state for a project and restores its saved preferences. */
@@ -30,6 +37,8 @@ export interface WorkspaceUiState {
   expandAll: () => void;
   collapseAll: (summaryIds: readonly UUID[]) => void;
   select: (id: UUID | null) => void;
+  setHovered: (id: UUID | null) => void;
+  setSplitWidth: (width: number) => void;
   setFilterText: (text: string) => void;
 }
 
@@ -52,6 +61,9 @@ function readPrefs(storage: Storage | null, projectId: UUID): StoredPrefs {
       collapsedIds: Array.isArray(parsed.collapsedIds)
         ? parsed.collapsedIds.filter((id): id is UUID => typeof id === 'string')
         : [],
+      ...(typeof parsed.splitWidth === 'number' && Number.isFinite(parsed.splitWidth)
+        ? { splitWidth: parsed.splitWidth }
+        : {}),
     };
   } catch {
     return { collapsedIds: [] };
@@ -68,23 +80,32 @@ function writePrefs(storage: Storage | null, projectId: UUID, prefs: StoredPrefs
 
 export function createWorkspaceUiStore(storage: Storage | null = getStorage()): WorkspaceUiStore {
   return create<WorkspaceUiState>()((set, get) => {
+    const save = () => {
+      const { projectId, collapsedIds, splitWidth } = get();
+      if (projectId)
+        writePrefs(storage, projectId, { collapsedIds: [...collapsedIds], splitWidth });
+    };
     const setCollapsedIds = (collapsedIds: ReadonlySet<UUID>) => {
       set({ collapsedIds });
-      const { projectId } = get();
-      if (projectId) writePrefs(storage, projectId, { collapsedIds: [...collapsedIds] });
+      save();
     };
 
     return {
       projectId: null,
       collapsedIds: new Set(),
       selectedId: null,
+      hoveredId: null,
+      splitWidth: DEFAULT_SPLIT_WIDTH,
       filterText: '',
 
       load: (projectId) => {
+        const prefs = readPrefs(storage, projectId);
         set({
           projectId,
-          collapsedIds: new Set(readPrefs(storage, projectId).collapsedIds),
+          collapsedIds: new Set(prefs.collapsedIds),
           selectedId: null,
+          hoveredId: null,
+          splitWidth: prefs.splitWidth ?? DEFAULT_SPLIT_WIDTH,
           filterText: '',
         });
       },
@@ -105,6 +126,13 @@ export function createWorkspaceUiStore(storage: Storage | null = getStorage()): 
       },
       select: (id) => {
         if (get().selectedId !== id) set({ selectedId: id });
+      },
+      setHovered: (id) => {
+        if (get().hoveredId !== id) set({ hoveredId: id });
+      },
+      setSplitWidth: (width) => {
+        set({ splitWidth: Math.round(width) });
+        save();
       },
       setFilterText: (filterText) => {
         set({ filterText });
