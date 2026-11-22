@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Project workspace at `#/projetos/<id>`, opened from the portfolio: an editable task table (TreeGrid) with WBS numbers, phases and subtasks, inline editing with validation, predecessors in readable form (`2.1TI+2d`), expand/collapse, filter, row actions, keyboard navigation and a save status.
 - Project schedules are saved per project with conflict detection across tabs, included in backups, deleted with their project and shown in the sample data ("Implantação de Sistema Industrial").
 - Scheduling domain for project plans: WBS hierarchy, precedence links (FS, SS, FF, SF with lag and lead), working-day calendar with holidays and an engine that propagates dates and rolls up summary tasks.
 - Live demo on GitHub Pages, deployed automatically on every push to `develop`.

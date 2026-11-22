@@ -112,13 +112,40 @@ working day, Monday 30/11. This is covered by tests.
 - **Deleting a project** deletes its schedule. **Backups** include the schedules of the
   exported projects; backups made before the planning module still import.
 
+## Workspace
+
+The project screen lives at `#/projetos/<projectId>` (hash routes work on GitHub Pages)
+and opens from the portfolio drawer ("Abrir cronograma"). It loads only that project's
+schedule; switching projects remounts it from a clean state.
+
+- **Columns:** EAP, Nome, Duração, Início, Término, Predecessoras, Responsável, %, Status.
+  EAP and Status are derived. Duration, dates, predecessors and progress of summary tasks
+  are rolled up and read-only. Editing "Término" keeps the start and changes the duration.
+- **Status** is derived, so it never contradicts progress: Concluída (100%), Atrasada (last
+  working day passed), Em andamento (some progress) or Não iniciada.
+- **Filter:** matches name, owner or EAP number, without case or accents; ancestors of
+  matches stay visible (greyed) so the hierarchy remains readable.
+- **Expansion** is presentation only and is remembered per project in the browser.
+
+| Keys                 | Action                                             |
+| -------------------- | -------------------------------------------------- |
+| Arrows, Home, End    | Move between cells (Ctrl+Home/End: first/last row) |
+| → / ← on the name    | Expand / collapse (← again goes to the parent)     |
+| Enter, F2 or typing  | Edit the cell                                      |
+| Enter / Tab / Esc    | Confirm and go down / next cell / cancel           |
+| Alt+Shift+→ / ←      | Indent (becomes a subtask) / outdent               |
+| Alt+Shift+↑ / ↓      | Move up / down among siblings                      |
+| Insert               | New task below                                     |
+| Delete               | Delete (with confirmation)                         |
+| Shift+F10 / menu key | Row actions                                        |
+
 ## Delivery plan
 
 | PR  | Block                       | Content                                                                                     | Status  |
 | --- | --------------------------- | ------------------------------------------------------------------------------------------- | ------- |
 | 1   | `feat/schedule-domain`      | Types, calendar, WBS tree, dependency graph, engine, commands, schemas, demo fixture, tests | PR 18   |
 | 2   | `feat/schedule-persistence` | Schedule repository (per project), workspace store, save status, backup and sample data     | PR 19   |
-| 3   | `feat/workspace-treegrid`   | Project route, workspace page, split view, editable TreeGrid with WBS, expand/collapse      | Planned |
+| 3   | `feat/workspace-treegrid`   | Project route, workspace page, editable TreeGrid with WBS, expand/collapse, row actions     | PR 20   |
 | 4   | `feat/gantt-chart`          | Gantt pane: time scale, bars, summaries, milestones, today line, synced rows and selection  | Planned |
 | 5   | `feat/gantt-dependencies`   | Orthogonal connector router, SVG layer, link editing (cell, dialog, drag from bar)          | Planned |
 | 6   | `feat/gantt-editing`        | Bar drag and resize with preview and snap, context menu, reorder, column and split sizing   | Planned |
@@ -130,33 +157,33 @@ working day, Monday 30/11. This is covered by tests.
 Status: **Implemented/Tested**, **Implemented/Not tested**, **Partial**, **Not
 implemented** or **Blocked**, with evidence.
 
-| Criterion                                                              | Status             | Evidence                                   |
-| ---------------------------------------------------------------------- | ------------------ | ------------------------------------------ |
-| Portfolio opens a project's own screen                                 | Not implemented    | PR 3                                       |
-| TreeGrid and Gantt side by side with an adjustable split               | Not implemented    | PR 3–4                                     |
-| Headers and rows stay aligned while scrolling                          | Not implemented    | PR 4                                       |
-| Phases, tasks and subtasks on several levels                           | Partial            | Domain: `tree.test.ts`, `commands.test.ts` |
-| WBS computed correctly and updated after reorganizing                  | Partial            | Domain: `tree.test.ts`                     |
-| Expand/collapse in both panes without data loss                        | Partial            | Visible rows: `tree.test.ts`               |
-| Editable name, duration, start, finish, predecessors, progress columns | Partial            | Validation: `commands.test.ts`             |
-| Bars match dates, duration, progress and scale                         | Not implemented    | PR 4                                       |
-| Summary tasks with their own look and correct roll-up dates            | Partial            | Roll-up: `engine.test.ts`                  |
-| Milestones as diamonds with coherent semantics                         | Partial            | Semantics: `engine.test.ts`                |
-| Real dependencies can be created                                       | Partial            | Domain: `commands.test.ts`                 |
-| FS, SS, FF and SF with correct anchors                                 | Partial            | Dates: `engine.test.ts`; anchors in PR 5   |
-| Orthogonal connectors with arrowheads                                  | Not implemented    | PR 5                                       |
-| No ghost connectors after scroll, zoom, resize, filters or collapse    | Not implemented    | PR 5                                       |
-| Editing a task reschedules its successors                              | Partial            | Engine: `engine.test.ts`                   |
-| Engine respects working days, weekends and date conventions            | Implemented/Tested | `calendar.test.ts`, `engine.test.ts`       |
-| Dependency cycles rejected without corrupting state                    | Implemented/Tested | `dependencies.test.ts`, `commands.test.ts` |
-| Bar drag/resize updates dates and the TreeGrid                         | Not implemented    | PR 6                                       |
-| Table edits update bars, connectors and summaries                      | Not implemented    | PR 3–5                                     |
-| No data from another project when switching quickly                    | Partial            | Store: `scheduleStore.test.ts`; UI in PR 3 |
-| Data and links persist after refresh                                   | Partial            | `ScheduleRepository.test.ts`; UI in PR 3   |
-| Permissions and data integrity respected                               | Partial            | Integrity: schemas, commands, revisions    |
-| Clear loading, empty, error and saving states                          | Partial            | Store states tested; UI in PR 3            |
-| Unit, integration and end-to-end tests run and reported                | Partial            | Unit tests only                            |
-| Remaining limitations documented                                       | Partial            | This document                              |
+| Criterion                                                              | Status             | Evidence                                                         |
+| ---------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------- |
+| Portfolio opens a project's own screen                                 | Implemented/Tested | `workspaceFlows.test.tsx`                                        |
+| TreeGrid and Gantt side by side with an adjustable split               | Not implemented    | PR 3–4                                                           |
+| Headers and rows stay aligned while scrolling                          | Not implemented    | PR 4                                                             |
+| Phases, tasks and subtasks on several levels                           | Implemented/Tested | `workspaceFlows.test.tsx`, `tree.test.ts`                        |
+| WBS computed correctly and updated after reorganizing                  | Implemented/Tested | `workspaceFlows.test.tsx`, `tree.test.ts`                        |
+| Expand/collapse in both panes without data loss                        | Partial            | Table: `workspaceFlows.test.tsx`; Gantt in PR 4                  |
+| Editable name, duration, start, finish, predecessors, progress columns | Implemented/Tested | `workspaceFlows.test.tsx`, `cells.test.ts`                       |
+| Bars match dates, duration, progress and scale                         | Not implemented    | PR 4                                                             |
+| Summary tasks with their own look and correct roll-up dates            | Partial            | Roll-up: `engine.test.ts`                                        |
+| Milestones as diamonds with coherent semantics                         | Partial            | Semantics: `engine.test.ts`                                      |
+| Real dependencies can be created                                       | Implemented/Tested | Predecessors cell: `workspaceFlows.test.tsx`; connectors in PR 5 |
+| FS, SS, FF and SF with correct anchors                                 | Partial            | Dates: `engine.test.ts`; anchors in PR 5                         |
+| Orthogonal connectors with arrowheads                                  | Not implemented    | PR 5                                                             |
+| No ghost connectors after scroll, zoom, resize, filters or collapse    | Not implemented    | PR 5                                                             |
+| Editing a task reschedules its successors                              | Implemented/Tested | `workspaceFlows.test.tsx`, `engine.test.ts`                      |
+| Engine respects working days, weekends and date conventions            | Implemented/Tested | `calendar.test.ts`, `engine.test.ts`                             |
+| Dependency cycles rejected without corrupting state                    | Implemented/Tested | `dependencies.test.ts`, `commands.test.ts`                       |
+| Bar drag/resize updates dates and the TreeGrid                         | Not implemented    | PR 6                                                             |
+| Table edits update bars, connectors and summaries                      | Partial            | Summaries: `workspaceFlows.test.tsx`; bars in PR 4               |
+| No data from another project when switching quickly                    | Implemented/Tested | `workspaceFlows.test.tsx`, `scheduleStore.test.ts`               |
+| Data and links persist after refresh                                   | Implemented/Tested | `ScheduleRepository.test.ts`; reload checked in Chrome           |
+| Permissions and data integrity respected                               | Partial            | Integrity: schemas, commands, revisions                          |
+| Clear loading, empty, error and saving states                          | Implemented/Tested | `workspaceFlows.test.tsx`                                        |
+| Unit, integration and end-to-end tests run and reported                | Partial            | Unit and integration (jsdom); browser end-to-end in PR 8         |
+| Remaining limitations documented                                       | Partial            | This document                                                    |
 
 ## Known limitations and future work
 
