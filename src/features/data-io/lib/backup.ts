@@ -1,9 +1,18 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
+import { projectScheduleSchema } from '@/features/schedule/schemas';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { migrateSnapshot, PersistenceError, ProjectValidationError } from '@/services/persistence';
 import type { HorizonSnapshot, Project } from '@/types/project';
+import type { ProjectSchedule } from '@/types/schedule';
+
+/**
+ * Backup file: the project snapshot plus the detailed schedules of planned projects.
+ * `schedules` is optional when reading, so backups made before the planning module
+ * still import (their projects simply have no schedule).
+ */
+export type HorizonBackup = HorizonSnapshot & { schedules: ProjectSchedule[] };
 
 /** Larger files are refused before reading them (a backup of hundreds of projects is ~1 MB). */
 export const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
@@ -18,16 +27,20 @@ const MAX_LISTED_ISSUES = 3;
 export function createBackup(
   projects: readonly Project[],
   now: Date = new Date(),
-): HorizonSnapshot {
+  schedules: readonly ProjectSchedule[] = [],
+): HorizonBackup {
+  const projectIds = new Set(projects.map((project) => project.id));
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
     exportedAt: now.toISOString(),
     projects: structuredClone([...projects]),
+    // Only schedules of exported projects: never leak leftovers of deleted ones.
+    schedules: structuredClone(schedules.filter((schedule) => projectIds.has(schedule.projectId))),
   };
 }
 
 /** Pretty-printed so the file is readable and diff-friendly. */
-export function serializeBackup(snapshot: HorizonSnapshot): string {
+export function serializeBackup(snapshot: HorizonSnapshot | HorizonBackup): string {
   return `${JSON.stringify(snapshot, null, 2)}\n`;
 }
 
@@ -82,8 +95,11 @@ function describeIssue(issue: z.core.$ZodIssue): string {
   return issue.message;
 }
 
-function describeIssues(issues: readonly z.core.$ZodIssue[]): string[] {
-  const lines = issues.slice(0, MAX_LISTED_ISSUES).map(describeIssue);
+function describeIssues(
+  issues: readonly z.core.$ZodIssue[],
+  describe: (issue: z.core.$ZodIssue) => string = describeIssue,
+): string[] {
+  const lines = issues.slice(0, MAX_LISTED_ISSUES).map(describe);
   const remaining = issues.length - MAX_LISTED_ISSUES;
   if (remaining > 0) {
     lines.push(`… e mais ${String(remaining)} ${remaining === 1 ? 'problema' : 'problemas'}.`);
@@ -95,7 +111,7 @@ function describeIssues(issues: readonly z.core.$ZodIssue[]): string[] {
  * Parses, migrates and validates a backup. Nothing is partially imported: either the whole
  * file is valid or a `BackupImportError` explains what is wrong.
  */
-export function parseBackup(text: string): HorizonSnapshot {
+export function parseBackup(text: string): HorizonBackup {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -103,8 +119,9 @@ export function parseBackup(text: string): HorizonSnapshot {
     throw new BackupImportError('O arquivo não é um JSON válido.');
   }
 
+  let snapshot: HorizonSnapshot;
   try {
-    return migrateSnapshot(raw);
+    snapshot = migrateSnapshot(raw);
   } catch (error) {
     if (error instanceof PersistenceError) {
       const details =
@@ -119,6 +136,46 @@ export function parseBackup(text: string): HorizonSnapshot {
     }
     throw error;
   }
+
+  return { ...snapshot, schedules: parseSchedules(raw, snapshot) };
+}
+
+const schedulesSchema = z.array(projectScheduleSchema).optional();
+
+function describeScheduleIssue(issue: z.core.$ZodIssue): string {
+  const [index] = issue.path;
+  return typeof index === 'number'
+    ? `Cronograma ${String(index + 1)}: ${issue.message}`
+    : issue.message;
+}
+
+/** Validates the optional `schedules` of a backup against its projects. */
+function parseSchedules(raw: unknown, snapshot: HorizonSnapshot): ProjectSchedule[] {
+  const value =
+    typeof raw === 'object' && raw !== null
+      ? (raw as { schedules?: unknown }).schedules
+      : undefined;
+  const parsed = schedulesSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new BackupImportError(
+      'O arquivo contém cronogramas inválidos.',
+      describeIssues(parsed.error.issues, describeScheduleIssue),
+    );
+  }
+  const schedules = parsed.data ?? [];
+  const projectIds = new Set(snapshot.projects.map((project) => project.id));
+  const seen = new Set<string>();
+  for (const schedule of schedules) {
+    if (!projectIds.has(schedule.projectId) || seen.has(schedule.projectId)) {
+      throw new BackupImportError('O arquivo contém cronogramas inválidos.', [
+        seen.has(schedule.projectId)
+          ? 'Há mais de um cronograma para o mesmo projeto.'
+          : 'Há um cronograma de um projeto que não está no arquivo.',
+      ]);
+    }
+    seen.add(schedule.projectId);
+  }
+  return schedules;
 }
 
 /** `FileReader` rather than `Blob.text()`, which older engines (and jsdom) lack. */
@@ -136,7 +193,7 @@ function readAsText(file: Blob): Promise<string> {
 }
 
 /** Reads a user-picked file and parses it as a backup. */
-export async function readBackupFile(file: File): Promise<HorizonSnapshot> {
+export async function readBackupFile(file: File): Promise<HorizonBackup> {
   if (file.size > MAX_BACKUP_BYTES) {
     throw new BackupImportError('O arquivo é grande demais (máximo de 5 MB).');
   }

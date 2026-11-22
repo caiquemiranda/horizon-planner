@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
 import { snapshotSchema } from '@/features/projects/schemas';
+import { projectScheduleSchema } from '@/features/schedule/schemas';
 import { createIdGenerator } from '@/services/persistence/__tests__/helpers';
 import { HORIZONS, type ISODate } from '@/types/project';
 
-import { createSampleProjects } from '../sampleData';
+import { createSampleData, createSampleProjects } from '../sampleData';
 
 const today = '2026-11-22' as ISODate;
 const now = new Date('2026-11-22T12:00:00.000Z');
@@ -66,5 +67,24 @@ describe('createSampleProjects', () => {
     const second = createSampleProjects(today);
 
     expect(first[0]?.id).not.toBe(second[0]?.id);
+  });
+});
+
+describe('createSampleData', () => {
+  it('adds a fully planned project whose dates come from its schedule', () => {
+    const { projects, schedules } = createSampleData(today, {
+      generateId: createIdGenerator(),
+      now,
+    });
+    const industrial = projects.find(
+      (project) => project.title === 'Implantação de Sistema Industrial',
+    );
+
+    expect(schedules).toHaveLength(1);
+    expect(schedules[0]?.projectId).toBe(industrial?.id);
+    expect(projectScheduleSchema.safeParse(schedules[0]).success).toBe(true);
+    // Starts 6 days before today, snapped to Monday 16/11/2026.
+    expect(industrial).toMatchObject({ startDate: '2026-11-16', status: 'in_progress' });
+    expect(industrial?.progress).toBeGreaterThan(0);
   });
 });

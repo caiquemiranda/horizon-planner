@@ -23,13 +23,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
-import type { HorizonSnapshot } from '@/types/project';
 
 import { pluralizeProjects, useDataActions } from '../hooks/useDataActions';
-import { BackupImportError, readBackupFile } from '../lib/backup';
+import { BackupImportError, type HorizonBackup, readBackupFile } from '../lib/backup';
 
 type PendingAction =
-  | { kind: 'import'; snapshot: HorizonSnapshot; fileName: string }
+  | { kind: 'import'; snapshot: HorizonBackup; fileName: string }
   | { kind: 'sample' }
   | { kind: 'clear' }
   | { kind: 'error'; message: string; details: readonly string[] };
@@ -51,10 +50,11 @@ export function DataMenu() {
     setDialogOpen(true);
   };
 
-  const importSnapshot = (snapshot: HorizonSnapshot) =>
+  const importSnapshot = (snapshot: HorizonBackup) =>
     replaceProjects(
       snapshot.projects,
       `Backup importado com ${pluralizeProjects(snapshot.projects.length)}.`,
+      snapshot.schedules,
     );
 
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -100,7 +100,12 @@ export function DataMenu() {
 
         <DropdownMenuContent align="end" className="w-60">
           <DropdownMenuLabel className="text-label">Dados</DropdownMenuLabel>
-          <DropdownMenuItem disabled={!hasProjects} onSelect={exportBackup}>
+          <DropdownMenuItem
+            disabled={!hasProjects}
+            onSelect={() => {
+              void exportBackup();
+            }}
+          >
             <Download />
             Exportar JSON
           </DropdownMenuItem>

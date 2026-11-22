@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createIndustrialSchedule } from '@/features/schedule/lib/fixtures';
 import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
 
@@ -39,7 +40,23 @@ describe('export', () => {
       schemaVersion: 1,
       exportedAt: '2026-11-22T15:30:00.000Z',
       projects,
+      schedules: [],
     });
+  });
+
+  it('includes the schedules of exported projects only', () => {
+    const project = makeProject();
+    const schedule = createIndustrialSchedule({
+      projectId: project.id,
+      start: '2026-11-23' as ISODate,
+      generateId: (key) => `id-${key}`,
+      now,
+    });
+    const orphan = { ...schedule, projectId: 'deleted-project' };
+
+    const backup = createBackup([project], now, [schedule, orphan]);
+    expect(backup.schedules).toEqual([schedule]);
+    expect(parseBackup(serializeBackup(backup)).schedules).toEqual([schedule]);
   });
 
   it('copies the projects', () => {
@@ -118,6 +135,45 @@ describe('parseBackup', () => {
       expect(details).toHaveLength(4);
       expect(details.at(-1)).toBe('… e mais 2 problemas.');
     }
+  });
+});
+
+describe('parseBackup with schedules', () => {
+  const project = makeProject();
+  const schedule = createIndustrialSchedule({
+    projectId: project.id,
+    start: '2026-11-23' as ISODate,
+    generateId: (key) => `id-${key}`,
+    now,
+  });
+
+  it('accepts backups made before schedules existed', () => {
+    const legacy = JSON.stringify({
+      schemaVersion: 1,
+      exportedAt: now.toISOString(),
+      projects: [project],
+    });
+    expect(parseBackup(legacy).schedules).toEqual([]);
+  });
+
+  it('lists invalid schedules', () => {
+    const text = serializeBackup({
+      ...createBackup([project], now),
+      schedules: [{ ...schedule, calendar: { workingWeekdays: [], holidays: [] } }],
+    });
+    expectImportError(() => parseBackup(text), 'O arquivo contém cronogramas inválidos.', [
+      expect.stringMatching(/^Cronograma 1: /),
+    ]);
+  });
+
+  it('refuses schedules of projects that are not in the file', () => {
+    const text = serializeBackup({
+      ...createBackup([project], now),
+      schedules: [{ ...schedule, projectId: 'other' }],
+    });
+    expectImportError(() => parseBackup(text), 'O arquivo contém cronogramas inválidos.', [
+      'Há um cronograma de um projeto que não está no arquivo.',
+    ]);
   });
 });
 
