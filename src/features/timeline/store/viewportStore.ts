@@ -55,8 +55,11 @@ export interface ViewportState {
   zoomBy: (factor: number, anchorX?: number) => void;
   /** Sets an absolute zoom level, anchored on the center by default. Animated. */
   zoomTo: (pxPerDay: number, anchorX?: number) => void;
-  /** Positive values move forward in time. Immediate, cancels any transition. */
-  panBy: (deltaPx: number) => void;
+  /**
+   * Positive values move forward in time. Immediate by default (follows the pointer),
+   * cancelling any transition; with `smooth`, animates and accumulates like `zoomAt`.
+   */
+  panBy: (deltaPx: number, options?: { smooth?: boolean }) => void;
   /** Animated. */
   centerOn: (day: DayNumber) => void;
   /** Animated. */
@@ -135,7 +138,11 @@ export const useViewportStore = create<ViewportState>()((set, get) => {
     zoomTo: (pxPerDay, anchorX) => {
       animateTo(zoomTo(destination(), pxPerDay, anchorX), { anchorX });
     },
-    panBy: (deltaPx) => {
+    panBy: (deltaPx, { smooth = false } = {}) => {
+      if (smooth) {
+        animateTo(panBy(destination(), deltaPx), { duration: DURATION.base });
+        return;
+      }
       stopTransition();
       set((state) => ({ viewport: panBy(state.viewport, deltaPx) }));
     },

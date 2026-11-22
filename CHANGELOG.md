@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Zoom anchored on the cursor with `Ctrl` + wheel, trackpad pinch and touch pinch, with smooth transitions.
+- Drag to pan, `Shift` + wheel and horizontal trackpad swipes to move through time.
+- Zoom controls with presets (years to days) and "fit all projects".
+- Keyboard shortcuts (`+`/`-`, arrows, `1`–`5`, `T`, `F`, `?`) with an in-app help panel.
 - Design system guidelines (`docs/design.md`) with refined color, elevation and motion tokens.
 - Visible date range in the header, weekend shading at day zoom and synced hover between the sidebar and the bars.
 - Timeline with a two-level time ruler, grid lines and collapsible horizon lanes.
