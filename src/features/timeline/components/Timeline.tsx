@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import type { Horizon, Project } from '@/types/project';
+import type { Horizon, Project, UUID } from '@/types/project';
 
 import { TIMELINE_METRICS } from '../constants';
 import { useElementWidth } from '../hooks/useElementWidth';
@@ -30,6 +30,7 @@ export function Timeline({ projects }: TimelineProps) {
   const setWidth = useViewportStore((state) => state.setWidth);
   const today = useTodayDay();
   const [collapsed, setCollapsed] = useState<ReadonlySet<Horizon>>(() => new Set());
+  const [hoveredProjectId, setHoveredProjectId] = useState<UUID | null>(null);
 
   useElementWidth(canvasRef, setWidth);
 
@@ -73,7 +74,13 @@ export function Timeline({ projects }: TimelineProps) {
             className="shrink-0 border-r bg-background"
             style={{ width: sidebarWidth }}
           >
-            <LaneSidebar lanes={lanes} projectsById={projectsById} onToggleLane={toggleLane} />
+            <LaneSidebar
+              lanes={lanes}
+              projectsById={projectsById}
+              onToggleLane={toggleLane}
+              hoveredProjectId={hoveredProjectId}
+              onHoverChange={setHoveredProjectId}
+            />
           </section>
 
           <div
@@ -88,13 +95,14 @@ export function Timeline({ projects }: TimelineProps) {
             {lanes.map((lane) => (
               <div key={lane.horizon} aria-hidden="true" className="pointer-events-none">
                 <div
-                  className="absolute inset-x-0 border-b bg-background/40"
+                  className="absolute inset-x-0 border-b bg-background/50"
                   style={{ top: lane.top, height: laneHeaderHeight }}
                 />
                 {lane.projectIds.map((projectId, row) => (
                   <div
                     key={projectId}
-                    className="absolute inset-x-0 border-b border-timeline-grid"
+                    data-highlighted={hoveredProjectId === projectId || undefined}
+                    className="absolute inset-x-0 border-b border-timeline-grid transition-colors duration-(--duration-fast) data-highlighted:bg-accent/40"
                     style={{
                       top: lane.top + laneHeaderHeight + row * rowHeight,
                       height: rowHeight,
@@ -115,6 +123,8 @@ export function Timeline({ projects }: TimelineProps) {
                   project={project}
                   layout={bar}
                   rowTop={position.top}
+                  highlighted={hoveredProjectId === bar.projectId}
+                  onHoverChange={setHoveredProjectId}
                 />
               );
             })}

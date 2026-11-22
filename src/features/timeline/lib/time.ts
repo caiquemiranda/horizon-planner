@@ -66,3 +66,8 @@ export function isoRangeToDays(
 ): { start: DayNumber; end: DayNumber } {
   return { start: isoDateToDay(startDate), end: isoDateToDay(endDate) + 1 };
 }
+
+/** Day of the week of a day number: 0 = Sunday … 6 = Saturday (1970-01-01 was a Thursday). */
+export function getWeekday(day: DayNumber): number {
+  return (((Math.floor(day) + 4) % 7) + 7) % 7;
+}

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ISODate } from '@/types/project';
 
-import { isoDateToDay } from '../../lib/time';
+import { getWeekday, isoDateToDay } from '../../lib/time';
 import { GridLines } from '../GridLines';
 import { TimeRuler } from '../TimeRuler';
 
@@ -46,5 +46,26 @@ describe('GridLines', () => {
 
     expect(lefts.length).toBeGreaterThan(5);
     expect(new Set(lefts).size).toBe(lefts.length);
+  });
+});
+
+describe('GridLines weekends', () => {
+  it('identifies weekdays from day numbers', () => {
+    expect(getWeekday(isoDateToDay('2026-03-01' as ISODate))).toBe(0); // Sunday
+    expect(getWeekday(isoDateToDay('2026-03-07' as ISODate))).toBe(6); // Saturday
+  });
+
+  it('shades weekends only when days are visible', () => {
+    const days = render(
+      <GridLines viewport={{ startDay: MARCH_1, pxPerDay: 40, widthPx: 1400 }} />,
+    );
+    // 35 visible days starting on a Sunday → 10 weekend days.
+    expect(days.container.querySelectorAll('[data-weekend]')).toHaveLength(10);
+    days.unmount();
+
+    const months = render(
+      <GridLines viewport={{ startDay: MARCH_1, pxPerDay: 6.5, widthPx: 1200 }} />,
+    );
+    expect(months.container.querySelectorAll('[data-weekend]')).toHaveLength(0);
   });
 });

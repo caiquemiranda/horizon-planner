@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 
-import { COLOR_META, HORIZON_META } from '@/features/projects/constants';
+import { COLOR_META, HORIZON_META, STATUS_META } from '@/features/projects/constants';
 import { cn } from '@/lib/utils';
 import type { Horizon, Project, UUID } from '@/types/project';
 
@@ -13,10 +13,18 @@ interface LaneSidebarProps {
   lanes: readonly LaneLayout[];
   projectsById: ReadonlyMap<UUID, Project>;
   onToggleLane: (horizon: Horizon) => void;
+  hoveredProjectId?: UUID | null;
+  onHoverChange?: (projectId: UUID | null) => void;
 }
 
 /** Left column: lane headers (collapsible) and one title per project row. */
-export function LaneSidebar({ lanes, projectsById, onToggleLane }: LaneSidebarProps) {
+export function LaneSidebar({
+  lanes,
+  projectsById,
+  onToggleLane,
+  hoveredProjectId = null,
+  onHoverChange,
+}: LaneSidebarProps) {
   return (
     <>
       {lanes.map((lane) => {
@@ -32,13 +40,14 @@ export function LaneSidebar({ lanes, projectsById, onToggleLane }: LaneSidebarPr
               onClick={() => {
                 onToggleLane(lane.horizon);
               }}
-              className="flex w-full items-center gap-2 border-b px-3 text-left transition-colors hover:bg-accent/50"
+              title={meta.description}
+              className="group flex w-full items-center gap-2 border-b px-3 text-left transition-colors duration-(--duration-fast) hover:bg-accent/60"
               style={{ height: laneHeaderHeight }}
             >
               <ChevronRight
                 aria-hidden="true"
                 className={cn(
-                  'size-3.5 shrink-0 text-muted-foreground transition-transform duration-150',
+                  'size-3.5 shrink-0 text-subtle-foreground transition-transform duration-(--duration-base) ease-out-expo group-hover:text-muted-foreground',
                   !lane.collapsed && 'rotate-90',
                 )}
               />
@@ -47,13 +56,10 @@ export function LaneSidebar({ lanes, projectsById, onToggleLane }: LaneSidebarPr
                 className="size-2 shrink-0 rounded-full"
                 style={{ backgroundColor: `var(${meta.cssVar})` }}
               />
-              <span id={`${laneId}-label`} className="text-sm font-medium whitespace-nowrap">
+              <span id={`${laneId}-label`} className="text-[13px] font-medium whitespace-nowrap">
                 {meta.label}
               </span>
-              <span className="min-w-0 truncate text-xs text-muted-foreground">
-                {meta.description}
-              </span>
-              <span className="ml-auto rounded-full bg-muted px-1.5 font-mono text-[10px] text-muted-foreground tabular-nums">
+              <span className="ml-auto font-mono text-[11px] text-subtle-foreground tabular-nums">
                 {lane.projectCount}
               </span>
             </button>
@@ -66,17 +72,28 @@ export function LaneSidebar({ lanes, projectsById, onToggleLane }: LaneSidebarPr
                 return (
                   <li
                     key={projectId}
-                    className="flex items-center gap-2 border-b border-timeline-grid pr-3 pl-8"
+                    data-highlighted={hoveredProjectId === projectId || undefined}
+                    onPointerEnter={() => onHoverChange?.(projectId)}
+                    onPointerLeave={() => onHoverChange?.(null)}
+                    className="flex items-center gap-2 border-b border-timeline-grid pr-3 pl-8 transition-colors duration-(--duration-fast) data-highlighted:bg-accent/60"
                     style={{ height: rowHeight }}
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        'size-2 shrink-0 rounded-xs',
+                        'size-2 shrink-0 rounded-[3px]',
                         COLOR_META[project.color].swatchClassName,
                       )}
                     />
-                    <span className="truncate text-sm">{project.title}</span>
+                    <span
+                      className={cn(
+                        'truncate text-sm',
+                        STATUS_META[project.status].isClosed && 'text-muted-foreground',
+                        project.status === 'cancelled' && 'line-through',
+                      )}
+                    >
+                      {project.title}
+                    </span>
                     <span className="ml-auto font-mono text-[11px] text-muted-foreground tabular-nums">
                       {project.progress}%
                     </span>

@@ -133,4 +133,19 @@ describe('Timeline', () => {
     expect(tooltip).toHaveTextContent('Em andamento');
     expect(tooltip).toHaveTextContent('40%');
   });
+
+  it('highlights the same project in the sidebar and on the canvas', async () => {
+    const user = userEvent.setup();
+    renderTimeline([makeProject({ title: 'Reforma' })]);
+
+    const bar = screen.getByRole('button', { name: /Reforma/ });
+    const row = screen.getByText('Reforma', { selector: 'li span' }).closest('li');
+
+    await user.hover(bar);
+    expect(bar).toHaveAttribute('data-highlighted');
+    expect(row).toHaveAttribute('data-highlighted');
+
+    await user.unhover(bar);
+    expect(row).not.toHaveAttribute('data-highlighted');
+  });
 });
