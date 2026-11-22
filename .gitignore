@@ -28,6 +28,8 @@ npm-debug.log*
 Thumbs.db
 *.local
 
-# AI assistant tooling
-.claude/
-CLAUDE.md
+# Local tool folders: hidden folders that are not part of the repository
+/.*/
+!/.github/
+!/.husky/
+!/.vscode/
