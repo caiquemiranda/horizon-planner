@@ -31,7 +31,7 @@ export const TimeRuler = memo(function TimeRuler({ viewport }: TimeRulerProps) {
   );
 
   return (
-    <div aria-hidden="true" className="relative h-full overflow-hidden select-none">
+    <div aria-hidden="true" className="relative h-full overflow-clip select-none">
       <div
         className="relative border-b border-timeline-grid"
         style={{ height: TIMELINE_METRICS.rulerMajorHeight }}

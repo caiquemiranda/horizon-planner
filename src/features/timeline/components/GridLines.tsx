@@ -32,7 +32,7 @@ export const GridLines = memo(function GridLines({ viewport }: GridLinesProps) {
   const showWeekends = minor === 'day';
 
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-clip">
       {showWeekends
         ? minorTicks
             .filter((tick) => isWeekend(tick.day))

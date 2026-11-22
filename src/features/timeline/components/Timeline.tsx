@@ -83,11 +83,15 @@ export function Timeline({ projects }: TimelineProps) {
             />
           </section>
 
+          {/*
+           * `overflow-clip`, not `overflow-hidden`: a hidden overflow is still a scroll
+           * container, and focusing a bar would scroll it out of sync with the ruler.
+           */}
           <div
             ref={canvasRef}
             role="region"
             aria-label="Linha do tempo"
-            className="relative min-w-0 flex-1 overflow-hidden"
+            className="relative min-w-0 flex-1 overflow-clip"
             style={{ minHeight: totalHeight }}
           >
             <GridLines viewport={viewport} />
