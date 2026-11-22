@@ -1,7 +1,7 @@
 import { type RefObject, useEffect } from 'react';
 
 import { interpretWheel } from '../lib/gestures';
-import { useViewportStore } from '../store/viewportStore';
+import { useViewportStoreApi } from '../store/viewportContext';
 
 /** Smallest |deltaY| treated as a mouse-wheel notch rather than a trackpad stream. */
 const WHEEL_NOTCH_MIN_DELTA = 40;
@@ -15,6 +15,8 @@ export function useWheelNavigation(
   targetRef: RefObject<HTMLElement | null>,
   canvasRef: RefObject<HTMLElement | null>,
 ) {
+  const store = useViewportStoreApi();
+
   useEffect(() => {
     const target = targetRef.current;
     if (!target) return;
@@ -39,7 +41,7 @@ export function useWheelNavigation(
       if (!intent) return;
 
       event.preventDefault();
-      const { zoomAt, panBy } = useViewportStore.getState();
+      const { zoomAt, panBy } = store.getState();
 
       if (intent.type === 'zoom') {
         // Mouse wheels jump in big notches: animate them. Trackpads already send a smooth stream.
@@ -53,5 +55,5 @@ export function useWheelNavigation(
     return () => {
       target.removeEventListener('wheel', handleWheel);
     };
-  }, [targetRef, canvasRef]);
+  }, [targetRef, canvasRef, store]);
 }

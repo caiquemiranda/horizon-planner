@@ -1,5 +1,5 @@
 import { animate, type AnimationPlaybackControls } from 'motion';
-import { create } from 'zustand';
+import { create, type StoreApi, type UseBoundStore } from 'zustand';
 
 import { DURATION, EASE_OUT_EXPO, prefersReducedMotion } from '@/lib/motion';
 import type { DayNumber, Viewport } from '@/types/timeline';
@@ -68,95 +68,103 @@ export interface ViewportState {
   goToToday: () => void;
 }
 
-/** The running transition, kept outside React state (it changes every frame). */
-let transition: { controls: AnimationPlaybackControls; target: Viewport } | null = null;
-
-function stopTransition() {
-  transition?.controls.stop();
-  transition = null;
-}
+export type ViewportStore = UseBoundStore<StoreApi<ViewportState>>;
 
 /**
- * Timeline viewport (what is visible and at which zoom).
+ * Creates a timeline viewport (what is visible and at which zoom). Each timeline gets its
+ * own: the portfolio and every project Gantt zoom and pan independently.
  * All the math lives in `lib/scale`; the store holds state, wires actions and runs
  * the smooth transitions between viewports.
  */
-export const useViewportStore = create<ViewportState>()((set, get) => {
-  /** Where the view is going: the running transition's target, or the current viewport. */
-  const destination = () => transition?.target ?? get().viewport;
+export function createViewportStore(initial: Viewport = createInitialViewport()): ViewportStore {
+  return create<ViewportState>()((set, get) => {
+    /** The running transition, kept outside React state (it changes every frame). */
+    let transition: { controls: AnimationPlaybackControls; target: Viewport } | null = null;
 
-  const animateTo: ViewportState['animateTo'] = (target, options = {}) => {
-    const from = get().viewport;
-    stopTransition();
-
-    if (prefersReducedMotion() || from.widthPx <= 0) {
-      set({ viewport: target });
-      return;
+    function stopTransition() {
+      transition?.controls.stop();
+      transition = null;
     }
 
-    const anchorX = options.anchorX ?? target.widthPx / 2;
-    const controls = animate(0, 1, {
-      duration: options.duration ?? DURATION.slow,
-      ease: [...EASE_OUT_EXPO],
-      onUpdate: (t) => {
-        set({ viewport: interpolateViewport(from, target, t, anchorX) });
-      },
-      onComplete: () => {
-        if (transition?.controls === controls) transition = null;
+    /** Where the view is going: the running transition's target, or the current viewport. */
+    const destination = () => transition?.target ?? get().viewport;
+
+    const animateTo: ViewportState['animateTo'] = (target, options = {}) => {
+      const from = get().viewport;
+      stopTransition();
+
+      if (prefersReducedMotion() || from.widthPx <= 0) {
         set({ viewport: target });
+        return;
+      }
+
+      const anchorX = options.anchorX ?? target.widthPx / 2;
+      const controls = animate(0, 1, {
+        duration: options.duration ?? DURATION.slow,
+        ease: [...EASE_OUT_EXPO],
+        onUpdate: (t) => {
+          set({ viewport: interpolateViewport(from, target, t, anchorX) });
+        },
+        onComplete: () => {
+          if (transition?.controls === controls) transition = null;
+          set({ viewport: target });
+        },
+      });
+      transition = { controls, target };
+    };
+
+    return {
+      viewport: initial,
+
+      setWidth: (widthPx) => {
+        if (get().viewport.widthPx === widthPx) return;
+        const running = transition;
+        set((state) => ({ viewport: resizeViewport(state.viewport, widthPx) }));
+        // A resize is not a user gesture: e.g. a scrollbar appearing right after new data
+        // starts a "fit" must not cancel it. Carry on towards the target at the new width.
+        if (running) animateTo(resizeViewport(running.target, widthPx));
       },
-    });
-    transition = { controls, target };
-  };
+      setViewport: (viewport) => {
+        stopTransition();
+        set({ viewport });
+      },
+      animateTo,
+      zoomAt: (anchorX, factor, { smooth = false } = {}) => {
+        if (smooth) {
+          animateTo(zoomAt(destination(), anchorX, factor), { anchorX, duration: DURATION.base });
+          return;
+        }
+        stopTransition();
+        set((state) => ({ viewport: zoomAt(state.viewport, anchorX, factor) }));
+      },
+      zoomBy: (factor, anchorX) => {
+        const target = destination();
+        const anchor = anchorX ?? target.widthPx / 2;
+        animateTo(zoomAt(target, anchor, factor), { anchorX: anchor });
+      },
+      zoomTo: (pxPerDay, anchorX) => {
+        animateTo(zoomTo(destination(), pxPerDay, anchorX), { anchorX });
+      },
+      panBy: (deltaPx, { smooth = false } = {}) => {
+        if (smooth) {
+          animateTo(panBy(destination(), deltaPx), { duration: DURATION.base });
+          return;
+        }
+        stopTransition();
+        set((state) => ({ viewport: panBy(state.viewport, deltaPx) }));
+      },
+      centerOn: (day) => {
+        animateTo(centerOn(destination(), day));
+      },
+      fitRange: (from, to) => {
+        animateTo(fitRange(destination(), from, to));
+      },
+      goToToday: () => {
+        animateTo(centerOn(destination(), getTodayDay()));
+      },
+    };
+  });
+}
 
-  return {
-    viewport: createInitialViewport(),
-
-    setWidth: (widthPx) => {
-      if (get().viewport.widthPx === widthPx) return;
-      const running = transition;
-      set((state) => ({ viewport: resizeViewport(state.viewport, widthPx) }));
-      // A resize is not a user gesture: e.g. a scrollbar appearing right after new data
-      // starts a "fit" must not cancel it. Carry on towards the target at the new width.
-      if (running) animateTo(resizeViewport(running.target, widthPx));
-    },
-    setViewport: (viewport) => {
-      stopTransition();
-      set({ viewport });
-    },
-    animateTo,
-    zoomAt: (anchorX, factor, { smooth = false } = {}) => {
-      if (smooth) {
-        animateTo(zoomAt(destination(), anchorX, factor), { anchorX, duration: DURATION.base });
-        return;
-      }
-      stopTransition();
-      set((state) => ({ viewport: zoomAt(state.viewport, anchorX, factor) }));
-    },
-    zoomBy: (factor, anchorX) => {
-      const target = destination();
-      const anchor = anchorX ?? target.widthPx / 2;
-      animateTo(zoomAt(target, anchor, factor), { anchorX: anchor });
-    },
-    zoomTo: (pxPerDay, anchorX) => {
-      animateTo(zoomTo(destination(), pxPerDay, anchorX), { anchorX });
-    },
-    panBy: (deltaPx, { smooth = false } = {}) => {
-      if (smooth) {
-        animateTo(panBy(destination(), deltaPx), { duration: DURATION.base });
-        return;
-      }
-      stopTransition();
-      set((state) => ({ viewport: panBy(state.viewport, deltaPx) }));
-    },
-    centerOn: (day) => {
-      animateTo(centerOn(destination(), day));
-    },
-    fitRange: (from, to) => {
-      animateTo(fitRange(destination(), from, to));
-    },
-    goToToday: () => {
-      animateTo(centerOn(destination(), getTodayDay()));
-    },
-  };
-});
+/** The portfolio timeline's viewport. */
+export const useViewportStore = createViewportStore();

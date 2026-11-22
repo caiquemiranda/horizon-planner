@@ -7,6 +7,8 @@ import { getWeekday } from '../lib/time';
 
 interface GridLinesProps {
   viewport: Viewport;
+  /** Days shaded at day zoom; weekends by default (a project Gantt uses its calendar). */
+  isNonWorkingDay?: (day: DayNumber) => boolean;
 }
 
 function isWeekend(day: DayNumber): boolean {
@@ -18,7 +20,10 @@ function isWeekend(day: DayNumber): boolean {
  * Background of the canvas: subtle lines for minor units, stronger lines for major units,
  * and shaded weekends when the zoom shows individual days.
  */
-export const GridLines = memo(function GridLines({ viewport }: GridLinesProps) {
+export const GridLines = memo(function GridLines({
+  viewport,
+  isNonWorkingDay = isWeekend,
+}: GridLinesProps) {
   const { major, minor } = getGranularity(viewport.pxPerDay);
   const majorTicks = useMemo(
     () => generateTicks(viewport, major, { role: 'major' }),
@@ -35,7 +40,7 @@ export const GridLines = memo(function GridLines({ viewport }: GridLinesProps) {
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-clip">
       {showWeekends
         ? minorTicks
-            .filter((tick) => isWeekend(tick.day))
+            .filter((tick) => isNonWorkingDay(tick.day))
             .map((tick) => (
               <div
                 key={`weekend-${String(tick.day)}`}

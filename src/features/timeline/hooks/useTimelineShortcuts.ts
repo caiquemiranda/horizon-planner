@@ -1,24 +1,24 @@
 import { useEffect, useRef } from 'react';
 
 import { isEditableTarget } from '@/lib/keyboard';
-import type { Project } from '@/types/project';
 
-import { getProjectsExtent } from '../lib/layout';
 import { resolveShortcut } from '../lib/shortcuts';
 import { ZOOM_PRESETS } from '../lib/ticks';
 import { ZOOM_STEP_FACTOR } from '../lib/zoom';
-import { useViewportStore } from '../store/viewportStore';
+import { useViewportStoreApi } from '../store/viewportContext';
 
 interface UseTimelineShortcutsOptions {
-  projects: readonly Project[];
-  onShowHelp: () => void;
+  /** Range used by "fit" (`F`), e.g. every visible project or the whole schedule. */
+  getFitRange: () => { start: number; end: number } | null;
+  onShowHelp?: () => void;
 }
 
 /** Global keyboard shortcuts for the timeline (ignored while typing in a field). */
-export function useTimelineShortcuts({ projects, onShowHelp }: UseTimelineShortcutsOptions) {
+export function useTimelineShortcuts({ getFitRange, onShowHelp }: UseTimelineShortcutsOptions) {
+  const viewportStore = useViewportStoreApi();
   // Latest values without re-subscribing the listener on every render.
-  const latest = useRef({ projects, onShowHelp });
-  latest.current = { projects, onShowHelp };
+  const latest = useRef({ getFitRange, onShowHelp });
+  latest.current = { getFitRange, onShowHelp };
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -33,9 +33,10 @@ export function useTimelineShortcuts({ projects, onShowHelp }: UseTimelineShortc
         isEditing: isEditableTarget(event.target),
       });
       if (!action) return;
+      if (action.type === 'help' && !latest.current.onShowHelp) return;
 
       event.preventDefault();
-      const store = useViewportStore.getState();
+      const store = viewportStore.getState();
 
       switch (action.type) {
         case 'zoom-in':
@@ -51,7 +52,7 @@ export function useTimelineShortcuts({ projects, onShowHelp }: UseTimelineShortc
           store.goToToday();
           break;
         case 'fit': {
-          const extent = getProjectsExtent(latest.current.projects);
+          const extent = latest.current.getFitRange();
           if (extent) store.fitRange(extent.start, extent.end);
           break;
         }
@@ -61,7 +62,7 @@ export function useTimelineShortcuts({ projects, onShowHelp }: UseTimelineShortc
           break;
         }
         case 'help':
-          latest.current.onShowHelp();
+          latest.current.onShowHelp?.();
           break;
       }
     }
@@ -70,5 +71,5 @@ export function useTimelineShortcuts({ projects, onShowHelp }: UseTimelineShortc
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [viewportStore]);
 }
