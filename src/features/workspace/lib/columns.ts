@@ -45,5 +45,32 @@ export const COLUMNS: readonly ColumnDef[] = [
   { key: 'status', label: 'Status', width: 124, derived: true },
 ];
 
-export const GRID_TEMPLATE = COLUMNS.map((column) => `${String(column.width)}px`).join(' ');
-export const GRID_WIDTH = COLUMNS.reduce((total, column) => total + column.width, 0);
+export const COLUMN_WIDTH_LIMITS = { min: 48, max: 640 } as const;
+
+/** Columns that can never be hidden: the task name carries the hierarchy. */
+export const REQUIRED_COLUMNS: readonly ColumnKey[] = ['name'];
+
+export function clampColumnWidth(width: number): number {
+  return Math.round(Math.min(COLUMN_WIDTH_LIMITS.max, Math.max(COLUMN_WIDTH_LIMITS.min, width)));
+}
+
+/** Visible columns, in order, with the user's widths applied. */
+export function resolveColumns(
+  widths: Partial<Record<ColumnKey, number>>,
+  hidden: readonly ColumnKey[],
+): ColumnDef[] {
+  return COLUMNS.filter(
+    (column) => REQUIRED_COLUMNS.includes(column.key) || !hidden.includes(column.key),
+  ).map((column) => {
+    const width = widths[column.key];
+    return width === undefined ? column : { ...column, width: clampColumnWidth(width) };
+  });
+}
+
+export function getGridTemplate(columns: readonly ColumnDef[]): string {
+  return columns.map((column) => `${String(column.width)}px`).join(' ');
+}
+
+export function getGridWidth(columns: readonly ColumnDef[]): number {
+  return columns.reduce((total, column) => total + column.width, 0);
+}

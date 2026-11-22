@@ -26,6 +26,7 @@ import type { UUID } from '@/types/project';
 
 import type { WorkspaceModel } from '../hooks/useWorkspaceModel';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
+import { ColumnsMenu } from './ColumnsMenu';
 
 interface WorkspaceToolbarProps {
   model: WorkspaceModel;
@@ -200,7 +201,9 @@ export function WorkspaceToolbar({
         </span>
       ) : null}
 
-      <label className="ml-auto flex h-8 min-w-40 items-center gap-1.5 rounded-md border bg-background px-2 text-sm focus-within:border-ring">
+      <div className="ml-auto" />
+      <ColumnsMenu />
+      <label className="flex h-8 min-w-40 items-center gap-1.5 rounded-md border bg-background px-2 text-sm focus-within:border-ring">
         <Search aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
         <span className="sr-only">Filtrar tarefas</span>
         <input

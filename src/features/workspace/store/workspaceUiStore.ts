@@ -2,6 +2,8 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand';
 
 import type { UUID } from '@/types/project';
 
+import { clampColumnWidth, type ColumnKey, COLUMNS, REQUIRED_COLUMNS } from '../lib/columns';
+
 /**
  * Presentation state of the workspace: which summaries are collapsed, which task is
  * selected and the text filter. It never changes the schedule: collapsing a phase hides
@@ -17,6 +19,14 @@ interface StoredPrefs {
   collapsedIds: UUID[];
   /** Width of the table pane, in px. */
   splitWidth?: number;
+  columnWidths?: Partial<Record<ColumnKey, number>>;
+  hiddenColumns?: ColumnKey[];
+}
+
+const COLUMN_KEYS = new Set<string>(COLUMNS.map((column) => column.key));
+
+function isColumnKey(value: unknown): value is ColumnKey {
+  return typeof value === 'string' && COLUMN_KEYS.has(value);
 }
 
 export const DEFAULT_SPLIT_WIDTH = 620;
@@ -28,6 +38,8 @@ export interface WorkspaceUiState {
   /** Row under the pointer, highlighted in both panes. */
   hoveredId: UUID | null;
   splitWidth: number;
+  columnWidths: Partial<Record<ColumnKey, number>>;
+  hiddenColumns: ColumnKey[];
   filterText: string;
 
   /** Resets the state for a project and restores its saved preferences. */
@@ -39,6 +51,9 @@ export interface WorkspaceUiState {
   select: (id: UUID | null) => void;
   setHovered: (id: UUID | null) => void;
   setSplitWidth: (width: number) => void;
+  setColumnWidth: (key: ColumnKey, width: number) => void;
+  toggleColumn: (key: ColumnKey) => void;
+  resetColumns: () => void;
   setFilterText: (text: string) => void;
 }
 
@@ -64,6 +79,15 @@ function readPrefs(storage: Storage | null, projectId: UUID): StoredPrefs {
       ...(typeof parsed.splitWidth === 'number' && Number.isFinite(parsed.splitWidth)
         ? { splitWidth: parsed.splitWidth }
         : {}),
+      columnWidths: Object.fromEntries(
+        Object.entries(parsed.columnWidths ?? {}).filter(
+          (entry): entry is [ColumnKey, number] =>
+            isColumnKey(entry[0]) && typeof entry[1] === 'number' && Number.isFinite(entry[1]),
+        ),
+      ),
+      hiddenColumns: Array.isArray(parsed.hiddenColumns)
+        ? parsed.hiddenColumns.filter(isColumnKey)
+        : [],
     };
   } catch {
     return { collapsedIds: [] };
@@ -81,9 +105,15 @@ function writePrefs(storage: Storage | null, projectId: UUID, prefs: StoredPrefs
 export function createWorkspaceUiStore(storage: Storage | null = getStorage()): WorkspaceUiStore {
   return create<WorkspaceUiState>()((set, get) => {
     const save = () => {
-      const { projectId, collapsedIds, splitWidth } = get();
-      if (projectId)
-        writePrefs(storage, projectId, { collapsedIds: [...collapsedIds], splitWidth });
+      const { projectId, collapsedIds, splitWidth, columnWidths, hiddenColumns } = get();
+      if (projectId) {
+        writePrefs(storage, projectId, {
+          collapsedIds: [...collapsedIds],
+          splitWidth,
+          columnWidths,
+          hiddenColumns,
+        });
+      }
     };
     const setCollapsedIds = (collapsedIds: ReadonlySet<UUID>) => {
       set({ collapsedIds });
@@ -96,6 +126,8 @@ export function createWorkspaceUiStore(storage: Storage | null = getStorage()): 
       selectedId: null,
       hoveredId: null,
       splitWidth: DEFAULT_SPLIT_WIDTH,
+      columnWidths: {},
+      hiddenColumns: [],
       filterText: '',
 
       load: (projectId) => {
@@ -106,6 +138,8 @@ export function createWorkspaceUiStore(storage: Storage | null = getStorage()): 
           selectedId: null,
           hoveredId: null,
           splitWidth: prefs.splitWidth ?? DEFAULT_SPLIT_WIDTH,
+          columnWidths: prefs.columnWidths ?? {},
+          hiddenColumns: prefs.hiddenColumns ?? [],
           filterText: '',
         });
       },
@@ -132,6 +166,25 @@ export function createWorkspaceUiStore(storage: Storage | null = getStorage()): 
       },
       setSplitWidth: (width) => {
         set({ splitWidth: Math.round(width) });
+        save();
+      },
+      setColumnWidth: (key, width) => {
+        set((state) => ({
+          columnWidths: { ...state.columnWidths, [key]: clampColumnWidth(width) },
+        }));
+        save();
+      },
+      toggleColumn: (key) => {
+        if (REQUIRED_COLUMNS.includes(key)) return;
+        set((state) => ({
+          hiddenColumns: state.hiddenColumns.includes(key)
+            ? state.hiddenColumns.filter((item) => item !== key)
+            : [...state.hiddenColumns, key],
+        }));
+        save();
+      },
+      resetColumns: () => {
+        set({ columnWidths: {}, hiddenColumns: [] });
         save();
       },
       setFilterText: (filterText) => {
