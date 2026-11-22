@@ -161,6 +161,7 @@ src/
 ```
 
 Key architectural decisions are recorded as lightweight ADRs in [`docs/architecture.md`](./docs/architecture.md).
+Visual decisions (colors, typography, spacing, motion and component rules) are documented in the [design system](./docs/design.md).
 
 ### Engineering standards
 
