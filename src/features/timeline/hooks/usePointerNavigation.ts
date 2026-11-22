@@ -1,7 +1,7 @@
 import { type RefObject, useEffect } from 'react';
 
 import { getPinchChange, hasExceededDragThreshold, type Point } from '../lib/gestures';
-import { useViewportStore } from '../store/viewportStore';
+import { useViewportStoreApi } from '../store/viewportContext';
 
 /**
  * Drag to pan (mouse, pen or one finger) and two-finger pinch to zoom on the canvas.
@@ -16,6 +16,8 @@ export function usePointerNavigation(
   canvasRef: RefObject<HTMLElement | null>,
   scrollRef: RefObject<HTMLElement | null>,
 ) {
+  const store = useViewportStoreApi();
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -62,7 +64,7 @@ export function usePointerNavigation(
       if (!previousPoint) return;
 
       const point = toLocal(event);
-      const { panBy, zoomAt } = useViewportStore.getState();
+      const { panBy, zoomAt } = store.getState();
 
       if (pointers.size >= 2) {
         const previousPair = getPair(pointers);
@@ -113,5 +115,5 @@ export function usePointerNavigation(
       element.removeEventListener('pointerup', handlePointerEnd);
       element.removeEventListener('pointercancel', handlePointerEnd);
     };
-  }, [canvasRef, scrollRef]);
+  }, [canvasRef, scrollRef, store]);
 }

@@ -11,12 +11,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Project } from '@/types/project';
 
-import { getProjectsExtent } from '../lib/layout';
 import { ZOOM_PRESETS } from '../lib/ticks';
 import { canZoomIn, canZoomOut, getNearestPreset, ZOOM_STEP_FACTOR } from '../lib/zoom';
-import { useViewportStore } from '../store/viewportStore';
+import { useViewportStoreApi } from '../store/viewportContext';
 
 function WithTooltip({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -28,19 +26,24 @@ function WithTooltip({ label, children }: { label: string; children: ReactNode }
 }
 
 interface ZoomControlsProps {
-  /** Used by "Ajustar" to fit every project in view. */
-  projects: readonly Project[];
+  /** Range shown by the "fit" button; disabled when `null`. */
+  fitExtent: { start: number; end: number } | null;
+  /** Accessible name of the "fit" button. */
+  fitLabel?: string;
 }
 
-/** Zoom out / preset menu / zoom in, plus "fit all projects". */
-export function ZoomControls({ projects }: ZoomControlsProps) {
-  const pxPerDay = useViewportStore((state) => state.viewport.pxPerDay);
-  const zoomBy = useViewportStore((state) => state.zoomBy);
-  const zoomTo = useViewportStore((state) => state.zoomTo);
-  const fitRange = useViewportStore((state) => state.fitRange);
+/** Zoom out / preset menu / zoom in, plus "fit" (all projects, or the whole schedule). */
+export function ZoomControls({
+  fitExtent: extent,
+  fitLabel = 'Ajustar todos os projetos',
+}: ZoomControlsProps) {
+  const store = useViewportStoreApi();
+  const pxPerDay = store((state) => state.viewport.pxPerDay);
+  const zoomBy = store((state) => state.zoomBy);
+  const zoomTo = store((state) => state.zoomTo);
+  const fitRange = store((state) => state.fitRange);
 
   const currentPreset = getNearestPreset(pxPerDay);
-  const extent = getProjectsExtent(projects);
 
   return (
     <div className="flex items-center gap-1">
@@ -106,11 +109,11 @@ export function ZoomControls({ projects }: ZoomControlsProps) {
         </WithTooltip>
       </div>
 
-      <WithTooltip label="Ajustar todos os projetos na tela">
+      <WithTooltip label={`${fitLabel} na tela`}>
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Ajustar todos os projetos"
+          aria-label={fitLabel}
           disabled={!extent}
           onClick={() => {
             if (extent) fitRange(extent.start, extent.end);

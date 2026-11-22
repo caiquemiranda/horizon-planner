@@ -8,8 +8,9 @@ import type { Project } from '@/types/project';
 
 import { useTimelineShortcuts } from '../hooks/useTimelineShortcuts';
 import { formatVisibleRange } from '../lib/format';
+import { getProjectsExtent } from '../lib/layout';
 import { getVisibleRange } from '../lib/scale';
-import { useViewportStore } from '../store/viewportStore';
+import { useViewportStoreApi } from '../store/viewportContext';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { ZoomControls } from './ZoomControls';
 
@@ -19,8 +20,9 @@ interface TimelineToolbarProps {
 
 /** Timeline actions shown in the app header. */
 export function TimelineToolbar({ projects }: TimelineToolbarProps) {
-  const goToToday = useViewportStore((state) => state.goToToday);
-  const rangeLabel = useViewportStore((state) => {
+  const store = useViewportStoreApi();
+  const goToToday = store((state) => state.goToToday);
+  const rangeLabel = store((state) => {
     if (state.viewport.widthPx <= 0) return '';
     const { from, to } = getVisibleRange(state.viewport);
     return formatVisibleRange(from, to);
@@ -28,7 +30,7 @@ export function TimelineToolbar({ projects }: TimelineToolbarProps) {
   const [isHelpOpen, setHelpOpen] = useState(false);
 
   useTimelineShortcuts({
-    projects,
+    getFitRange: () => getProjectsExtent(projects),
     onShowHelp: () => {
       setHelpOpen(true);
     },
@@ -52,7 +54,7 @@ export function TimelineToolbar({ projects }: TimelineToolbarProps) {
         </TooltipContent>
       </Tooltip>
 
-      <ZoomControls projects={projects} />
+      <ZoomControls fitExtent={getProjectsExtent(projects)} />
       <ShortcutsHelp open={isHelpOpen} onOpenChange={setHelpOpen} />
 
       {rangeLabel ? (
