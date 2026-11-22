@@ -20,6 +20,7 @@ import type { UUID } from '@/types/project';
 import type { ScheduledTask } from '@/types/schedule';
 import type { DayNumber } from '@/types/timeline';
 
+import { ensureRowVisible, useRowWindow } from '../hooks/useRowWindow';
 import type { WorkspaceActions } from '../hooks/useWorkspaceActions';
 import type { WorkspaceModel } from '../hooks/useWorkspaceModel';
 import {
@@ -144,6 +145,7 @@ export function TaskGrid({
   );
   const columnKeys = columns.map((column) => column.key);
   const gridTemplate = getGridTemplate(columns);
+  const gridRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<ActiveCell | null>(null);
   const [editing, setEditing] = useState<{
     cell: ActiveCell;
@@ -155,12 +157,32 @@ export function TaskGrid({
   const [menuRowId, setMenuRowId] = useState<UUID | null>(null);
   const sessions = useRef(0);
   const cellRefs = useRef(new Map<string, HTMLDivElement>());
-  const gridRef = useRef<HTMLDivElement>(null);
   const focusPending = useRef(false);
 
   const rowIndexById = useMemo(
     () => new Map(rows.map((row, index) => [row.task.id, index])),
     [rows],
+  );
+  const scroller = scrollerRef ?? gridRef;
+  const windowOptions = {
+    rowHeight: WORKSPACE_METRICS.rowHeight,
+    offsetTop: WORKSPACE_METRICS.headerHeight,
+  };
+  const rowWindow = useRowWindow(scroller, rows.length, windowOptions);
+  /** Brings a row into the rendered window before focusing or editing it. */
+  const revealRow = useCallback(
+    (rowId: UUID) => {
+      const index = rowIndexById.get(rowId);
+      if (index !== undefined) {
+        ensureRowVisible(
+          scroller.current,
+          index,
+          WORKSPACE_METRICS.rowHeight,
+          WORKSPACE_METRICS.headerHeight,
+        );
+      }
+    },
+    [rowIndexById, scroller],
   );
   const fallbackRowId = rows[0]?.task.id ?? null;
 
@@ -249,10 +271,11 @@ export function TaskGrid({
 
   const cellKey = (cell: ActiveCell) => `${cell.rowId}:${cell.column}`;
 
-  const focusCell = useCallback((cell: ActiveCell) => {
+  const focusCell = (cell: ActiveCell) => {
+    revealRow(cell.rowId);
     focusPending.current = true;
     setActive(cell);
-  }, []);
+  };
 
   useLayoutEffect(() => {
     if (!focusPending.current || !resolvedActive || editing) return;
@@ -268,6 +291,7 @@ export function TaskGrid({
       if (!row || !column) return;
       const scheduled = result.tasks.get(row.task.id);
       if (!isEditable(column, row, scheduled)) return;
+      revealRow(cell.rowId);
       setActive(cell);
       sessions.current += 1;
       setEditing({
@@ -277,7 +301,7 @@ export function TaskGrid({
         session: sessions.current,
       });
     },
-    [readOnly, rows, rowIndexById, result, model, columns],
+    [readOnly, rows, rowIndexById, result, model, columns, revealRow],
   );
 
   // Open the name editor of a task that was just created.
@@ -564,7 +588,14 @@ export function TaskGrid({
           ))}
         </div>
 
-        {rows.map((row, rowIndex) => {
+        {rowWindow.first > 0 ? (
+          <div
+            aria-hidden="true"
+            style={{ height: rowWindow.first * WORKSPACE_METRICS.rowHeight }}
+          />
+        ) : null}
+        {rows.slice(rowWindow.first, rowWindow.last + 1).map((row, offset) => {
+          const rowIndex = rowWindow.first + offset;
           const id = row.task.id;
           const scheduled = result.tasks.get(id);
           const isSummary = scheduled?.kind === 'summary';
@@ -749,7 +780,24 @@ export function TaskGrid({
                             </TooltipContent>
                           </Tooltip>
                         ) : null}
-                        {!readOnly ? (
+                        {readOnly ? null : menuRowId !== id ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onSelect(id);
+                              setMenuRowId(id);
+                            }}
+                            tabIndex={-1}
+                            aria-label={`Ações de ${row.task.name}`}
+                            className={cn(
+                              'ml-auto inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground focus-visible:opacity-100 data-[state=open]:opacity-100',
+                              isSelected && 'opacity-100',
+                            )}
+                          >
+                            <Ellipsis aria-hidden="true" className="size-4" />
+                          </button>
+                        ) : (
                           <RowMenu
                             open={menuRowId === id}
                             onOpenChange={(open) => {
@@ -806,7 +854,7 @@ export function TaskGrid({
                               </button>
                             }
                           />
-                        ) : null}
+                        )}
                       </div>
                     ) : (
                       <span className="truncate">{renderDisplay(column.key, row, scheduled)}</span>
@@ -817,6 +865,12 @@ export function TaskGrid({
             </div>
           );
         })}
+        {rowWindow.last < rows.length - 1 ? (
+          <div
+            aria-hidden="true"
+            style={{ height: (rows.length - 1 - rowWindow.last) * WORKSPACE_METRICS.rowHeight }}
+          />
+        ) : null}
       </div>
     </div>
   );
