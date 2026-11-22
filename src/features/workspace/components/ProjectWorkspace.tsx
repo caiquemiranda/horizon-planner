@@ -5,6 +5,7 @@ import { Logo } from '@/components/brand/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
+import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { GanttPane } from '@/features/gantt/components/GanttPane';
 import { COLOR_META } from '@/features/projects/constants';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
@@ -22,6 +23,7 @@ import { useWorkspaceActions } from '../hooks/useWorkspaceActions';
 import { useWorkspaceModel } from '../hooks/useWorkspaceModel';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
+import { LinksDialog } from './LinksDialog';
 import { SaveStatus } from './SaveStatus';
 import { SplitView } from './SplitView';
 import { TaskGrid } from './TaskGrid';
@@ -158,6 +160,10 @@ function WorkspaceBody({ project }: { project: Project }) {
   const [ganttViewport] = useState(() => createViewportStore());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [pendingDelete, setPendingDelete] = useState<UUID | null>(null);
+  const [linksTarget, setLinksTarget] = useState<{ taskId: UUID; focusLinkId: UUID | null } | null>(
+    null,
+  );
+  const showNotice = useNoticeStore((state) => state.show);
   const [editRequest, setEditRequest] = useState<UUID | null>(null);
   const today = useMemo(() => getTodayDay(), []);
 
@@ -219,6 +225,9 @@ function WorkspaceBody({ project }: { project: Project }) {
         onDelete={() => {
           if (selectedId) setPendingDelete(selectedId);
         }}
+        onEditLinks={() => {
+          if (selectedId) setLinksTarget({ taskId: selectedId, focusLinkId: null });
+        }}
       />
       {isEmpty ? (
         <CenteredMessage
@@ -256,6 +265,9 @@ function WorkspaceBody({ project }: { project: Project }) {
               onToggle={toggle}
               onRequestDelete={setPendingDelete}
               onTaskCreated={addAndEdit}
+              onEditLinks={(id) => {
+                setLinksTarget({ taskId: id, focusLinkId: null });
+              }}
               editRequest={editRequest}
               onEditRequestHandled={clearEditRequest}
               today={today}
@@ -275,10 +287,32 @@ function WorkspaceBody({ project }: { project: Project }) {
               onHover={setHovered}
               barColor={`var(${COLOR_META[project.color].cssVar})`}
               today={today}
+              activeLinkId={linksTarget?.focusLinkId ?? null}
+              onOpenLink={(linkId) => {
+                const link = model.schedule.dependencies.find((item) => item.id === linkId);
+                if (link) setLinksTarget({ taskId: link.successorId, focusLinkId: link.id });
+              }}
+              onCreateLink={(candidate) => {
+                const error = actions.addLink(candidate);
+                if (error) showNotice(error, 'error');
+                else
+                  showNotice(
+                    `Vínculo criado: ${model.describeTask(candidate.predecessorId)} → ${model.describeTask(candidate.successorId)}.`,
+                  );
+              }}
             />
           }
         />
       )}
+      <LinksDialog
+        model={model}
+        actions={actions}
+        taskId={linksTarget?.taskId ?? null}
+        focusLinkId={linksTarget?.focusLinkId ?? null}
+        onClose={() => {
+          setLinksTarget(null);
+        }}
+      />
       <DeleteTaskDialog
         model={model}
         taskId={pendingDelete}

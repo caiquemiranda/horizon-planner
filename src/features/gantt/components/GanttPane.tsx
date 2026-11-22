@@ -1,14 +1,17 @@
 import {
   type CSSProperties,
   type MouseEvent,
+  type PointerEvent,
   type RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 
+import type { DependencyCandidate } from '@/features/schedule/lib/dependencies';
 import { GridLines } from '@/features/timeline/components/GridLines';
 import { TimeRuler } from '@/features/timeline/components/TimeRuler';
 import { TodayIndicator } from '@/features/timeline/components/TodayIndicator';
@@ -22,7 +25,10 @@ import { WORKSPACE_METRICS } from '@/features/workspace/lib/columns';
 import type { UUID } from '@/types/project';
 import type { DayNumber } from '@/types/timeline';
 
+import { layoutConnectors } from '../lib/connectorLayout';
+import { linkTypeFor } from '../lib/connectors';
 import { getBarGeometry, isHorizontallyVisible } from '../lib/geometry';
+import { ConnectorLayer } from './ConnectorLayer';
 import { GanttBar } from './GanttBar';
 
 interface GanttPaneProps {
@@ -36,7 +42,25 @@ interface GanttPaneProps {
   /** CSS color of the bars (the project color). */
   barColor: string;
   today: DayNumber;
+  /** Opens the links dialog on a connector. */
+  onOpenLink?: (dependencyId: UUID) => void;
+  activeLinkId?: UUID | null;
+  /** Creates a link drawn by dragging from a bar end; omitted when read-only. */
+  onCreateLink?: (link: DependencyCandidate) => void;
 }
+
+interface LinkDrag {
+  fromId: UUID;
+  fromEdge: 'start' | 'finish';
+  /** Anchor and current pointer, in content coordinates. */
+  origin: { x: number; y: number };
+  pointer: { x: number; y: number };
+}
+
+const LINK_HANDLE_TITLES = {
+  start: 'Arraste até outra tarefa para vincular a partir do início',
+  finish: 'Arraste até outra tarefa para vinculá-la depois desta',
+} as const;
 
 const { rowHeight, headerHeight } = WORKSPACE_METRICS;
 
@@ -59,6 +83,9 @@ export function GanttPane({
   onHover,
   barColor,
   today,
+  onOpenLink,
+  activeLinkId = null,
+  onCreateLink,
 }: GanttPaneProps) {
   const store = useViewportStoreApi();
   const viewport = store((state) => state.viewport);
@@ -132,6 +159,59 @@ export function GanttPane({
     [model, viewport],
   );
 
+  const connectors = useMemo(
+    () =>
+      layoutConnectors(model.schedule.dependencies, model.rows, model.result, viewport, rowHeight),
+    [model, viewport],
+  );
+
+  const [drag, setDrag] = useState<LinkDrag | null>(null);
+
+  const toContent = (event: PointerEvent) => {
+    const rect = contentRef.current?.getBoundingClientRect();
+    return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) };
+  };
+
+  const startLinkDrag = (
+    event: PointerEvent<HTMLButtonElement>,
+    fromId: UUID,
+    fromEdge: 'start' | 'finish',
+    origin: { x: number; y: number },
+  ) => {
+    // The handle owns the gesture: no chart pan while drawing a link.
+    event.stopPropagation();
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDrag({ fromId, fromEdge, origin, pointer: toContent(event) });
+  };
+
+  const moveLinkDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!drag) return;
+    setDrag({ ...drag, pointer: toContent(event) });
+  };
+
+  const endLinkDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!drag) return;
+    const current = drag;
+    setDrag(null);
+    // Dropping anywhere on a task's row targets that task: no need to hit a thin bar
+    // or a small diamond exactly.
+    const pointer = toContent(event);
+    const row = model.rows[Math.floor(pointer.y / rowHeight)];
+    const task = row ? model.result.tasks.get(row.task.id) : undefined;
+    if (!row || !task || row.task.id === current.fromId || task.kind === 'summary') return;
+    const geometry = getBarGeometry(task, Math.floor(pointer.y / rowHeight), viewport, rowHeight);
+    // Left of the bar's middle: the successor's start; right of it: its finish.
+    const middle = geometry.kind === 'milestone' ? geometry.x : geometry.x + geometry.width / 2;
+    const toEdge = geometry.kind === 'milestone' || pointer.x < middle ? 'start' : 'finish';
+    onCreateLink?.({
+      predecessorId: current.fromId,
+      successorId: row.task.id,
+      type: linkTypeFor(current.fromEdge, toEdge),
+      lag: 0,
+    });
+  };
+
   const rowAt = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return model.rows[Math.floor((event.clientY - rect.top) / rowHeight)];
@@ -194,6 +274,14 @@ export function GanttPane({
               style={{ top: selectedIndex * rowHeight, height: rowHeight }}
             />
           ) : null}
+          <ConnectorLayer
+            shapes={connectors}
+            width={viewport.widthPx}
+            height={model.rows.length * rowHeight}
+            emphasizedTaskId={selectedId}
+            activeLinkId={activeLinkId}
+            {...(onOpenLink ? { onOpenLink } : {})}
+          />
           {bars.map(({ row, task, geometry }) => (
             <GanttBar
               key={row.task.id}
@@ -207,6 +295,61 @@ export function GanttPane({
               manual={row.task.mode === 'manual'}
             />
           ))}
+          {onCreateLink
+            ? bars
+                .filter(
+                  ({ row, task }) =>
+                    task.kind !== 'summary' &&
+                    (row.task.id === hoveredId || drag?.fromId === row.task.id),
+                )
+                .flatMap(({ row, geometry }) =>
+                  (['start', 'finish'] as const).map((edge) => {
+                    const half = geometry.kind === 'milestone' ? geometry.height / 2 : 0;
+                    const x =
+                      edge === 'start' ? geometry.x - half : geometry.x + geometry.width + half;
+                    const origin = { x, y: geometry.centerY };
+                    return (
+                      <button
+                        key={`${row.task.id}-${edge}`}
+                        type="button"
+                        tabIndex={-1}
+                        data-link-handle={edge}
+                        data-no-pan=""
+                        title={LINK_HANDLE_TITLES[edge]}
+                        onPointerDown={(event) => {
+                          startLinkDrag(event, row.task.id, edge, origin);
+                        }}
+                        onPointerMove={moveLinkDrag}
+                        onPointerUp={endLinkDrag}
+                        onPointerCancel={() => {
+                          setDrag(null);
+                        }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                        }}
+                        className="absolute z-10 size-3 -translate-x-1/2 -translate-y-1/2 cursor-crosshair touch-none rounded-full border-2 border-background bg-ring shadow-sm"
+                        style={{ left: x, top: geometry.centerY }}
+                      />
+                    );
+                  }),
+                )
+            : null}
+          {drag ? (
+            <svg
+              className="pointer-events-none absolute top-0 left-0 overflow-visible"
+              width={1}
+              height={1}
+            >
+              <path
+                data-testid="link-preview"
+                d={`M${String(drag.origin.x)} ${String(drag.origin.y)} L${String(drag.pointer.x)} ${String(drag.origin.y)} L${String(drag.pointer.x)} ${String(drag.pointer.y)}`}
+                fill="none"
+                stroke="var(--ring)"
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+              />
+            </svg>
+          ) : null}
         </div>
       </div>
     </section>
