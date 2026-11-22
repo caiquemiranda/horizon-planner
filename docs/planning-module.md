@@ -92,12 +92,32 @@ working day, Monday 30/11. This is covered by tests.
 - **Duplicate** copies the task and its subtree right below it, **without links**, so a
   copy never gets unexpected links to old tasks.
 
+### Persistence
+
+- Each project's schedule is stored under its own key
+  (`horizon-planner:schedule:<projectId>`), so opening a project reads only its data.
+  Stored data is validated with zod; unreadable data is copied to a `:backup:` key
+  instead of being lost, and data from a newer app version is refused, not discarded.
+- **Concurrency:** every save carries the revision it started from. If another tab saved
+  in between, the save is rejected as a conflict and the user chooses: reload the stored
+  version or overwrite it. A tab with no pending edits follows the other tab's changes.
+- **Saving:** edits show at once and are saved in the background, one write at a time,
+  so a newer edit is never replaced by an older save. Failures keep the edit and offer a
+  retry; the status is "Salvando", "Salvo", "Erro ao salvar" or "Conflito".
+- **Switching projects:** loads carry a token; a slow answer for a project the user
+  already left is ignored, and nothing from the previous project stays on screen.
+- **Portfolio:** once a project has tasks, it acts as the root summary of its schedule:
+  its dates span the tasks (widened to keep portfolio milestones valid) and its progress
+  is the schedule's weighted progress.
+- **Deleting a project** deletes its schedule. **Backups** include the schedules of the
+  exported projects; backups made before the planning module still import.
+
 ## Delivery plan
 
 | PR  | Block                       | Content                                                                                     | Status  |
 | --- | --------------------------- | ------------------------------------------------------------------------------------------- | ------- |
-| 1   | `feat/schedule-domain`      | Types, calendar, WBS tree, dependency graph, engine, commands, schemas, demo fixture, tests | This PR |
-| 2   | `feat/schedule-persistence` | Schedule repository (per project), workspace store, save status, backup and sample data     | Planned |
+| 1   | `feat/schedule-domain`      | Types, calendar, WBS tree, dependency graph, engine, commands, schemas, demo fixture, tests | PR 18   |
+| 2   | `feat/schedule-persistence` | Schedule repository (per project), workspace store, save status, backup and sample data     | PR 19   |
 | 3   | `feat/workspace-treegrid`   | Project route, workspace page, split view, editable TreeGrid with WBS, expand/collapse      | Planned |
 | 4   | `feat/gantt-chart`          | Gantt pane: time scale, bars, summaries, milestones, today line, synced rows and selection  | Planned |
 | 5   | `feat/gantt-dependencies`   | Orthogonal connector router, SVG layer, link editing (cell, dialog, drag from bar)          | Planned |
@@ -131,10 +151,10 @@ implemented** or **Blocked**, with evidence.
 | Dependency cycles rejected without corrupting state                    | Implemented/Tested | `dependencies.test.ts`, `commands.test.ts` |
 | Bar drag/resize updates dates and the TreeGrid                         | Not implemented    | PR 6                                       |
 | Table edits update bars, connectors and summaries                      | Not implemented    | PR 3–5                                     |
-| No data from another project when switching quickly                    | Not implemented    | PR 2–3                                     |
-| Data and links persist after refresh                                   | Not implemented    | PR 2                                       |
-| Permissions and data integrity respected                               | Partial            | Integrity: schemas and commands            |
-| Clear loading, empty, error and saving states                          | Not implemented    | PR 2–3                                     |
+| No data from another project when switching quickly                    | Partial            | Store: `scheduleStore.test.ts`; UI in PR 3 |
+| Data and links persist after refresh                                   | Partial            | `ScheduleRepository.test.ts`; UI in PR 3   |
+| Permissions and data integrity respected                               | Partial            | Integrity: schemas, commands, revisions    |
+| Clear loading, empty, error and saving states                          | Partial            | Store states tested; UI in PR 3            |
 | Unit, integration and end-to-end tests run and reported                | Partial            | Unit tests only                            |
 | Remaining limitations documented                                       | Partial            | This document                              |
 
