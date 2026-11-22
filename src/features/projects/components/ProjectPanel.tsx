@@ -1,19 +1,29 @@
 import { useEffect, useMemo } from 'react';
 
+import { getTodayIsoDate } from '@/features/timeline/lib/time';
+import type { Project } from '@/types/project';
+
 import { useDrawerStore } from '../store/drawerStore';
 import { useProjectsStore } from '../store/projectsStore';
+import { ProjectCreator } from './ProjectCreator';
 import { ProjectDrawer } from './ProjectDrawer';
 import { ProjectEditor } from './ProjectEditor';
 
-/** Connects the drawer to the stores: which project is open and its data. */
-export function ProjectPanel() {
+interface ProjectPanelProps {
+  /** E.g. to bring the new project into view on the timeline. */
+  onProjectCreated?: (project: Project) => void;
+}
+
+/** Connects the drawer to the stores: which project is open, its data, create and delete. */
+export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
   const view = useDrawerStore((state) => state.view);
   const close = useDrawerStore((state) => state.close);
-  const project = useProjectsStore((state) =>
-    view.mode === 'edit' ? state.projects.find((item) => item.id === view.projectId) : undefined,
-  );
-  const status = useProjectsStore((state) => state.status);
+  const openProject = useDrawerStore((state) => state.openProject);
   const projects = useProjectsStore((state) => state.projects);
+  const status = useProjectsStore((state) => state.status);
+
+  const project =
+    view.mode === 'edit' ? projects.find((item) => item.id === view.projectId) : undefined;
   const categories = useMemo(
     () =>
       [...new Set(projects.flatMap((item) => (item.category ? [item.category] : [])))].sort(
@@ -28,22 +38,38 @@ export function ProjectPanel() {
     if (isMissing) close();
   }, [isMissing, close]);
 
-  const isOpen = view.mode === 'create' || Boolean(project);
-  const title = view.mode === 'create' ? 'Novo projeto' : (project?.title ?? '');
+  const isCreating = view.mode === 'create';
+  const isOpen = isCreating || Boolean(project);
 
   return (
     <ProjectDrawer
       open={isOpen}
       onClose={close}
-      title={title}
+      title={isCreating ? 'Novo projeto' : (project?.title ?? '')}
       description={
-        view.mode === 'create'
+        isCreating
           ? 'Preencha os dados para criar um projeto.'
           : 'Edite o projeto. As alterações aparecem na linha do tempo e são salvas automaticamente.'
       }
     >
+      {isCreating ? (
+        <ProjectCreator
+          today={getTodayIsoDate()}
+          categories={categories}
+          onCancel={close}
+          onCreated={(created) => {
+            openProject(created.id);
+            onProjectCreated?.(created);
+          }}
+        />
+      ) : null}
       {project ? (
-        <ProjectEditor key={project.id} project={project} categories={categories} />
+        <ProjectEditor
+          key={project.id}
+          project={project}
+          categories={categories}
+          onDeleted={close}
+        />
       ) : null}
     </ProjectDrawer>
   );

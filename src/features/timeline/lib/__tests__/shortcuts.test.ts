@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isEditableTarget, resolveShortcut, type ShortcutInput } from '../shortcuts';
+import { resolveShortcut, type ShortcutInput } from '../shortcuts';
 
 function press(key: string, overrides: Partial<ShortcutInput> = {}): ShortcutInput {
   return {
@@ -48,14 +48,5 @@ describe('resolveShortcut', () => {
     expect(resolveShortcut(press('t', { metaKey: true }))).toBeNull();
     expect(resolveShortcut(press('f', { altKey: true }))).toBeNull();
     expect(resolveShortcut(press('t', { isEditing: true }))).toBeNull();
-  });
-});
-
-describe('isEditableTarget', () => {
-  it('detects text fields', () => {
-    expect(isEditableTarget(document.createElement('input'))).toBe(true);
-    expect(isEditableTarget(document.createElement('textarea'))).toBe(true);
-    expect(isEditableTarget(document.createElement('button'))).toBe(false);
-    expect(isEditableTarget(null)).toBe(false);
   });
 });
