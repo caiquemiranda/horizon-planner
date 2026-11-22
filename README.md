@@ -54,15 +54,22 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 
 ## 📸 Screenshots
 
-> Screenshots and GIFs live in [`docs/assets/`](./docs/assets). The [capture guide](./docs/assets/README.md) covers sizes and naming conventions.
+> Captured from the sample data with `npm run screenshots`. Assets live in [`docs/assets/`](./docs/assets); the [capture guide](./docs/assets/README.md) covers naming and the manual GIFs.
 
-|                                             Macro view (years / quarters)                                             |                                        Micro view (weeks / days)                                         |
-| :-------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
-| <img src="docs/assets/timeline-macro-dark.png" alt="Timeline in macro view showing years and quarters" width="420" /> | <img src="docs/assets/timeline-micro-dark.png" alt="Timeline zoomed in to weeks and days" width="420" /> |
+<img src="docs/assets/timeline-macro-dark.png" alt="Timeline fitted to all projects, from 2026 to 2029, with the short, medium and long-term lanes" width="100%" />
 
-|                                              Side drawer                                               |                                         Smooth zoom (GIF)                                          |
-| :----------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------: |
-| <img src="docs/assets/drawer-edit-dark.png" alt="Project drawer open over the timeline" width="420" /> | <img src="docs/assets/demo-zoom.gif" alt="Animated demo of the macro to micro zoom" width="420" /> |
+|                                          Micro view (weeks / days)                                           |                                               Side drawer (light theme)                                                |
+| :----------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/assets/timeline-micro-dark.png" alt="Timeline zoomed in to weeks around today" width="420" /> | <img src="docs/assets/drawer-edit-light.png" alt="Project drawer open over the timeline in light theme" width="420" /> |
+
+<details>
+<summary>More: light theme, dark drawer and phone layout</summary>
+
+<img src="docs/assets/timeline-macro-light.png" alt="Timeline fitted to all projects in light theme" width="100%" />
+<img src="docs/assets/drawer-edit-dark.png" alt="Project drawer open over the timeline in dark theme" width="100%" />
+<p align="center"><img src="docs/assets/timeline-mobile-dark.png" alt="Timeline on a phone-sized screen" width="260" /></p>
+
+</details>
 
 ## 🚀 Getting started
 
@@ -100,6 +107,7 @@ Open <http://localhost:5173> and click **Carregar dados de exemplo** (Load sampl
 | `npm test`                        | Runs the test suite once with Vitest.                       |
 | `npm run test:watch`              | Runs Vitest in watch mode.                                  |
 | `npm run test:coverage`           | Runs the tests and writes a coverage report to `coverage/`. |
+| `npm run screenshots`             | Builds the app and recaptures the README screenshots.       |
 
 ## 🏗️ Architecture
 
@@ -109,7 +117,7 @@ Open <http://localhost:5173> and click **Carregar dados de exemplo** (Load sampl
 | ---------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
 | Core       | **React 19 + TypeScript (strict) + Vite 7**      | Fast DX, strict typing with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`.     |
 | UI         | **Tailwind CSS v4 + shadcn/ui (Radix) + Lucide** | Accessible primitives, design tokens as CSS variables, full ownership of the components.     |
-| Motion     | **Framer Motion**                                | Drawer and micro-interactions only. The timeline runs its own `requestAnimationFrame` loop.  |
+| Motion     | **Motion**                                       | Drawer and micro-interactions only. The timeline runs its own `requestAnimationFrame` loop.  |
 | State      | **Zustand**                                      | Small, selector-based stores that avoid re-rendering the whole timeline on every zoom frame. |
 | Dates      | **date-fns**                                     | Precise, tree-shakeable calendar math and `pt-BR` formatting.                                |
 | Validation | **zod**                                          | Runtime validation of imported JSON and persisted data.                                      |
@@ -162,6 +170,7 @@ src/
 ├── types/                  # Shared domain types (Project, Viewport…)
 ├── styles/                 # Tailwind entry and design tokens
 └── test/                   # Test setup and browser API mocks
+scripts/                    # Maintenance scripts (README screenshots)
 ```
 
 Key architectural decisions are recorded as lightweight ADRs in [`docs/architecture.md`](./docs/architecture.md).
@@ -181,7 +190,6 @@ Visual decisions (colors, typography, spacing, motion and component rules) are d
 - [ ] **v0.1.0 (MVP):** interactive timeline, macro/micro zoom, drawer CRUD, filters, localStorage, JSON import/export, sample data
 - [ ] Drag and resize bars directly on the timeline to change dates
 - [ ] Dependencies between projects (finish-to-start arrows)
-- [ ] Milestone diamonds with completion tracking on the timeline
 - [ ] Undo / redo (command history)
 - [ ] Row virtualization for very large portfolios
 - [ ] Command palette (`Ctrl + K`)

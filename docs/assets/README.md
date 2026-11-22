@@ -2,18 +2,19 @@
 
 This folder holds the visual assets used by the main [`README.md`](../../README.md). Follow this guide so every image looks consistent and the README links keep working.
 
-## Required assets
+## Assets
 
-| File                       | Shows                                                                      | Used in README |
-| -------------------------- | -------------------------------------------------------------------------- | :------------: |
-| `timeline-macro-dark.png`  | Macro view (years and quarters), all three horizon lanes visible           |       ✅       |
-| `timeline-micro-dark.png`  | Micro view (weeks and days), zoomed on one or two projects with milestones |       ✅       |
-| `drawer-edit-dark.png`     | Side drawer open while editing a project, timeline visible behind it       |       ✅       |
-| `demo-zoom.gif`            | Smooth `Ctrl + Scroll` zoom from macro to micro, anchored on a project     |       ✅       |
-| `timeline-macro-light.png` | Same as the macro view, in light theme                                     |    optional    |
-| `drawer-edit-light.png`    | Same as the drawer view, in light theme                                    |    optional    |
-| `demo-drawer.gif`          | Clicking a bar, editing progress and seeing the bar update live            |    optional    |
-| `social-preview.png`       | 1280×640 image for _Settings → Social preview_ on GitHub                   |       –        |
+| File                       | Shows                                                      | Captured by           |
+| -------------------------- | ---------------------------------------------------------- | --------------------- |
+| `timeline-macro-dark.png`  | All projects fitted on screen, the three horizon lanes     | `npm run screenshots` |
+| `timeline-macro-light.png` | Same view in light theme                                   | `npm run screenshots` |
+| `timeline-micro-dark.png`  | Weeks zoom centered on today, with milestones              | `npm run screenshots` |
+| `drawer-edit-dark.png`     | Side drawer editing a project, timeline visible behind it  | `npm run screenshots` |
+| `drawer-edit-light.png`    | Same view in light theme                                   | `npm run screenshots` |
+| `timeline-mobile-dark.png` | Phone layout (390×844)                                     | `npm run screenshots` |
+| `demo-zoom.gif`            | Smooth `Ctrl + Scroll` zoom from macro to micro (optional) | By hand               |
+| `demo-drawer.gif`          | Clicking a bar and editing progress live (optional)        | By hand               |
+| `social-preview.png`       | 1280×640 image for _Settings → Social preview_ on GitHub   | By hand               |
 
 ## Naming convention
 
@@ -27,19 +28,22 @@ This folder holds the visual assets used by the main [`README.md`](../../README.
 
 ## How to capture
 
-### Preparation
+### Screenshots (automated)
 
-1. Run the production build for representative performance: `npm run build && npm run preview`.
-2. Open the app in a clean browser profile (no extensions in the UI) at a **1440×900** viewport.
-   In Chrome DevTools: _Toggle device toolbar_ (`Ctrl + Shift + M`) → _Responsive_ → `1440 × 900`.
-3. Clear existing data (**Data → Clear all**) and click **Load sample data** so the content is consistent across captures.
-4. Hide the mouse cursor in static screenshots, unless it shows an interaction such as a tooltip.
+```bash
+npm run screenshots
+```
 
-### Static screenshots (PNG)
+The script ([`scripts/capture-screenshots.js`](../../scripts/capture-screenshots.js)) builds
+the app, serves it with `vite preview` and drives your installed Chrome (or Edge, with
+`HORIZON_BROWSER=msedge`) through `playwright-core`. Every capture starts from a clean
+profile with the sample data, at 1440×900 and a 2× pixel ratio, with animations off, so
+reruns are consistent. Sample dates are relative to the current day, which keeps the
+"today" line in the middle of the content.
 
-- Use DevTools: `Ctrl + Shift + P` → **Capture screenshot**. This produces a pixel-perfect image at a 2× device pixel ratio when the zoom is set to `200%`.
-- Target size: **2880×1800** (2× of 1440×900). The README displays them scaled down.
-- Compress before committing: [Squoosh](https://squoosh.app) or `npx @squoosh/cli --oxipng {} file.png`. Aim for **under 500 KB** per image.
+Review the images before committing: the script overwrites the files in place, so a
+`git diff` shows exactly which ones changed. To add a view, add an entry to `SHOTS` in
+the script.
 
 ### Animated GIFs
 
@@ -53,6 +57,6 @@ This folder holds the visual assets used by the main [`README.md`](../../README.
 
 - [ ] File name follows the convention above.
 - [ ] No personal data on screen (use the sample data only).
-- [ ] Image is compressed within the size targets.
+- [ ] Image is within the size targets (PNG under 500 KB, GIF under 5 MB).
 - [ ] Both themes look right when a light variant is added.
 - [ ] README renders correctly on GitHub (check the PR preview).
