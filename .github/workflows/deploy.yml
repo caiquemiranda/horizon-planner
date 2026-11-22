@@ -1,0 +1,66 @@
+name: Deploy
+
+# Publishes the app to GitHub Pages. While the MVP is being evaluated, every push to
+# `develop` goes live; switch the branch to `main` to deploy releases only.
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+# One deployment at a time; a newer push replaces a queued one but never cancels a
+# deployment that is already running.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The site is served from /<repository>/, so assets need that base path.
+      - name: Build
+        run: npm run build -- --base=${{ steps.pages.outputs.base_path }}/
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
