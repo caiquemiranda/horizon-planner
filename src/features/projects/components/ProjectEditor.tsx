@@ -98,7 +98,8 @@ export function ProjectEditor({ project, categories, onDeleted }: ProjectEditorP
             <AlertDialogHeader>
               <AlertDialogTitle>Excluir “{project.title}”?</AlertDialogTitle>
               <AlertDialogDescription>
-                O projeto e seus marcos serão removidos. Esta ação não pode ser desfeita.
+                O projeto, seus marcos e seu cronograma (tarefas e vínculos) serão removidos. Esta
+                ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

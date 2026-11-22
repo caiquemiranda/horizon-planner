@@ -13,6 +13,8 @@ interface ProjectDrawerProps {
   description: string;
   children?: ReactNode;
   footer?: ReactNode;
+  /** Extra actions next to the close button, e.g. "Abrir cronograma". */
+  headerActions?: ReactNode;
 }
 
 /**
@@ -29,6 +31,7 @@ export function ProjectDrawer({
   description,
   children,
   footer,
+  headerActions,
 }: ProjectDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +78,7 @@ export function ProjectDrawer({
                     {title}
                   </Dialog.Title>
                   <Dialog.Description className="sr-only">{description}</Dialog.Description>
+                  {headerActions}
                   <Dialog.Close asChild>
                     <Button variant="ghost" size="icon-sm" aria-label="Fechar painel">
                       <X />
