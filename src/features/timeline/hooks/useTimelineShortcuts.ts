@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 
+import { isEditableTarget } from '@/lib/keyboard';
 import type { Project } from '@/types/project';
 
 import { getProjectsExtent } from '../lib/layout';
-import { isEditableTarget, resolveShortcut } from '../lib/shortcuts';
+import { resolveShortcut } from '../lib/shortcuts';
 import { ZOOM_PRESETS } from '../lib/ticks';
 import { ZOOM_STEP_FACTOR } from '../lib/zoom';
 import { useViewportStore } from '../store/viewportStore';

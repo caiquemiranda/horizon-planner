@@ -1,6 +1,19 @@
-import { CircleAlert, CircleCheck } from 'lucide-react';
+import { CircleAlert, CircleCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import type { Project } from '@/types/project';
 
 import { type ProjectFormValues, toFormValues, validateForm } from '../lib/form';
@@ -11,6 +24,8 @@ import { ProjectForm } from './ProjectForm';
 interface ProjectEditorProps {
   project: Project;
   categories: readonly string[];
+  /** Called after the project is deleted. */
+  onDeleted: () => void;
 }
 
 /**
@@ -20,8 +35,9 @@ interface ProjectEditorProps {
  *
  * Mount with `key={project.id}` so switching projects resets the form.
  */
-export function ProjectEditor({ project, categories }: ProjectEditorProps) {
+export function ProjectEditor({ project, categories, onDeleted }: ProjectEditorProps) {
   const update = useProjectsStore((state) => state.update);
+  const remove = useProjectsStore((state) => state.remove);
   const [values, setValues] = useState<ProjectFormValues>(() => toFormValues(project));
   const validation = validateForm(values);
 
@@ -51,22 +67,55 @@ export function ProjectEditor({ project, categories }: ProjectEditorProps) {
           }}
         />
       </ProjectForm>
-      <p
-        role="status"
-        className="sticky bottom-0 flex items-center gap-1.5 border-t bg-background px-4 py-3 text-xs text-muted-foreground"
-      >
-        {validation.success ? (
-          <>
-            <CircleCheck aria-hidden="true" className="size-3.5 text-subtle-foreground" />
-            Alterações salvas automaticamente
-          </>
-        ) : (
-          <>
-            <CircleAlert aria-hidden="true" className="size-3.5 text-destructive" />
-            Corrija os campos destacados para salvar
-          </>
-        )}
-      </p>
+
+      <div className="sticky bottom-0 flex items-center gap-2 border-t bg-background px-4 py-2.5">
+        <p role="status" className="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">
+          {validation.success ? (
+            <>
+              <CircleCheck aria-hidden="true" className="size-3.5 text-subtle-foreground" />
+              Alterações salvas automaticamente
+            </>
+          ) : (
+            <>
+              <CircleAlert aria-hidden="true" className="size-3.5 text-destructive" />
+              Corrija os campos destacados para salvar
+            </>
+          )}
+        </p>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 />
+              Excluir
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir “{project.title}”?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O projeto e seus marcos serão removidos. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className={buttonVariants({ variant: 'destructive' })}
+                onClick={() => {
+                  void remove(project.id);
+                  onDeleted();
+                }}
+              >
+                Excluir projeto
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </>
   );
 }

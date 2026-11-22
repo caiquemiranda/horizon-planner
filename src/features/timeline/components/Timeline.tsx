@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import type { Horizon, Project, UUID } from '@/types/project';
 
@@ -24,13 +24,20 @@ interface TimelineProps {
   selectedProjectId?: UUID | null;
   /** Must be stable. */
   onSelectProject?: (projectId: UUID) => void;
+  /** Call to action shown in the empty state. */
+  emptyAction?: ReactNode;
 }
 
 /**
  * Gantt-like timeline: a fixed sidebar with the horizon lanes on the left and the
  * time canvas on the right. Only the canvas width feeds the viewport.
  */
-export function Timeline({ projects, selectedProjectId = null, onSelectProject }: TimelineProps) {
+export function Timeline({
+  projects,
+  selectedProjectId = null,
+  onSelectProject,
+  emptyAction,
+}: TimelineProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -149,7 +156,7 @@ export function Timeline({ projects, selectedProjectId = null, onSelectProject }
 
             <TodayIndicator viewport={viewport} today={today} variant="canvas" />
 
-            {projects.length === 0 ? <TimelineEmptyState /> : null}
+            {projects.length === 0 ? <TimelineEmptyState action={emptyAction} /> : null}
           </div>
         </div>
       </div>

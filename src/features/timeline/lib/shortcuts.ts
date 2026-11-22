@@ -58,17 +58,6 @@ export function resolveShortcut(input: ShortcutInput): ShortcutAction | null {
   return preset ? { type: 'preset', presetId: preset.id } : null;
 }
 
-/** Whether keyboard focus is in a place that types text. */
-export function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return (
-    target.isContentEditable ||
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    target instanceof HTMLSelectElement
-  );
-}
-
 export interface ShortcutHelp {
   keys: string[];
   label: string;
@@ -83,5 +72,7 @@ export const SHORTCUT_HELP: readonly ShortcutHelp[] = [
   { keys: ['1', '5'], label: 'Escala: anos … dias' },
   { keys: ['T'], label: 'Ir para hoje' },
   { keys: ['F'], label: 'Ajustar todos os projetos' },
+  { keys: ['N'], label: 'Novo projeto' },
+  { keys: ['Esc'], label: 'Fechar painel' },
   { keys: ['?'], label: 'Mostrar atalhos' },
 ];

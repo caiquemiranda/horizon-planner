@@ -1,6 +1,12 @@
 import { CalendarRange } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-export function TimelineEmptyState() {
+interface TimelineEmptyStateProps {
+  /** Call to action, e.g. a "create project" button. */
+  action?: ReactNode;
+}
+
+export function TimelineEmptyState({ action }: TimelineEmptyStateProps) {
   return (
     <div className="pointer-events-none absolute inset-0 flex animate-fade-in flex-col items-center justify-center gap-3 p-8 text-center">
       <span className="inline-flex size-12 items-center justify-center rounded-xl border bg-background text-horizon-long shadow-sm">
@@ -10,6 +16,7 @@ export function TimelineEmptyState() {
       <p className="max-w-sm text-sm text-muted-foreground">
         Crie seu primeiro projeto ou carregue os dados de exemplo para começar a planejar.
       </p>
+      {action ? <div className="pointer-events-auto mt-2">{action}</div> : null}
     </div>
   );
 }
