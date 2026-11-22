@@ -10,6 +10,7 @@ Lightweight ADRs that capture the key technical decisions behind Horizon. Each r
 | [004](#adr-004-split-zustand-stores-with-selective-subscriptions) | Split Zustand stores with selective subscriptions | Accepted |
 | [005](#adr-005-zod-for-runtime-validation)                        | zod for runtime validation                        | Accepted |
 | [006](#adr-006-feature-based-folder-structure)                    | Feature-based folder structure                    | Accepted |
+| [007](#adr-007-in-house-scheduling-domain)                        | In-house scheduling domain                        | Accepted |
 
 ---
 
@@ -73,3 +74,11 @@ Lightweight ADRs that capture the key technical decisions behind Horizon. Each r
 **Decision.** Group code by feature under `src/features/<feature>/` (`components/`, `hooks/`, `lib/`, `store/`). Shared primitives live in `src/components/ui`, cross-cutting utilities in `src/lib`, and infrastructure in `src/services`.
 
 **Consequences.** Features are cohesive and easy to locate, review and delete. Cross-feature imports must go through the `@/` alias, which keeps dependencies visible in code review.
+
+## ADR-007: In-house scheduling domain
+
+**Context.** The project workspace needs a WBS, precedence links (FS, SS, FF, SF with lags), working-day calendars and summary roll-up, with every rule tested. Gantt libraries bundle these with their own rendering and data model; the mature ones (Bryntum, DHTMLX PRO, Syncfusion) are commercial, and the open-source ones (Frappe Gantt, gantt-task-react) lack link types, calendars or a separable engine.
+
+**Decision.** Implement the scheduling domain as pure TypeScript in `src/features/schedule/lib`: a WBS tree module, a dependency graph module and a scheduling engine, plus domain commands that are the only way to change a schedule. Rendering stays in DOM/SVG on top of the existing scale engine (ADR-001). Conventions and policies are documented in [`docs/planning-module.md`](./planning-module.md).
+
+**Consequences.** No license cost or lock-in, and the engine is testable without a browser. Advanced features (critical path, baselines, resource leveling) must be built on top of it when needed.
