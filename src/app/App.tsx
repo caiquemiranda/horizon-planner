@@ -82,6 +82,18 @@ export function App() {
 
   return (
     <div className="flex h-svh flex-col overflow-hidden">
+      {/* First focusable element: lets keyboard users skip the header toolbar. */}
+      <a
+        href="#timeline"
+        onClick={(event) => {
+          // Move focus explicitly: following a fragment link does not do it in every browser.
+          event.preventDefault();
+          document.getElementById('timeline')?.focus();
+        }}
+        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-popover focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+      >
+        Pular para a linha do tempo
+      </a>
       <AppHeader
         actions={
           <>
@@ -96,7 +108,11 @@ export function App() {
         <TimelineToolbar projects={filtered.projects} />
       </AppHeader>
 
-      <main className="relative flex min-h-0 flex-1 flex-col bg-surface-sunken">
+      <main
+        id="timeline"
+        tabIndex={-1}
+        className="relative flex min-h-0 flex-1 flex-col bg-surface-sunken outline-none"
+      >
         <ActiveFiltersBar matchCount={filtered.matchCount} totalCount={projects.length} />
         <Timeline
           projects={filtered.projects}
