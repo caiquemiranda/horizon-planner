@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Dialog } from 'radix-ui';
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { DURATION, EASE_OUT_EXPO } from '@/lib/motion';
@@ -30,6 +30,8 @@ export function ProjectDrawer({
   children,
   footer,
 }: ProjectDrawerProps) {
+  const panelRef = useRef<HTMLElement>(null);
+
   return (
     <Dialog.Root
       open={open}
@@ -47,8 +49,17 @@ export function ProjectDrawer({
               onInteractOutside={(event) => {
                 event.preventDefault();
               }}
+              onOpenAutoFocus={(event) => {
+                // Focus the field marked with `data-autofocus` (e.g. the title) when present.
+                const target = panelRef.current?.querySelector<HTMLElement>('[data-autofocus]');
+                if (target) {
+                  event.preventDefault();
+                  target.focus();
+                }
+              }}
             >
               <motion.aside
+                ref={panelRef}
                 initial={{ x: '100%', opacity: 0.4 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: '100%', opacity: 0, transition: { duration: DURATION.base } }}
