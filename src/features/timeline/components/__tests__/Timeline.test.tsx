@@ -2,6 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
 
@@ -12,7 +13,11 @@ import { Timeline } from '../Timeline';
 const MARCH_1 = isoDateToDay('2026-03-01' as ISODate);
 
 function renderTimeline(projects = [makeProject()]) {
-  const result = render(<Timeline projects={projects} />);
+  const result = render(
+    <TooltipProvider delayDuration={0}>
+      <Timeline projects={projects} />
+    </TooltipProvider>,
+  );
   // jsdom has no layout: provide the measured width by hand.
   act(() => {
     useViewportStore.setState({ viewport: { startDay: MARCH_1, pxPerDay: 10, widthPx: 1000 } });
@@ -105,5 +110,27 @@ describe('Timeline', () => {
     const milestone = bar.querySelector<HTMLElement>('[data-milestone-id]');
     // 5.5 days after the start of the bar, at 10 px/day.
     expect(milestone?.style.left).toBe('55px');
+  });
+
+  it('shows the project summary in a tooltip on hover', async () => {
+    const user = userEvent.setup();
+    renderTimeline([
+      makeProject({
+        title: 'Mudança',
+        status: 'in_progress',
+        startDate: '2026-03-11' as ISODate,
+        endDate: '2026-03-20' as ISODate,
+        progress: 40,
+      }),
+    ]);
+
+    await user.hover(screen.getByRole('button', { name: /Mudança/ }));
+
+    await screen.findByRole('tooltip');
+    const tooltip = document.querySelector('[data-slot="tooltip-content"]');
+    expect(tooltip).toHaveTextContent('11 – 20 mar 2026');
+    expect(tooltip).toHaveTextContent('10 dias');
+    expect(tooltip).toHaveTextContent('Em andamento');
+    expect(tooltip).toHaveTextContent('40%');
   });
 });

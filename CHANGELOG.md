@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Timeline with a two-level time ruler, grid lines and collapsible horizon lanes.
+- Project bars showing progress, status and milestones, plus hover tooltips with dates and duration.
+- "Today" indicator and a button to center the timeline on the current date.
 - App shell with header, brand mark, version badge and the three horizon lanes.
 - Dark theme by default, light theme and "system" mode, persisted and applied before first paint.
 - Project scaffold with Vite 7, React 19 and TypeScript in strict mode.
