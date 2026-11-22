@@ -9,13 +9,14 @@
 A modern, keyboard-friendly Gantt-style planner that combines the planning power of MS Project with the minimal aesthetic of Linear, Notion and Raycast.
 
 [![CI](https://github.com/caiquemiranda/horizon-planner/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/caiquemiranda/horizon-planner/actions/workflows/ci.yml)
+[![Deploy](https://github.com/caiquemiranda/horizon-planner/actions/workflows/deploy.yml/badge.svg)](https://github.com/caiquemiranda/horizon-planner/actions/workflows/deploy.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Version](https://img.shields.io/github/package-json/v/caiquemiranda/horizon-planner?label=version&color=f59e0b)](./CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](./LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org)
 
-[Features](#-features) · [Screenshots](#-screenshots) · [Getting started](#-getting-started) · [Architecture](#%EF%B8%8F-architecture) · [Roadmap](#%EF%B8%8F-roadmap) · [Contributing](#-contributing)
+**[Live demo](https://caiquemiranda.github.io/horizon-planner/)** · [Features](#-features) · [Screenshots](#-screenshots) · [Getting started](#-getting-started) · [Architecture](#%EF%B8%8F-architecture) · [Roadmap](#%EF%B8%8F-roadmap) · [Contributing](#-contributing)
 
 </div>
 
@@ -72,6 +73,8 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 </details>
 
 ## 🚀 Getting started
+
+> **Just want to try it?** Open the [live demo](https://caiquemiranda.github.io/horizon-planner/) and click **Carregar dados de exemplo**. Your projects are saved only in your browser.
 
 ### Prerequisites
 
@@ -182,6 +185,7 @@ Visual decisions (colors, typography, spacing, motion and component rules) are d
 - **Conventional Commits**, enforced locally by **Husky + Commitlint** and in CI on every pull request.
 - **lint-staged** runs ESLint and Prettier on staged files before each commit.
 - **CI** (GitHub Actions) runs the format check, lint, type-check, tests with coverage and the build on every pull request.
+- **CD** publishes the app to [GitHub Pages](https://caiquemiranda.github.io/horizon-planner/) on every push to `develop`.
 - **Semantic Versioning** with a human-readable [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## 🗺️ Roadmap

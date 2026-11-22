@@ -140,3 +140,4 @@ One-time configuration on GitHub, under **Settings**:
    - Require linear history (on `develop` only, since `main` receives merge commits).
    - Block force pushes and deletions.
 4. **Features:** enable _Discussions_ (linked from the issue template chooser).
+5. **Pages → Build and deployment → Source:** select _GitHub Actions_. The [`deploy`](.github/workflows/deploy.yml) workflow then publishes every push to `develop`; change its branch to `main` to deploy releases only.
