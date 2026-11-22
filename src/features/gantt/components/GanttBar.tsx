@@ -151,7 +151,8 @@ export const GanttBar = memo(function GanttBar({
       </Tooltip>
       <span
         className={cn(
-          'pointer-events-none absolute truncate text-xs whitespace-nowrap text-muted-foreground',
+          // A halo in the canvas color keeps the name readable where a connector crosses it.
+          'pointer-events-none absolute z-[1] truncate text-xs whitespace-nowrap text-muted-foreground [text-shadow:0_0_3px_var(--surface-sunken),0_0_2px_var(--surface-sunken),0_0_1px_var(--surface-sunken)]',
           task.kind === 'summary' && 'font-semibold text-foreground',
         )}
         style={{ left: labelX, top: geometry.centerY - 8, lineHeight: '16px', maxWidth: 260 }}

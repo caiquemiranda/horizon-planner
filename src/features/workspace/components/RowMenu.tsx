@@ -6,6 +6,7 @@ import {
   Diamond,
   IndentDecrease,
   IndentIncrease,
+  Link2,
   ListPlus,
   Pin,
   PinOff,
@@ -41,6 +42,7 @@ interface RowMenuProps {
   onToggleMilestone: () => void;
   onToggleMode: () => void;
   onDelete: () => void;
+  onEditLinks: () => void;
 }
 
 /** Row actions: opened from the "…" button, a right click or Shift+F10 on the row. */
@@ -61,6 +63,7 @@ export function RowMenu({
   onToggleMilestone,
   onToggleMode,
   onDelete,
+  onEditLinks,
 }: RowMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
@@ -112,6 +115,10 @@ export function RowMenu({
         </DropdownMenuItem>
         {!isSummary ? (
           <>
+            <DropdownMenuItem onSelect={onEditLinks}>
+              <Link2 />
+              Vínculos…
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={onToggleMilestone}>
               <Diamond />
               {isMilestone ? 'Converter em tarefa' : 'Converter em marco'}

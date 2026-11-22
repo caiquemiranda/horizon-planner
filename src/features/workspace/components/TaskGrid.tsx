@@ -52,6 +52,8 @@ interface TaskGridProps {
   onRequestDelete: (id: UUID) => void;
   /** Called with the id of a task created from the grid, so its name opens for editing. */
   onTaskCreated: (id: UUID | null) => void;
+  /** Opens the links dialog of a task. */
+  onEditLinks?: (id: UUID) => void;
   /** Task whose name cell should open in edit mode (e.g. right after creating it). */
   editRequest: UUID | null;
   onEditRequestHandled: () => void;
@@ -121,6 +123,7 @@ export function TaskGrid({
   onToggle,
   onRequestDelete,
   onTaskCreated,
+  onEditLinks,
   editRequest,
   onEditRequestHandled,
   today,
@@ -684,6 +687,9 @@ export function TaskGrid({
                             }}
                             onDelete={() => {
                               onRequestDelete(id);
+                            }}
+                            onEditLinks={() => {
+                              onEditLinks?.(id);
                             }}
                             trigger={
                               <button

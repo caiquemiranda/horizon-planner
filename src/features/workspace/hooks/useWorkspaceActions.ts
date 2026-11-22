@@ -2,18 +2,21 @@ import { useMemo } from 'react';
 
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import {
+  addDependency,
   createTask,
   deleteTask,
   duplicateTask,
   indentTask,
   moveTask,
   outdentTask,
+  removeDependency,
   setPredecessors,
   shiftTask,
   type TaskPatch,
+  updateDependency,
   updateTask,
 } from '@/features/schedule/lib/commands';
-import { parsePredecessors } from '@/features/schedule/lib/dependencies';
+import { type DependencyCandidate, parsePredecessors } from '@/features/schedule/lib/dependencies';
 import { ScheduleRuleError } from '@/features/schedule/lib/errors';
 import { getChildren } from '@/features/schedule/lib/tree';
 import { generateScheduleId, useScheduleStore } from '@/features/schedule/store';
@@ -45,6 +48,13 @@ export interface WorkspaceActions {
   update: (id: UUID, patch: TaskPatch) => string | null;
   /** Parses and applies the "Predecessoras" cell. Returns an error message or `null`. */
   setPredecessorsText: (id: UUID, text: string) => string | null;
+  /** Links: each returns an error message, or `null` when applied. */
+  addLink: (candidate: DependencyCandidate) => string | null;
+  updateLink: (
+    id: UUID,
+    patch: Partial<Pick<DependencyCandidate, 'type' | 'lag'>>,
+  ) => string | null;
+  removeLink: (id: UUID) => string | null;
 }
 
 export function useWorkspaceActions(
@@ -60,7 +70,7 @@ export function useWorkspaceActions(
     /** Runs a command; shows the rule message when it is refused. */
     const run = (command: (schedule: ProjectSchedule) => ProjectSchedule): boolean => {
       const result = apply(command);
-      if (!result.ok) show(result.error);
+      if (!result.ok) show(result.error, 'error');
       return result.ok;
     };
 
@@ -153,6 +163,12 @@ export function useWorkspaceActions(
           setPredecessors(schedule, id, parsed, generateScheduleId),
         );
       },
+      addLink: (candidate) =>
+        runForMessage(
+          (schedule) => addDependency(schedule, candidate, generateScheduleId).schedule,
+        ),
+      updateLink: (id, patch) => runForMessage((schedule) => updateDependency(schedule, id, patch)),
+      removeLink: (id) => runForMessage((schedule) => removeDependency(schedule, id)),
     };
   }, [apply, show, select, setCollapsed, model, projectStart]);
 }

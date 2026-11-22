@@ -6,6 +6,7 @@ import {
   CornerDownRight,
   IndentDecrease,
   IndentIncrease,
+  Link2,
   Plus,
   Search,
   Trash2,
@@ -37,6 +38,7 @@ interface WorkspaceToolbarProps {
   onOutdent: () => void;
   onMove: (direction: -1 | 1) => void;
   onDelete: () => void;
+  onEditLinks: () => void;
 }
 
 function ToolButton({
@@ -84,6 +86,7 @@ export function WorkspaceToolbar({
   onOutdent,
   onMove,
   onDelete,
+  onEditLinks,
 }: WorkspaceToolbarProps) {
   const expandAll = useWorkspaceUiStore((state) => state.expandAll);
   const collapseAll = useWorkspaceUiStore((state) => state.collapseAll);
@@ -170,6 +173,13 @@ export function WorkspaceToolbar({
         <ChevronsDownUp />
       </ToolButton>
       <Separator orientation="vertical" className="mx-1 h-5!" />
+      <ToolButton
+        label="Vínculos da tarefa"
+        disabled={!hasSelection || model.result.tasks.get(selectedId ?? '')?.kind === 'summary'}
+        onClick={onEditLinks}
+      >
+        <Link2 />
+      </ToolButton>
       <ToolButton
         label="Excluir tarefa"
         shortcut="Delete"

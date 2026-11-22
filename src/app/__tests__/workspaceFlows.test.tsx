@@ -216,30 +216,44 @@ describe('project workspace', () => {
     });
   });
 
-  it('offers row actions from the keyboard menu', async () => {
+  /** Opens the row menu of a task with Shift+F10 and picks an item. */
+  async function chooseRowAction(
+    user: ReturnType<typeof userEvent.setup>,
+    task: string,
+    item: string,
+  ) {
+    await user.click(cell(task, 1));
+    await user.keyboard('{Shift>}{F10}{/Shift}');
+    await user.click(await screen.findByRole('menuitem', { name: item }));
+  }
+
+  it('converts a task into a milestone from the row menu', async () => {
     const user = userEvent.setup();
     await openWorkspace();
-
-    await user.click(cell('Treinamento da equipe', 1));
-    await user.keyboard('{Shift>}{F10}{/Shift}');
-    await user.click(await screen.findByRole('menuitem', { name: 'Converter em marco' }));
+    await chooseRowAction(user, 'Treinamento da equipe', 'Converter em marco');
     expect(cell('Treinamento da equipe', 2)).toHaveTextContent('0 dias');
+  });
 
-    await user.click(cell('Treinamento da equipe', 1));
-    await user.keyboard('{Shift>}{F10}{/Shift}');
-    await user.click(await screen.findByRole('menuitem', { name: 'Duplicar (sem vínculos)' }));
+  it('duplicates a task below itself from the row menu', async () => {
+    const user = userEvent.setup();
+    await openWorkspace();
+    await chooseRowAction(user, 'Treinamento da equipe', 'Duplicar (sem vínculos)');
     expect(cell('Treinamento da equipe (cópia)', 0)).toHaveTextContent('3.5');
+  });
 
-    await user.click(cell('Treinamento da equipe', 1));
-    await user.keyboard('{Shift>}{F10}{/Shift}');
-    await user.click(await screen.findByRole('menuitem', { name: 'Agendar manualmente' }));
+  it('switches a task to manual scheduling from the row menu', async () => {
+    const user = userEvent.setup();
+    await openWorkspace();
+    await chooseRowAction(user, 'Treinamento da equipe', 'Agendar manualmente');
     expect(
       within(row('Treinamento da equipe') ?? document.body).getByText('Agendamento manual'),
     ).toBeInTheDocument();
+  });
 
-    await user.click(cell('Treinamento da equipe', 1));
-    await user.keyboard('{Shift>}{F10}{/Shift}');
-    await user.click(await screen.findByRole('menuitem', { name: 'Nova subtarefa' }));
+  it('adds a subtask from the row menu, turning the task into a summary', async () => {
+    const user = userEvent.setup();
+    await openWorkspace();
+    await chooseRowAction(user, 'Treinamento da equipe', 'Nova subtarefa');
     const input = await screen.findByRole('textbox', { name: /Nome da tarefa de 3\.4\.1 / });
     await user.type(input, '{Escape}');
     expect(cell('Treinamento da equipe', 2)).toHaveAttribute('aria-readonly', 'true');
