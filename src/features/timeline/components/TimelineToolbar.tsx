@@ -1,12 +1,16 @@
 import { LocateFixed } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Project } from '@/types/project';
 
+import { useTimelineShortcuts } from '../hooks/useTimelineShortcuts';
 import { formatVisibleRange } from '../lib/format';
 import { getVisibleRange } from '../lib/scale';
 import { useViewportStore } from '../store/viewportStore';
+import { ShortcutsHelp } from './ShortcutsHelp';
 import { ZoomControls } from './ZoomControls';
 
 interface TimelineToolbarProps {
@@ -21,6 +25,14 @@ export function TimelineToolbar({ projects }: TimelineToolbarProps) {
     const { from, to } = getVisibleRange(state.viewport);
     return formatVisibleRange(from, to);
   });
+  const [isHelpOpen, setHelpOpen] = useState(false);
+
+  useTimelineShortcuts({
+    projects,
+    onShowHelp: () => {
+      setHelpOpen(true);
+    },
+  });
 
   return (
     <div className="flex items-center gap-2">
@@ -31,10 +43,16 @@ export function TimelineToolbar({ projects }: TimelineToolbarProps) {
             Hoje
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Centralizar a linha do tempo em hoje</TooltipContent>
+        <TooltipContent>
+          Centralizar a linha do tempo em hoje{' '}
+          <Kbd className="ml-1 border-background/20 bg-background/15 text-background shadow-none">
+            T
+          </Kbd>
+        </TooltipContent>
       </Tooltip>
 
       <ZoomControls projects={projects} />
+      <ShortcutsHelp open={isHelpOpen} onOpenChange={setHelpOpen} />
 
       {rangeLabel ? (
         // Not a live region: it changes on every frame while panning.

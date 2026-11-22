@@ -39,14 +39,18 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 
 ### ⌨️ Keyboard shortcuts
 
-| Shortcut                  | Action                  |
-| ------------------------- | ----------------------- |
-| `Ctrl` + `Scroll` / pinch | Zoom anchored on cursor |
-| `Shift` + `Scroll` / drag | Pan horizontally        |
-| `+` / `-`                 | Zoom in / out           |
-| `T`                       | Go to today             |
-| `N`                       | New project             |
-| `Esc`                     | Close drawer            |
+| Shortcut                  | Action                               |
+| ------------------------- | ------------------------------------ |
+| `Ctrl` + `Scroll` / pinch | Zoom anchored on cursor              |
+| `Shift` + `Scroll` / drag | Pan through time                     |
+| `+` / `-`                 | Zoom in / out                        |
+| `←` / `→`                 | Pan (with `Shift`: a full page)      |
+| `1` … `5`                 | Zoom presets: years, quarters … days |
+| `T`                       | Go to today                          |
+| `F`                       | Fit all projects                     |
+| `?`                       | Show keyboard shortcuts              |
+| `N`                       | New project                          |
+| `Esc`                     | Close drawer                         |
 
 ## 📸 Screenshots
 

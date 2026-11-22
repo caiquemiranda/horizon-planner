@@ -98,4 +98,56 @@ describe('TimelineToolbar', () => {
 
     expect(screen.getByRole('button', { name: 'Ajustar todos os projetos' })).toBeDisabled();
   });
+
+  describe('keyboard shortcuts', () => {
+    it('zooms with + and -', async () => {
+      const user = userEvent.setup();
+      renderToolbar();
+
+      await user.keyboard('+');
+      expect(getViewport().pxPerDay).toBeCloseTo(10 * ZOOM_STEP_FACTOR);
+      await user.keyboard('-');
+      expect(getViewport().pxPerDay).toBeCloseTo(10);
+    });
+
+    it('pans with the arrow keys', async () => {
+      const user = userEvent.setup();
+      renderToolbar();
+
+      await user.keyboard('{ArrowRight}');
+      // 20% of 1000 px at 10 px/day.
+      expect(getViewport().startDay).toBeCloseTo(20_020);
+    });
+
+    it('applies presets with the number keys and goes to today with T', async () => {
+      const user = userEvent.setup();
+      renderToolbar();
+
+      await user.keyboard('5');
+      expect(getViewport().pxPerDay).toBe(85);
+
+      await user.keyboard('t');
+      expect(dayToX(getTodayDay(), getViewport())).toBeCloseTo(500, 0);
+    });
+
+    it('opens the shortcuts help with ?', async () => {
+      const user = userEvent.setup();
+      renderToolbar();
+
+      await user.keyboard('?');
+      expect(
+        await screen.findByText('Atalhos de teclado', { selector: 'div' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Ajustar todos os projetos')).toBeInTheDocument();
+    });
+
+    it('ignores keys typed in a text field', async () => {
+      const user = userEvent.setup();
+      render(<input aria-label="Busca" />);
+      renderToolbar();
+
+      await user.type(screen.getByRole('textbox', { name: 'Busca' }), '+t');
+      expect(getViewport()).toEqual(VIEWPORT);
+    });
+  });
 });
