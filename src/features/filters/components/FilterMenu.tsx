@@ -77,10 +77,10 @@ export function FilterMenu({ projects }: FilterMenuProps) {
           size="sm"
           aria-label={activeCount > 0 ? `Filtros (${String(activeCount)} ativos)` : 'Filtros'}
           data-active={activeCount > 0 || undefined}
-          className="data-active:border-primary/40 data-active:text-foreground"
+          className="shrink-0 data-active:border-primary/40 data-active:text-foreground"
         >
           <ListFilter />
-          Filtros
+          <span className="hidden sm:inline">Filtros</span>
           {activeCount > 0 ? (
             <span
               aria-hidden="true"

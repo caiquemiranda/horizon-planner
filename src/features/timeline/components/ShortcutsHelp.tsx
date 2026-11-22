@@ -21,7 +21,13 @@ export function ShortcutsHelp({ open, onOpenChange }: ShortcutsHelpProps) {
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Atalhos de teclado">
+        {/* Hidden on phones, where there is rarely a keyboard (`?` still opens it). */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Atalhos de teclado"
+          className="hidden md:inline-flex"
+        >
           <Keyboard />
         </Button>
       </DropdownMenuTrigger>
