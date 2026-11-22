@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Project schedules are saved per project with conflict detection across tabs, included in backups, deleted with their project and shown in the sample data ("Implantação de Sistema Industrial").
 - Scheduling domain for project plans: WBS hierarchy, precedence links (FS, SS, FF, SF with lag and lead), working-day calendar with holidays and an engine that propagates dates and rolls up summary tasks.
 - Live demo on GitHub Pages, deployed automatically on every push to `develop`.
 - README screenshots (dark and light themes, drawer and phone layout) and an `npm run screenshots` script that recaptures them from the sample data.
