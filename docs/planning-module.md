@@ -228,18 +228,24 @@ schedule; switching projects remounts it from a clean state.
   leaving while a change is not stored.
 - **Narrow screens:** the chart fits the schedule again each time it becomes visible.
 
+## Performance
+
+Rows are virtualized: the table and the chart render the same window of rows around the
+visible area, and connectors outside it are skipped. Measured results for 100, 500 and
+1 000 tasks are in [`docs/performance.md`](./performance.md).
+
 ## Delivery plan
 
-| PR  | Block                       | Content                                                                                     | Status  |
-| --- | --------------------------- | ------------------------------------------------------------------------------------------- | ------- |
-| 1   | `feat/schedule-domain`      | Types, calendar, WBS tree, dependency graph, engine, commands, schemas, demo fixture, tests | PR 18   |
-| 2   | `feat/schedule-persistence` | Schedule repository (per project), workspace store, save status, backup and sample data     | PR 19   |
-| 3   | `feat/workspace-treegrid`   | Project route, workspace page, editable TreeGrid with WBS, expand/collapse, row actions     | PR 20   |
-| 4   | `feat/gantt-chart`          | Gantt pane: time scale, bars, summaries, milestones, today line, synced rows and selection  | PR 21   |
-| 5   | `feat/gantt-dependencies`   | Orthogonal connector router, SVG layer, link editing (cell, dialog, drag from bar)          | PR 22   |
-| 6   | `feat/gantt-editing`        | Bar drag and resize with preview and snap, row drag-and-drop, column sizing and visibility  | PR 23   |
-| 7   | `feat/workspace-robustness` | Calendar settings, access rule (read-only), unsaved-changes guard, narrow-screen refit      | PR 24   |
-| 8   | `test/planning-e2e`         | Row virtualization, performance measurements, end-to-end tests, screenshots, final report   | Planned |
+| PR  | Block                       | Content                                                                                           | Status |
+| --- | --------------------------- | ------------------------------------------------------------------------------------------------- | ------ |
+| 1   | `feat/schedule-domain`      | Types, calendar, WBS tree, dependency graph, engine, commands, schemas, demo fixture, tests       | PR 18  |
+| 2   | `feat/schedule-persistence` | Schedule repository (per project), workspace store, save status, backup and sample data           | PR 19  |
+| 3   | `feat/workspace-treegrid`   | Project route, workspace page, editable TreeGrid with WBS, expand/collapse, row actions           | PR 20  |
+| 4   | `feat/gantt-chart`          | Gantt pane: time scale, bars, summaries, milestones, today line, synced rows and selection        | PR 21  |
+| 5   | `feat/gantt-dependencies`   | Orthogonal connector router, SVG layer, link editing (cell, dialog, drag from bar)                | PR 22  |
+| 6   | `feat/gantt-editing`        | Bar drag and resize with preview and snap, row drag-and-drop, column sizing and visibility        | PR 23  |
+| 7   | `feat/workspace-robustness` | Calendar settings, access rule (read-only), unsaved-changes guard, narrow-screen refit            | PR 24  |
+| 8   | `test/planning-e2e`         | Row virtualization, performance measurements, browser end-to-end tests, screenshots, final report | PR 25  |
 
 ## Acceptance criteria
 
@@ -248,31 +254,99 @@ implemented** or **Blocked**, with evidence.
 
 | Criterion                                                              | Status             | Evidence                                                                                                                        |
 | ---------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| Portfolio opens a project's own screen                                 | Implemented/Tested | `workspaceFlows.test.tsx`                                                                                                       |
-| TreeGrid and Gantt side by side with an adjustable split               | Implemented/Tested | `ganttFlows.test.tsx`; checked in Chrome                                                                                        |
-| Headers and rows stay aligned while scrolling                          | Implemented/Tested | Chrome: 0 px offset after scroll, wheel, zoom, resize, collapse                                                                 |
+| Portfolio opens a project's own screen                                 | Implemented/Tested | `workspaceFlows.test.tsx`, `e2e/planning.spec.ts`                                                                               |
+| TreeGrid and Gantt side by side with an adjustable split               | Implemented/Tested | `ganttFlows.test.tsx`, `e2e/planning.spec.ts`                                                                                   |
+| Headers and rows stay aligned while scrolling                          | Implemented/Tested | `e2e/planning.spec.ts` (0 px after zoom, scroll, divider); `npm run perf` (0 px at 100–1 000 tasks)                             |
 | Phases, tasks and subtasks on several levels                           | Implemented/Tested | `workspaceFlows.test.tsx`, `tree.test.ts`                                                                                       |
 | WBS computed correctly and updated after reorganizing                  | Implemented/Tested | `workspaceFlows.test.tsx`, `tree.test.ts`                                                                                       |
-| Expand/collapse in both panes without data loss                        | Implemented/Tested | `workspaceFlows.test.tsx`, `ganttFlows.test.tsx`                                                                                |
+| Expand/collapse in both panes without data loss                        | Implemented/Tested | `workspaceFlows.test.tsx`, `ganttFlows.test.tsx`, `e2e/planning.spec.ts`                                                        |
 | Editable name, duration, start, finish, predecessors, progress columns | Implemented/Tested | `workspaceFlows.test.tsx`, `cells.test.ts`                                                                                      |
 | Bars match dates, duration, progress and scale                         | Implemented/Tested | `geometry.test.ts`, `ganttFlows.test.tsx`                                                                                       |
 | Summary tasks with their own look and correct roll-up dates            | Implemented/Tested | `engine.test.ts`, `ganttFlows.test.tsx`                                                                                         |
 | Milestones as diamonds with coherent semantics                         | Implemented/Tested | `engine.test.ts`, `ganttFlows.test.tsx`                                                                                         |
-| Real dependencies can be created                                       | Implemented/Tested | Cell, dialog and drag: `linkFlows.test.tsx`, `workspaceFlows.test.tsx`                                                          |
+| Real dependencies can be created                                       | Implemented/Tested | Cell, dialog and drag: `linkFlows.test.tsx`, `e2e/planning.spec.ts`                                                             |
 | FS, SS, FF and SF with correct anchors                                 | Implemented/Tested | `connectors.test.ts`, `engine.test.ts`; anchors checked in Chrome                                                               |
-| Orthogonal connectors with arrowheads                                  | Implemented/Tested | `connectors.test.ts` (all types and positions); Chrome: 0 diagonals                                                             |
+| Orthogonal connectors with arrowheads                                  | Implemented/Tested | `connectors.test.ts` (all types and positions), `e2e/planning.spec.ts` (no diagonal segment)                                    |
 | No ghost connectors after scroll, zoom, resize, filters or collapse    | Implemented/Tested | `connectorLayout.test.ts`, `linkFlows.test.tsx`; Chrome: ends attached after scroll, zoom, collapse                             |
 | Editing a task reschedules its successors                              | Implemented/Tested | `workspaceFlows.test.tsx`, `engine.test.ts`                                                                                     |
 | Engine respects working days, weekends and date conventions            | Implemented/Tested | `calendar.test.ts`, `engine.test.ts`; holidays and custom weeks from the UI: `robustnessFlows.test.tsx`                         |
-| Dependency cycles rejected without corrupting state                    | Implemented/Tested | `dependencies.test.ts`, `commands.test.ts`, `linkFlows.test.tsx`                                                                |
-| Bar drag/resize updates dates and the TreeGrid                         | Implemented/Tested | `barDrag.test.ts`, `editingFlows.test.tsx`; checked in Chrome                                                                   |
+| Dependency cycles rejected without corrupting state                    | Implemented/Tested | `dependencies.test.ts`, `commands.test.ts`, `linkFlows.test.tsx`, `e2e/planning.spec.ts`                                        |
+| Bar drag/resize updates dates and the TreeGrid                         | Implemented/Tested | `barDrag.test.ts`, `editingFlows.test.tsx`, `e2e/planning.spec.ts`                                                              |
 | Table edits update bars, connectors and summaries                      | Implemented/Tested | `ganttFlows.test.tsx`, `connectorLayout.test.ts`                                                                                |
 | No data from another project when switching quickly                    | Implemented/Tested | `workspaceFlows.test.tsx`, `scheduleStore.test.ts`                                                                              |
-| Data and links persist after refresh                                   | Implemented/Tested | `ScheduleRepository.test.ts`; reload checked in Chrome                                                                          |
+| Data and links persist after refresh                                   | Implemented/Tested | `ScheduleRepository.test.ts`, `e2e/planning.spec.ts`                                                                            |
 | Permissions and data integrity respected                               | Implemented/Tested | Access rule enforced in the store: `scheduleStore.test.ts`, `robustnessFlows.test.tsx`; integrity: schemas, commands, revisions |
 | Clear loading, empty, error and saving states                          | Implemented/Tested | `workspaceFlows.test.tsx`                                                                                                       |
-| Unit, integration and end-to-end tests run and reported                | Partial            | Unit and integration (jsdom); browser end-to-end in PR 8                                                                        |
-| Remaining limitations documented                                       | Partial            | This document                                                                                                                   |
+| Unit, integration and end-to-end tests run and reported                | Implemented/Tested | 629 Vitest tests (unit and jsdom integration) and 8 Playwright tests in Chrome, all in CI; see the final report below           |
+| Remaining limitations documented                                       | Implemented/Tested | Final report and limitations below; measurements in `docs/performance.md`                                                       |
+
+## Final report
+
+### Architecture
+
+| Layer                   | Responsibility                                      | Main files                                                            |
+| ----------------------- | --------------------------------------------------- | --------------------------------------------------------------------- |
+| Project and task domain | Types, validation, hierarchy and ordering           | `src/types/schedule.ts`, `schedule/lib/tree.ts`, `schemas.ts`         |
+| Dependency graph        | Links, validation, cycle detection, readable format | `schedule/lib/dependencies.ts`                                        |
+| Scheduling engine       | Working-day calendar, link propagation, roll-up     | `schedule/lib/calendar.ts`, `schedule/lib/engine.ts`                  |
+| Domain commands         | The only way to change a schedule                   | `schedule/lib/commands.ts`, `schedule/lib/access.ts`                  |
+| Persistence             | Per-project storage, revisions, conflicts, backups  | `services/persistence/*Schedule*`, `data-io/lib/backup.ts`            |
+| Workspace state         | Source of truth, save status, stale-load guard      | `schedule/store/scheduleStore.ts`, `workspace/store/*`                |
+| View selectors          | Visible rows, WBS, filters, row window              | `schedule/lib/tree.ts`, `workspace/hooks/*`                           |
+| TreeGrid UI             | Cells, editing, keyboard, row drag, columns         | `workspace/components/TaskGrid.tsx` and siblings                      |
+| Gantt renderer          | Time scale, bars, drag/resize                       | `gantt/lib/geometry.ts`, `gantt/lib/barDrag.ts`, `gantt/components/*` |
+| Connector router        | Orthogonal routing and layout of links              | `gantt/lib/connectors.ts`, `gantt/lib/connectorLayout.ts`             |
+
+The domain, graph and engine are pure TypeScript (no React, no pixels) and tested without a
+browser. The UI only reads their results and sends commands.
+
+### Running it
+
+```bash
+npm install
+npm run dev            # http://localhost:5173 → Dados → Carregar dados de exemplo →
+                       # "Implantação de Sistema Industrial" → Abrir cronograma
+npm test               # unit and integration tests (Vitest, jsdom)
+npm run test:e2e       # browser end-to-end tests (Playwright, installed Chrome)
+npm run perf           # performance measurements with 100, 500 and 1 000 tasks
+```
+
+There is no database or server migration: schedules are stored per project in
+`localStorage` with a versioned envelope; data written before the module simply has no
+schedule, and backups made before it still import.
+
+### Tests actually executed
+
+- **Vitest:** 629 tests in 57 files, all passing (statements ~91%, lines ~93%), covering
+  the calendar, tree, graph, engine, commands, schemas, repository, stores and the
+  workspace flows in jsdom (opening, editing, links, drag gestures, read-only, calendar).
+- **Playwright (Chrome):** 8 end-to-end tests, all passing: open a project from the list;
+  create a phase and a subtask; expand/collapse with matching rows, bars and connectors;
+  create an FS link from the table and check its orthogonal path; move a bar by dragging
+  and check the table; keep rows and bars aligned after zoom, scroll and resizing the
+  divider; keep the schedule after a reload; refuse a circular link.
+- **Manual checks in Chrome** during each pull request (alignment, connectors attached to
+  their bars, gestures), and **performance measurements** in `docs/performance.md`.
+- The spec's scenarios 13.2 are covered by these tests, except multi-user permissions
+  (scenario 22 is covered by the project-based access rule; see limitations) and network
+  failures, which are simulated as storage failures (the app has no network calls).
+
+### Licensing
+
+Every dependency added by the module is free for commercial use: `@playwright/test` and
+`playwright-core` (Apache-2.0, development only), Radix primitives through `radix-ui`
+(MIT, already used). No Gantt library was added: the commercial ones (Bryntum, DHTMLX PRO,
+Syncfusion) were avoided by building the scheduling domain in-house (ADR-007).
+
+### Suggested next steps, by priority
+
+1. **Accounts and a server:** move persistence behind an API that repeats the domain
+   validation, with the user's role feeding `getScheduleAccess`.
+2. **Critical path (CPM)** with total and free slack, highlighting critical tasks.
+3. **Baselines** to compare the plan against a saved version.
+4. **Undo/redo** on top of the domain commands.
+5. **Faster scrolling** by memoizing rendered rows and bars (see `docs/performance.md`).
+6. Per-task calendars and deadlines; resource assignment and leveling.
 
 ## Known limitations and future work
 
@@ -281,6 +355,12 @@ implemented** or **Blocked**, with evidence.
   status; user roles plug in there when authentication exists.
 - **No server.** Validation runs in the domain layer, which is the authoritative layer of
   this client-only app; a future API must repeat it on the server.
+- **Links connect leaf tasks only**: summary tasks get their dates from their subtasks, and
+  a linked task must lose its links before receiving subtasks.
+- **One link per pair of tasks**, whatever the type.
+- **Column widths** are set with the mouse; keyboard users can show or hide columns.
+- **The chart is a visual view of the table**: assistive technology reads and edits the
+  schedule through the table and dialogs, which carry the same information.
 - Out of scope for this module: critical path (CPM) and slack, baselines, resource
   leveling, per-resource calendars, costs and earned value, MPP import/export and
   real-time collaboration.
