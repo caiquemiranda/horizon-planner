@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { interpretWheel, normalizeWheelDelta, type WheelInput } from '../gestures';
+import {
+  getPinchChange,
+  hasExceededDragThreshold,
+  interpretWheel,
+  normalizeWheelDelta,
+  type WheelInput,
+} from '../gestures';
 import { wheelDeltaToZoomFactor } from '../scale';
 
 const WIDTH = 1000;
@@ -71,5 +77,48 @@ describe('interpretWheel', () => {
   it('leaves plain vertical scrolling to the browser', () => {
     expect(interpretWheel(wheel({ deltaY: 100 }), WIDTH)).toBeNull();
     expect(interpretWheel(wheel({ ctrlKey: true }), WIDTH)).toBeNull();
+  });
+});
+
+describe('hasExceededDragThreshold', () => {
+  it('ignores small jitter and detects real drags', () => {
+    expect(hasExceededDragThreshold({ x: 0, y: 0 }, { x: 2, y: 2 })).toBe(false);
+    expect(hasExceededDragThreshold({ x: 0, y: 0 }, { x: 5, y: 0 })).toBe(true);
+  });
+});
+
+describe('getPinchChange', () => {
+  it('zooms in when the fingers spread, around their midpoint', () => {
+    const change = getPinchChange(
+      [
+        { x: 100, y: 0 },
+        { x: 200, y: 0 },
+      ],
+      [
+        { x: 50, y: 0 },
+        { x: 250, y: 0 },
+      ],
+    );
+    expect(change).toEqual({ anchorX: 150, factor: 2, panDeltaPx: 0 });
+  });
+
+  it('pans back in time when both fingers move right', () => {
+    const change = getPinchChange(
+      [
+        { x: 100, y: 0 },
+        { x: 200, y: 0 },
+      ],
+      [
+        { x: 130, y: 0 },
+        { x: 230, y: 0 },
+      ],
+    );
+    expect(change.factor).toBe(1);
+    expect(change.panDeltaPx).toBe(-30);
+  });
+
+  it('ignores a degenerate pinch', () => {
+    const same = { x: 10, y: 10 };
+    expect(getPinchChange([same, same], [same, { x: 20, y: 10 }]).factor).toBe(1);
   });
 });

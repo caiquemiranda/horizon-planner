@@ -53,3 +53,37 @@ export function interpretWheel(input: WheelInput, canvasWidth: number): WheelInt
 
   return null;
 }
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/** Distance (px) a pointer must travel before a press becomes a drag instead of a click. */
+export const DRAG_THRESHOLD_PX = 4;
+
+export function hasExceededDragThreshold(start: Point, current: Point): boolean {
+  return Math.hypot(current.x - start.x, current.y - start.y) > DRAG_THRESHOLD_PX;
+}
+
+/**
+ * Change between two consecutive two-finger positions:
+ * zoom `factor` around the previous midpoint, plus the midpoint's horizontal movement.
+ * Coordinates must be relative to the canvas.
+ */
+export function getPinchChange(
+  previous: readonly [Point, Point],
+  next: readonly [Point, Point],
+): { anchorX: number; factor: number; panDeltaPx: number } {
+  const previousDistance = Math.hypot(previous[1].x - previous[0].x, previous[1].y - previous[0].y);
+  const nextDistance = Math.hypot(next[1].x - next[0].x, next[1].y - next[0].y);
+  const previousMidX = (previous[0].x + previous[1].x) / 2;
+  const nextMidX = (next[0].x + next[1].x) / 2;
+
+  return {
+    anchorX: previousMidX,
+    factor: previousDistance > 0 ? nextDistance / previousDistance : 1,
+    // Fingers moving right drag the content right, i.e. back in time.
+    panDeltaPx: previousMidX - nextMidX,
+  };
+}

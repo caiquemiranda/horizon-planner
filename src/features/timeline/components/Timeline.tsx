@@ -4,6 +4,7 @@ import type { Horizon, Project, UUID } from '@/types/project';
 
 import { TIMELINE_METRICS } from '../constants';
 import { useElementWidth } from '../hooks/useElementWidth';
+import { usePointerNavigation } from '../hooks/usePointerNavigation';
 import { useTodayDay } from '../hooks/useTodayDay';
 import { useWheelNavigation } from '../hooks/useWheelNavigation';
 import { computeBarLayouts, layoutLanes } from '../lib/layout';
@@ -27,6 +28,7 @@ interface TimelineProps {
  */
 export function Timeline({ projects }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const viewport = useViewportStore((state) => state.viewport);
   const setWidth = useViewportStore((state) => state.setWidth);
@@ -36,6 +38,7 @@ export function Timeline({ projects }: TimelineProps) {
 
   useElementWidth(canvasRef, setWidth);
   useWheelNavigation(rootRef, canvasRef);
+  usePointerNavigation(canvasRef, scrollRef);
 
   const { lanes, rows, totalHeight } = useMemo(
     () => layoutLanes(projects, { rowHeight, headerHeight: laneHeaderHeight, collapsed }),
@@ -70,7 +73,7 @@ export function Timeline({ projects }: TimelineProps) {
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+      <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <div className="flex min-h-full">
           <section
             aria-label="Horizontes"
@@ -94,7 +97,7 @@ export function Timeline({ projects }: TimelineProps) {
             ref={canvasRef}
             role="region"
             aria-label="Linha do tempo"
-            className="relative min-w-0 flex-1 overflow-clip"
+            className="relative min-w-0 flex-1 cursor-grab touch-pan-y overflow-clip select-none data-panning:cursor-grabbing"
             style={{ minHeight: totalHeight }}
           >
             <GridLines viewport={viewport} />

@@ -1,6 +1,6 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { makeProject } from '@/test/factories';
@@ -175,5 +175,44 @@ describe('Timeline', () => {
     const scroll = new WheelEvent('wheel', { deltaY: 100, cancelable: true, bubbles: true });
     canvas.dispatchEvent(scroll);
     expect(scroll.defaultPrevented).toBe(false);
+  });
+
+  it('pans when dragging and swallows the click that ends the drag', () => {
+    renderTimeline([makeProject({ title: 'Reforma' })]);
+    const canvas = screen.getByRole('region', { name: 'Linha do tempo' });
+    const bar = screen.getByRole('button', { name: /Reforma/ });
+    canvas.setPointerCapture = () => undefined;
+    const onClick = vi.fn();
+    canvas.addEventListener('click', onClick);
+
+    const pointer = { pointerId: 1, pointerType: 'mouse', button: 0, bubbles: true };
+    fireEvent.pointerDown(bar, { ...pointer, clientX: 300, clientY: 10 });
+    fireEvent.pointerMove(bar, { ...pointer, clientX: 280, clientY: 10 });
+    expect(canvas).toHaveAttribute('data-panning');
+    fireEvent.pointerMove(bar, { ...pointer, clientX: 200, clientY: 10 });
+    fireEvent.pointerUp(bar, { ...pointer, clientX: 200, clientY: 10 });
+    fireEvent.click(bar);
+
+    // 100 px to the left at 10 px/day = 10 days forward.
+    expect(useViewportStore.getState().viewport.startDay).toBeCloseTo(MARCH_1 + 10);
+    expect(canvas).not.toHaveAttribute('data-panning');
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps a short press as a normal click', () => {
+    renderTimeline([makeProject({ title: 'Reforma' })]);
+    const canvas = screen.getByRole('region', { name: 'Linha do tempo' });
+    const bar = screen.getByRole('button', { name: /Reforma/ });
+    const onClick = vi.fn();
+    canvas.addEventListener('click', onClick);
+
+    const pointer = { pointerId: 1, pointerType: 'mouse', button: 0, bubbles: true };
+    fireEvent.pointerDown(bar, { ...pointer, clientX: 300, clientY: 10 });
+    fireEvent.pointerMove(bar, { ...pointer, clientX: 302, clientY: 11 });
+    fireEvent.pointerUp(bar, { ...pointer, clientX: 302, clientY: 11 });
+    fireEvent.click(bar);
+
+    expect(useViewportStore.getState().viewport.startDay).toBe(MARCH_1);
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });
