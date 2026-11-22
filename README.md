@@ -85,7 +85,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173> and click **Load sample data** to explore the timeline right away.
+Open <http://localhost:5173> and click **Carregar dados de exemplo** (Load sample data) to explore the timeline right away.
 
 ### Available scripts
 
