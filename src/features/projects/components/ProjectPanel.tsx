@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useDrawerStore } from '../store/drawerStore';
 import { useProjectsStore } from '../store/projectsStore';
 import { ProjectDrawer } from './ProjectDrawer';
+import { ProjectEditor } from './ProjectEditor';
 
 /** Connects the drawer to the stores: which project is open and its data. */
 export function ProjectPanel() {
@@ -12,6 +13,14 @@ export function ProjectPanel() {
     view.mode === 'edit' ? state.projects.find((item) => item.id === view.projectId) : undefined,
   );
   const status = useProjectsStore((state) => state.status);
+  const projects = useProjectsStore((state) => state.projects);
+  const categories = useMemo(
+    () =>
+      [...new Set(projects.flatMap((item) => (item.category ? [item.category] : [])))].sort(
+        (a, b) => a.localeCompare(b, 'pt-BR'),
+      ),
+    [projects],
+  );
 
   // A project deleted elsewhere (or a stale id) closes the panel.
   const isMissing = view.mode === 'edit' && status === 'ready' && !project;
@@ -32,6 +41,10 @@ export function ProjectPanel() {
           ? 'Preencha os dados para criar um projeto.'
           : 'Edite o projeto. As alterações aparecem na linha do tempo e são salvas automaticamente.'
       }
-    />
+    >
+      {project ? (
+        <ProjectEditor key={project.id} project={project} categories={categories} />
+      ) : null}
+    </ProjectDrawer>
   );
 }
