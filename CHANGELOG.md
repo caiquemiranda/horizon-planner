@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Responsive layout for phones and small tablets: narrower lane sidebar, icon-only header buttons and a scrollable toolbar.
+- Accessibility: skip link to the timeline, spoken descriptions for project bars and automated axe-core checks of the main screens.
+- Press feedback on buttons and a "pop" on the active filters count (only when motion is allowed).
 - "Dados" menu to export a JSON backup, import one (validated as a whole, with the invalid fields listed), load sample data and clear all projects, with confirmation before replacing data.
 - Sample data with dates relative to the current day, also offered from the empty timeline.
 - Filters by horizon, status and category with faceted counts, an active filters bar and a filtered empty state; the project being edited stays visible.
@@ -38,5 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The timeline canvas no longer drifts away from the ruler when a project bar receives focus.
+- WCAG AA contrast for the "Hoje" badge and cancelled project bars in both themes.
+- The project drawer no longer creates duplicate page landmarks.
+- "Fit" transitions are no longer cancelled when a scrollbar appears after loading data.
 
 [Unreleased]: https://github.com/caiquemiranda/horizon-planner/commits/develop
