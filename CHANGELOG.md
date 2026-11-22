@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Direct editing: drag Gantt bars to move tasks and their edges to change dates (with a preview, scale-aware snapping and auto-scroll), drag table rows to reorder or nest tasks, and resize or hide table columns per project.
 - Dependency connectors on the Gantt: orthogonal staircase arrows for finish-to-start, start-to-start, finish-to-finish and start-to-finish links, hidden while an end is collapsed, plus a links dialog and drag-from-bar to create, edit and delete links. Refused actions show a warning icon.
 - Gantt chart beside the task table: shared rows and vertical scroll, a resizable split remembered per project, bars with progress, summary brackets, milestone diamonds, today line, calendar shading, its own zoom and pan, and a chart/table switch on narrow screens.
 - Project workspace at `#/projetos/<id>`, opened from the portfolio: an editable task table (TreeGrid) with WBS numbers, phases and subtasks, inline editing with validation (Enter, F2 or double click), predecessors in readable form (`2.1TI+2d`), expand/collapse, filter, row actions, keyboard navigation and a save status.
