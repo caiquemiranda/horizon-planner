@@ -1,11 +1,13 @@
 import { type CSSProperties, memo } from 'react';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { COLOR_META } from '@/features/projects/constants';
 import { cn } from '@/lib/utils';
 import type { Project, ProjectStatus } from '@/types/project';
 import type { ProjectBarLayout } from '@/types/timeline';
 
 import { TIMELINE_METRICS } from '../constants';
+import { ProjectTooltipContent } from './ProjectTooltipContent';
 
 /** Vertical gap between the bar and its row edges. */
 const BAR_INSET_Y = 6;
@@ -42,53 +44,60 @@ export const ProjectBar = memo(function ProjectBar({ project, layout, rowTop }: 
   } as CSSProperties;
 
   return (
-    <button
-      type="button"
-      data-project-id={project.id}
-      aria-label={project.title}
-      className={cn(
-        'group absolute flex items-center overflow-hidden rounded-md border text-left',
-        'border-[color-mix(in_oklab,var(--project-color)_55%,transparent)]',
-        'bg-[color-mix(in_oklab,var(--project-color)_16%,var(--surface-sunken))]',
-        'transition-[box-shadow,filter] duration-150 ease-out-expo',
-        'hover:shadow-[0_0_0_1px_var(--project-color)] hover:brightness-110',
-        STATUS_CLASS_NAMES[project.status],
-      )}
-      style={style}
-    >
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-0 left-0 bg-[color-mix(in_oklab,var(--project-color)_35%,transparent)]"
-        style={{ width: `${String(project.progress)}%` }}
-      />
-
-      {width >= MIN_LABEL_WIDTH_PX ? (
-        <span
-          data-slot="bar-title"
-          className="relative truncate px-2 text-xs font-medium text-foreground"
-          style={{ transform: `translateX(${String(labelOffset)}px)` }}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          data-project-id={project.id}
+          aria-label={project.title}
+          className={cn(
+            'group absolute flex items-center overflow-hidden rounded-md border text-left',
+            'border-[color-mix(in_oklab,var(--project-color)_55%,transparent)]',
+            'bg-[color-mix(in_oklab,var(--project-color)_16%,var(--surface-sunken))]',
+            'transition-[box-shadow,filter] duration-150 ease-out-expo',
+            'hover:shadow-[0_0_0_1px_var(--project-color)] hover:brightness-110',
+            STATUS_CLASS_NAMES[project.status],
+          )}
+          style={style}
         >
-          {project.title}
-        </span>
-      ) : null}
-
-      {milestoneXs.map((milestoneX, index) => {
-        const milestone = project.milestones[index];
-        if (!milestone) return null;
-
-        return (
           <span
-            key={milestone.id}
             aria-hidden="true"
-            data-milestone-id={milestone.id}
-            className={cn(
-              'absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] border border-(--project-color)',
-              milestone.completed ? 'bg-(--project-color)' : 'bg-background',
-            )}
-            style={{ left: milestoneX - x }}
+            className="absolute inset-y-0 left-0 bg-[color-mix(in_oklab,var(--project-color)_35%,transparent)]"
+            style={{ width: `${String(project.progress)}%` }}
           />
-        );
-      })}
-    </button>
+
+          {width >= MIN_LABEL_WIDTH_PX ? (
+            <span
+              data-slot="bar-title"
+              className="relative truncate px-2 text-xs font-medium text-foreground"
+              style={{ transform: `translateX(${String(labelOffset)}px)` }}
+            >
+              {project.title}
+            </span>
+          ) : null}
+
+          {milestoneXs.map((milestoneX, index) => {
+            const milestone = project.milestones[index];
+            if (!milestone) return null;
+
+            return (
+              <span
+                key={milestone.id}
+                aria-hidden="true"
+                data-milestone-id={milestone.id}
+                className={cn(
+                  'absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px] border border-(--project-color)',
+                  milestone.completed ? 'bg-(--project-color)' : 'bg-background',
+                )}
+                style={{ left: milestoneX - x }}
+              />
+            );
+          })}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="center" sideOffset={6} collisionPadding={12}>
+        <ProjectTooltipContent project={project} />
+      </TooltipContent>
+    </Tooltip>
   );
 });
