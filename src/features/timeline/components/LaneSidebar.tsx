@@ -87,7 +87,7 @@ export function LaneSidebar({
                       type="button"
                       aria-current={selectedProjectId === projectId || undefined}
                       onClick={() => onSelectProject?.(projectId)}
-                      className="flex size-full items-center gap-2 pr-3 pl-8 text-left outline-none focus-visible:bg-accent"
+                      className="flex size-full items-center gap-2 pr-3 pl-5 text-left outline-none focus-visible:bg-accent md:pl-8"
                     >
                       <span
                         aria-hidden="true"
@@ -105,7 +105,7 @@ export function LaneSidebar({
                       >
                         {project.title}
                       </span>
-                      <span className="ml-auto font-mono text-[11px] text-muted-foreground tabular-nums">
+                      <span className="ml-auto hidden font-mono text-[11px] text-muted-foreground tabular-nums md:inline">
                         {project.progress}%
                       </span>
                     </button>

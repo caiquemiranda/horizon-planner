@@ -16,7 +16,7 @@ import { TimelineEmptyState } from './TimelineEmptyState';
 import { TimeRuler } from './TimeRuler';
 import { TodayIndicator } from './TodayIndicator';
 
-const { rulerHeight, laneHeaderHeight, rowHeight, sidebarWidth } = TIMELINE_METRICS;
+const { rulerHeight, laneHeaderHeight, rowHeight } = TIMELINE_METRICS;
 
 interface TimelineProps {
   projects: readonly Project[];
@@ -78,7 +78,8 @@ export function Timeline({
   return (
     <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 border-b bg-background" style={{ height: rulerHeight }}>
-        <div className="flex shrink-0 items-end border-r px-4 pb-2" style={{ width: sidebarWidth }}>
+        {/* Responsive width from `--sidebar-width`; the canvas takes the rest. */}
+        <div className="flex w-(--sidebar-width) shrink-0 items-end border-r px-3 pb-2 md:px-4">
           <span className="text-label">Horizontes</span>
         </div>
         <div className="relative min-w-0 flex-1">
@@ -91,8 +92,7 @@ export function Timeline({
         <div className="flex min-h-full">
           <section
             aria-label="Horizontes"
-            className="shrink-0 border-r bg-background"
-            style={{ width: sidebarWidth }}
+            className="w-(--sidebar-width) shrink-0 border-r bg-background"
           >
             <LaneSidebar
               lanes={lanes}

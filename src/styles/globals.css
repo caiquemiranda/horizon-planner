@@ -19,7 +19,12 @@
   --row-height: 2.5rem;
   --ruler-height: 3.5rem;
   --drawer-width: 26rem;
-  --sidebar-width: 15rem;
+  /* Narrower on phones so the time canvas keeps most of the screen. */
+  --sidebar-width: 9.5rem;
+
+  @media (width >= 48rem) {
+    --sidebar-width: 15rem;
+  }
 
   /* Motion (see docs/design.md) */
   --duration-fast: 120ms;
@@ -211,6 +216,15 @@
 @utility glass {
   background-color: var(--surface-raised);
   backdrop-filter: blur(12px) saturate(140%);
+}
+
+/* Scrollable without a visible scrollbar (e.g. the header toolbar on phones). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @utility text-label {

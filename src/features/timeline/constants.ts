@@ -11,6 +11,4 @@ export const TIMELINE_METRICS = {
   laneHeaderHeight: 32,
   /** `--row-height` */
   rowHeight: 40,
-  /** `--sidebar-width` */
-  sidebarWidth: 240,
 } as const;
