@@ -11,6 +11,9 @@ import { useViewportStoreApi } from '../store/viewportContext';
  * - A press that moves less than the drag threshold stays a normal click, so bars remain
  *   clickable; after a real drag the click that follows is swallowed.
  * - `data-panning` is set on the canvas while dragging, for the grabbing cursor.
+ * - Elements marked `data-no-pan` (e.g. link handles) own their gestures: pressing on
+ *   them never starts a pan. This listener is native, so it runs before React handlers
+ *   and cannot rely on their `stopPropagation`.
  */
 export function usePointerNavigation(
   canvasRef: RefObject<HTMLElement | null>,
@@ -51,6 +54,7 @@ export function usePointerNavigation(
 
     function handlePointerDown(event: PointerEvent) {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (event.target instanceof Element && event.target.closest('[data-no-pan]')) return;
 
       pointers.set(event.pointerId, toLocal(event));
       if (pointers.size === 1) {
