@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live demo on GitHub Pages, deployed automatically on every push to `develop`.
 - README screenshots (dark and light themes, drawer and phone layout) and an `npm run screenshots` script that recaptures them from the sample data.
 - Responsive layout for phones and small tablets: narrower lane sidebar, icon-only header buttons and a scrollable toolbar.
 - Accessibility: skip link to the timeline, spoken descriptions for project bars and automated axe-core checks of the main screens.
