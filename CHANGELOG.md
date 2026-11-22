@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Milestone diamonds no longer cover the bar title and progress percentage.
 - The timeline canvas no longer drifts away from the ruler when a project bar receives focus.
 - WCAG AA contrast for the "Hoje" badge and cancelled project bars in both themes.
 - The project drawer no longer creates duplicate page landmarks.
