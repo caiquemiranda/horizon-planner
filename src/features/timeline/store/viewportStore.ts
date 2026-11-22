@@ -114,8 +114,11 @@ export const useViewportStore = create<ViewportState>()((set, get) => {
 
     setWidth: (widthPx) => {
       if (get().viewport.widthPx === widthPx) return;
-      stopTransition();
+      const running = transition;
       set((state) => ({ viewport: resizeViewport(state.viewport, widthPx) }));
+      // A resize is not a user gesture: e.g. a scrollbar appearing right after new data
+      // starts a "fit" must not cancel it. Carry on towards the target at the new width.
+      if (running) animateTo(resizeViewport(running.target, widthPx));
     },
     setViewport: (viewport) => {
       stopTransition();
