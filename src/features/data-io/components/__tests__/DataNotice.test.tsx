@@ -28,6 +28,20 @@ describe('DataNotice', () => {
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
+  it('marks refusals with a warning icon instead of a check', () => {
+    render(<DataNotice />);
+
+    act(() => {
+      useNoticeStore.getState().show('Vínculo circular.', 'error');
+    });
+    expect(screen.getByRole('status').querySelector('.lucide-triangle-alert')).not.toBeNull();
+
+    act(() => {
+      useNoticeStore.getState().show('Salvo.');
+    });
+    expect(screen.getByRole('status').querySelector('.lucide-circle-check')).not.toBeNull();
+  });
+
   it('restarts the timer when the same message is shown again', () => {
     render(<DataNotice />);
 
