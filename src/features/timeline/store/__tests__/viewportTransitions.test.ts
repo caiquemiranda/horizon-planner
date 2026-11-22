@@ -87,6 +87,16 @@ describe('viewport transitions', () => {
     expect(getViewport().startDay).toBeCloseTo(20_010);
   });
 
+  it('keeps a running transition going when the canvas resizes', () => {
+    useViewportStore.getState().zoomTo(40);
+    useViewportStore.getState().setWidth(985);
+
+    expect(animations[0]?.stopped).toBe(true);
+    expect(lastAnimation().stopped).toBe(false);
+    lastAnimation().onComplete();
+    expect(getViewport()).toMatchObject({ pxPerDay: 40, widthPx: 985 });
+  });
+
   it('applies instantly when the user prefers reduced motion', () => {
     mockReducedMotion(true);
 
