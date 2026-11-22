@@ -45,7 +45,7 @@ export function useDataActions(): DataActions {
     try {
       schedules = await scheduleRepository.listAll();
     } catch {
-      showNotice('Não foi possível ler os cronogramas; o backup não foi gerado.');
+      showNotice('Não foi possível ler os cronogramas; o backup não foi gerado.', 'error');
       return;
     }
     downloadTextFile(
@@ -69,7 +69,10 @@ export function useDataActions(): DataActions {
           schedules.filter((schedule) => projectIds.has(schedule.projectId)),
         );
       } catch {
-        showNotice('Os projetos foram salvos, mas os cronogramas não puderam ser gravados.');
+        showNotice(
+          'Os projetos foram salvos, mas os cronogramas não puderam ser gravados.',
+          'error',
+        );
         return;
       }
       // A fresh data set: nothing open, nothing hidden, everything in view.
