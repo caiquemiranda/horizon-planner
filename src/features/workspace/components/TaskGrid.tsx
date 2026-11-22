@@ -2,6 +2,7 @@ import { ChevronRight, Diamond, Ellipsis, Pin, TriangleAlert } from 'lucide-reac
 import {
   type KeyboardEvent,
   type ReactNode,
+  type RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -39,6 +40,7 @@ import {
   GRID_WIDTH,
   WORKSPACE_METRICS,
 } from '../lib/columns';
+import { CellEditor, type EditorExit } from './CellEditor';
 import { RowMenu } from './RowMenu';
 
 interface TaskGridProps {
@@ -56,6 +58,10 @@ interface TaskGridProps {
   today: DayNumber;
   readOnly?: boolean;
   label: string;
+  /** The scroll container, shared with the Gantt so both panes scroll as one. */
+  scrollerRef?: RefObject<HTMLDivElement | null>;
+  hoveredId?: UUID | null;
+  onHover?: (id: UUID | null) => void;
 }
 
 interface ActiveCell {
@@ -101,10 +107,11 @@ function editorValue(
 /**
  * Hierarchical, editable task table (WAI-ARIA treegrid).
  *
- * Keyboard: arrows move between cells, Enter/F2 edits, Esc cancels, Tab commits and moves
+ * Keyboard: arrows move between cells, Enter/F2 (or a double click) edits, Esc cancels, Tab commits and moves
  * to the next editable cell, → / ← on the name expand or collapse, Alt+Shift+→/← indent
  * and outdent, Alt+Shift+↑/↓ reorder, Insert adds a task below, Delete removes one,
- * Shift+F10 opens the row menu.
+ * Shift+F10 opens the row menu. Typing alone never starts an edit, so the chart's single
+ * key shortcuts (T, F, +, -, 1–5) cannot change data by accident.
  */
 export function TaskGrid({
   model,
@@ -119,17 +126,21 @@ export function TaskGrid({
   today,
   readOnly = false,
   label,
+  scrollerRef,
+  hoveredId = null,
+  onHover,
 }: TaskGridProps) {
   const { rows, result, wbs } = model;
   const [active, setActive] = useState<ActiveCell | null>(null);
   const [editing, setEditing] = useState<{
     cell: ActiveCell;
-    value: string;
+    initial: string;
     error: string | null;
+    /** New editor instance per opening (keeps the typed value while an error shows). */
+    session: number;
   } | null>(null);
   const [menuRowId, setMenuRowId] = useState<UUID | null>(null);
-  const editingRef = useRef(editing);
-  editingRef.current = editing;
+  const sessions = useRef(0);
   const cellRefs = useRef(new Map<string, HTMLDivElement>());
   const gridRef = useRef<HTMLDivElement>(null);
   const focusPending = useRef(false);
@@ -186,10 +197,12 @@ export function TaskGrid({
       const scheduled = result.tasks.get(row.task.id);
       if (!isEditable(column, row, scheduled)) return;
       setActive(cell);
+      sessions.current += 1;
       setEditing({
         cell,
-        value: initial ?? editorValue(cell.column, row, scheduled, model),
+        initial: initial ?? editorValue(cell.column, row, scheduled, model),
         error: null,
+        session: sessions.current,
       });
     },
     [readOnly, rows, rowIndexById, result, model],
@@ -241,15 +254,14 @@ export function TaskGrid({
     }
   };
 
-  const finishEditing = (move: 'down' | 'next' | 'previous' | null) => {
-    // The editor's blur also fires when Enter/Tab already closed it: commit only once.
-    if (!editing || editingRef.current !== editing) return;
-    const error = commit(editing.cell, editing.value);
+  /** Returns whether the value was accepted (the editor then closes). */
+  const finishEditing = (value: string, move: EditorExit): boolean => {
+    if (!editing) return true;
+    const error = commit(editing.cell, value);
     if (error) {
       setEditing({ ...editing, error });
-      return;
+      return false;
     }
-    editingRef.current = null;
     setEditing(null);
     const { cell } = editing;
     if (move === 'down') {
@@ -262,6 +274,7 @@ export function TaskGrid({
     } else {
       focusCell(cell);
     }
+    return true;
   };
 
   const findEditableNeighbour = (from: ActiveCell, step: 1 | -1): ActiveCell | null => {
@@ -390,21 +403,6 @@ export function TaskGrid({
         event.preventDefault();
         setMenuRowId(id);
         break;
-      default:
-        // Typing a character starts editing with it, like a spreadsheet.
-        if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-          const column = COLUMNS.find((item) => item.key === current.column);
-          if (
-            column &&
-            isEditable(column, row, result.tasks.get(id)) &&
-            current.column !== 'start' &&
-            current.column !== 'finish'
-          ) {
-            event.preventDefault();
-            onSelect(id);
-            startEditing(current, event.key);
-          }
-        }
     }
   };
 
@@ -455,7 +453,7 @@ export function TaskGrid({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-auto" ref={gridRef}>
+    <div className="min-h-0 flex-1 overflow-auto" ref={scrollerRef ?? gridRef}>
       <div
         role="treegrid"
         // Focus lives on the active cell (roving tabindex); the grid itself is not a tab stop.
@@ -511,6 +509,8 @@ export function TaskGrid({
               onClick={() => {
                 onSelect(id);
               }}
+              onMouseEnter={() => onHover?.(id)}
+              onMouseLeave={() => onHover?.(null)}
               onContextMenu={(event) => {
                 event.preventDefault();
                 onSelect(id);
@@ -518,7 +518,7 @@ export function TaskGrid({
               }}
               className={cn(
                 'group grid border-b border-timeline-grid',
-                isSelected ? 'bg-accent' : 'hover:bg-muted/50',
+                isSelected ? 'bg-accent' : hoveredId === id ? 'bg-muted/50' : 'hover:bg-muted/50',
                 row.isFilterContext && 'text-muted-foreground',
               )}
               style={{ gridTemplateColumns: GRID_TEMPLATE, height: WORKSPACE_METRICS.rowHeight }}
@@ -527,7 +527,9 @@ export function TaskGrid({
                 const cell = { rowId: id, column: column.key };
                 const isActive =
                   resolvedActive?.rowId === id && resolvedActive.column === column.key;
-                const isEditing = editing?.cell.rowId === id && editing.cell.column === column.key;
+                const editor =
+                  editing?.cell.rowId === id && editing.cell.column === column.key ? editing : null;
+                const isEditing = editor !== null;
                 const editable = !readOnly && isEditable(column, row, scheduled);
                 const errorId = `${id}-${column.key}-error`;
 
@@ -564,61 +566,20 @@ export function TaskGrid({
                       isSummary && 'font-semibold',
                     )}
                   >
-                    {isEditing ? (
-                      <>
-                        <input
-                          // eslint-disable-next-line jsx-a11y/no-autofocus -- the cell was just opened for editing
-                          autoFocus
-                          type={column.key === 'start' || column.key === 'finish' ? 'date' : 'text'}
-                          inputMode={
-                            column.key === 'duration' || column.key === 'progress'
-                              ? 'numeric'
-                              : undefined
-                          }
-                          aria-label={`${column.ariaLabel ?? column.label} de ${model.describeTask(id)}`}
-                          aria-invalid={editing.error ? true : undefined}
-                          aria-describedby={editing.error ? errorId : undefined}
-                          value={editing.value}
-                          onChange={(event) => {
-                            setEditing({ ...editing, value: event.target.value, error: null });
-                          }}
-                          onFocus={(event) => {
-                            if (event.target.type === 'text') event.target.select();
-                          }}
-                          onBlur={() => {
-                            finishEditing(null);
-                          }}
-                          onKeyDown={(event) => {
-                            event.stopPropagation();
-                            if (event.key === 'Enter') {
-                              event.preventDefault();
-                              finishEditing('down');
-                            } else if (event.key === 'Tab') {
-                              event.preventDefault();
-                              finishEditing(event.shiftKey ? 'previous' : 'next');
-                            } else if (event.key === 'Escape') {
-                              event.preventDefault();
-                              editingRef.current = null;
-                              setEditing(null);
-                              focusCell(cell);
-                            }
-                          }}
-                          className={cn(
-                            'h-7 w-full min-w-0 rounded-sm border bg-background px-1.5 text-[13px] font-normal text-foreground outline-none focus:border-ring',
-                            column.align === 'end' && 'text-right',
-                            editing.error && 'border-destructive',
-                          )}
-                        />
-                        {editing.error ? (
-                          <p
-                            id={errorId}
-                            role="alert"
-                            className="absolute top-full left-0 z-20 mt-0.5 w-64 rounded-md border border-destructive/40 bg-popover px-2 py-1.5 text-xs font-normal text-foreground shadow-popover"
-                          >
-                            {editing.error}
-                          </p>
-                        ) : null}
-                      </>
+                    {editor ? (
+                      <CellEditor
+                        key={editor.session}
+                        column={column}
+                        initialValue={editor.initial}
+                        label={`${column.ariaLabel ?? column.label} de ${model.describeTask(id)}`}
+                        error={editor.error}
+                        errorId={errorId}
+                        onCommit={finishEditing}
+                        onCancel={() => {
+                          setEditing(null);
+                          focusCell(cell);
+                        }}
+                      />
                     ) : column.key === 'name' ? (
                       <div
                         className="flex min-w-0 flex-1 items-center gap-1"

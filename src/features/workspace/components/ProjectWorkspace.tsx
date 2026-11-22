@@ -1,15 +1,19 @@
 import { ArrowLeft, ListTree, Plus, SearchX } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
+import { GanttPane } from '@/features/gantt/components/GanttPane';
 import { COLOR_META } from '@/features/projects/constants';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { useScheduleStore } from '@/features/schedule/store';
+import { useTimelineShortcuts } from '@/features/timeline/hooks/useTimelineShortcuts';
 import { formatDateRange } from '@/features/timeline/lib/format';
 import { getTodayDay } from '@/features/timeline/lib/time';
+import { ViewportStoreContext } from '@/features/timeline/store/viewportContext';
+import { createViewportStore } from '@/features/timeline/store/viewportStore';
 import { PORTFOLIO_HREF } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import type { Project, UUID } from '@/types/project';
@@ -19,6 +23,7 @@ import { useWorkspaceModel } from '../hooks/useWorkspaceModel';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { SaveStatus } from './SaveStatus';
+import { SplitView } from './SplitView';
 import { TaskGrid } from './TaskGrid';
 import { WorkspaceToolbar } from './WorkspaceToolbar';
 
@@ -145,6 +150,13 @@ function WorkspaceBody({ project }: { project: Project }) {
   const select = useWorkspaceUiStore((state) => state.select);
   const toggle = useWorkspaceUiStore((state) => state.toggle);
   const filterText = useWorkspaceUiStore((state) => state.filterText);
+  const hoveredId = useWorkspaceUiStore((state) => state.hoveredId);
+  const setHovered = useWorkspaceUiStore((state) => state.setHovered);
+  const splitWidth = useWorkspaceUiStore((state) => state.splitWidth);
+  const setSplitWidth = useWorkspaceUiStore((state) => state.setSplitWidth);
+  // The chart's own zoom and pan, independent from the portfolio timeline.
+  const [ganttViewport] = useState(() => createViewportStore());
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const [pendingDelete, setPendingDelete] = useState<UUID | null>(null);
   const [editRequest, setEditRequest] = useState<UUID | null>(null);
   const today = useMemo(() => getTodayDay(), []);
@@ -179,11 +191,15 @@ function WorkspaceBody({ project }: { project: Project }) {
   if (status !== 'ready' || !model) return <WorkspaceSkeleton />;
 
   const isEmpty = model.schedule.tasks.length === 0;
+  const range = model.result.range;
+  const fitExtent = range ? { start: range.start, end: range.finish } : null;
 
   return (
-    <>
+    <ViewportStoreContext.Provider value={ganttViewport}>
+      <GanttShortcuts fitExtent={fitExtent} />
       <WorkspaceToolbar
         model={model}
+        fitExtent={fitExtent}
         selectedId={selectedId}
         onAddTask={() => {
           addAndEdit(actions.addTask(selectedId));
@@ -228,18 +244,39 @@ function WorkspaceBody({ project }: { project: Project }) {
           description={`Nenhuma tarefa corresponde a “${filterText}”.`}
         />
       ) : (
-        <TaskGrid
-          model={model}
-          actions={actions}
-          selectedId={selectedId}
-          onSelect={select}
-          onToggle={toggle}
-          onRequestDelete={setPendingDelete}
-          onTaskCreated={addAndEdit}
-          editRequest={editRequest}
-          onEditRequestHandled={clearEditRequest}
-          today={today}
-          label={`Tarefas de ${project.title}`}
+        <SplitView
+          leftWidth={splitWidth}
+          onLeftWidthChange={setSplitWidth}
+          left={
+            <TaskGrid
+              model={model}
+              actions={actions}
+              selectedId={selectedId}
+              onSelect={select}
+              onToggle={toggle}
+              onRequestDelete={setPendingDelete}
+              onTaskCreated={addAndEdit}
+              editRequest={editRequest}
+              onEditRequestHandled={clearEditRequest}
+              today={today}
+              label={`Tarefas de ${project.title}`}
+              scrollerRef={scrollerRef}
+              hoveredId={hoveredId}
+              onHover={setHovered}
+            />
+          }
+          right={
+            <GanttPane
+              model={model}
+              scrollerRef={scrollerRef}
+              selectedId={selectedId}
+              hoveredId={hoveredId}
+              onSelect={select}
+              onHover={setHovered}
+              barColor={`var(${COLOR_META[project.color].cssVar})`}
+              today={today}
+            />
+          }
         />
       )}
       <DeleteTaskDialog
@@ -253,8 +290,14 @@ function WorkspaceBody({ project }: { project: Project }) {
           actions.remove(id);
         }}
       />
-    </>
+    </ViewportStoreContext.Provider>
   );
+}
+
+/** Zoom, pan and "fit" shortcuts on the chart (ignored while typing or in the table). */
+function GanttShortcuts({ fitExtent }: { fitExtent: { start: number; end: number } | null }) {
+  useTimelineShortcuts({ getFitRange: () => fitExtent });
+  return null;
 }
 
 function WorkspaceSkeleton() {
