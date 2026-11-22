@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
-import type { Horizon, Project, UUID } from '@/types/project';
+import { type Horizon, HORIZONS, type Project, type UUID } from '@/types/project';
 
 import { TIMELINE_METRICS } from '../constants';
 import { useElementWidth } from '../hooks/useElementWidth';
@@ -24,8 +24,10 @@ interface TimelineProps {
   selectedProjectId?: UUID | null;
   /** Must be stable. */
   onSelectProject?: (projectId: UUID) => void;
-  /** Call to action shown in the empty state. */
-  emptyAction?: ReactNode;
+  /** Lanes to show (default: all horizons). Must be stable. */
+  horizons?: readonly Horizon[];
+  /** Shown over the canvas when there are no projects (default: a generic empty state). */
+  emptyState?: ReactNode;
 }
 
 /**
@@ -36,7 +38,8 @@ export function Timeline({
   projects,
   selectedProjectId = null,
   onSelectProject,
-  emptyAction,
+  horizons = HORIZONS,
+  emptyState,
 }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,8 +55,8 @@ export function Timeline({
   usePointerNavigation(canvasRef, scrollRef);
 
   const { lanes, rows, totalHeight } = useMemo(
-    () => layoutLanes(projects, { rowHeight, headerHeight: laneHeaderHeight, collapsed }),
-    [projects, collapsed],
+    () => layoutLanes(projects, { rowHeight, headerHeight: laneHeaderHeight, collapsed, horizons }),
+    [projects, collapsed, horizons],
   );
   const bars = useMemo(
     () => computeBarLayouts(projects, rows, viewport),
@@ -156,7 +159,7 @@ export function Timeline({
 
             <TodayIndicator viewport={viewport} today={today} variant="canvas" />
 
-            {projects.length === 0 ? <TimelineEmptyState action={emptyAction} /> : null}
+            {projects.length === 0 ? (emptyState ?? <TimelineEmptyState />) : null}
           </div>
         </div>
       </div>
