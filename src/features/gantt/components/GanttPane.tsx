@@ -121,10 +121,15 @@ export function GanttPane({
   useWheelNavigation(sectionRef, bodyRef);
   usePointerNavigation(bodyRef, scrollerRef);
 
-  // First time the chart has a width: show the whole schedule (or today when empty).
+  // When the chart gets a width: show the whole schedule (or today when empty).
   const range = model.result.range;
   useEffect(() => {
-    if (hasFitted.current || viewport.widthPx <= 0) return;
+    // Hidden (e.g. the table view on a phone): fit again when the chart comes back.
+    if (viewport.widthPx <= 0) {
+      hasFitted.current = false;
+      return;
+    }
+    if (hasFitted.current) return;
     hasFitted.current = true;
     store
       .getState()
