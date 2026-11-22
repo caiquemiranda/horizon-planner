@@ -104,6 +104,29 @@ describe('projectsStore', () => {
     expect(store.getState().projects).toEqual([second]);
   });
 
+  it('replaces every project after persisting them', async () => {
+    const [first, second] = await seed(2);
+    if (!first || !second) throw new Error('seed failed');
+    const renamed = { ...second, title: 'Importado' };
+
+    await store.getState().replaceAll([renamed]);
+
+    expect(store.getState().projects).toEqual([renamed]);
+    await expect(repository.list()).resolves.toEqual([renamed]);
+  });
+
+  it('keeps the current projects when replacing fails', async () => {
+    const projects = await seed(1);
+    vi.spyOn(repository, 'replaceAll').mockRejectedValueOnce(
+      new PersistenceError('quota-exceeded', 'full'),
+    );
+
+    await expect(store.getState().replaceAll([])).rejects.toThrow('full');
+
+    expect(store.getState().projects).toEqual(projects);
+    expect(store.getState().error).toMatch(/espaço/);
+  });
+
   it('clears the error', () => {
     store.setState({ error: 'Falhou' });
     store.getState().clearError();

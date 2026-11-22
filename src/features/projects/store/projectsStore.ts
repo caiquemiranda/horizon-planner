@@ -26,6 +26,11 @@ export interface ProjectsState {
   update: (id: UUID, patch: ProjectPatch) => Promise<void>;
   /** Optimistic, with the same recovery as `update`. */
   remove: (id: UUID) => Promise<void>;
+  /**
+   * Replaces every project (import, sample data, "clear all"). Persists first, so a
+   * failure leaves both the list and the storage untouched.
+   */
+  replaceAll: (projects: Project[]) => Promise<void>;
   clearError: () => void;
 }
 
@@ -113,6 +118,16 @@ export function createProjectsStore(
           await repository.remove(id);
         } catch (error) {
           await resync(error);
+        }
+      },
+
+      replaceAll: async (projects) => {
+        try {
+          await repository.replaceAll(projects);
+          set({ projects: await repository.list(), error: null });
+        } catch (error) {
+          set({ error: describeError(error) });
+          throw error;
         }
       },
 
