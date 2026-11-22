@@ -4,6 +4,7 @@ import type { Horizon, Project } from '@/types/project';
 
 import { TIMELINE_METRICS } from '../constants';
 import { useElementWidth } from '../hooks/useElementWidth';
+import { useTodayDay } from '../hooks/useTodayDay';
 import { computeBarLayouts, layoutLanes } from '../lib/layout';
 import { useViewportStore } from '../store/viewportStore';
 import { GridLines } from './GridLines';
@@ -11,6 +12,7 @@ import { LaneSidebar } from './LaneSidebar';
 import { ProjectBar } from './ProjectBar';
 import { TimelineEmptyState } from './TimelineEmptyState';
 import { TimeRuler } from './TimeRuler';
+import { TodayIndicator } from './TodayIndicator';
 
 const { rulerHeight, laneHeaderHeight, rowHeight, sidebarWidth } = TIMELINE_METRICS;
 
@@ -26,6 +28,7 @@ export function Timeline({ projects }: TimelineProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const viewport = useViewportStore((state) => state.viewport);
   const setWidth = useViewportStore((state) => state.setWidth);
+  const today = useTodayDay();
   const [collapsed, setCollapsed] = useState<ReadonlySet<Horizon>>(() => new Set());
 
   useElementWidth(canvasRef, setWidth);
@@ -59,6 +62,7 @@ export function Timeline({ projects }: TimelineProps) {
         </div>
         <div className="relative min-w-0 flex-1">
           <TimeRuler viewport={viewport} />
+          <TodayIndicator viewport={viewport} today={today} variant="ruler" />
         </div>
       </div>
 
@@ -114,6 +118,8 @@ export function Timeline({ projects }: TimelineProps) {
                 />
               );
             })}
+
+            <TodayIndicator viewport={viewport} today={today} variant="canvas" />
 
             {projects.length === 0 ? <TimelineEmptyState /> : null}
           </div>
