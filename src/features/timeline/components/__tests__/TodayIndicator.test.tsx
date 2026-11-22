@@ -48,4 +48,16 @@ describe('TimelineToolbar', () => {
 
     expect(dayToX(getTodayDay(), useViewportStore.getState().viewport)).toBeCloseTo(500, 0);
   });
+
+  it('shows the visible date range', () => {
+    // 2024-10-04 + 100 days at 10 px/day.
+    useViewportStore.setState({ viewport: VIEWPORT });
+    render(
+      <TooltipProvider>
+        <TimelineToolbar />
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByText('out 2024 – jan 2025')).toBeInTheDocument();
+  });
 });
