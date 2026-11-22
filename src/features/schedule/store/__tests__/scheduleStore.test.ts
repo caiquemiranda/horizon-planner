@@ -5,6 +5,7 @@ import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
 import type { ProjectSchedule } from '@/types/schedule';
 
+import { getScheduleAccess } from '../../lib/access';
 import { addDependency, createTask, updateTask } from '../../lib/commands';
 import { computeSchedule } from '../../lib/engine';
 import { createIndustrialSchedule } from '../../lib/fixtures';
@@ -229,6 +230,31 @@ describe('scheduleStore', () => {
     store.getState().apply((schedule) => updateTask(schedule, 'project-1-A', { progress: 50 }));
     await settle();
     expect(onSaved).toHaveBeenCalledOnce();
+  });
+
+  it('refuses every command when access is read-only', async () => {
+    const repository = new InMemoryScheduleRepository([demo('project-1')]);
+    const store = createScheduleStore(repository);
+    await store.getState().open('project-1');
+    store.getState().setAccess(getScheduleAccess({ status: 'completed' }));
+    const before = store.getState().schedule;
+
+    const result = store
+      .getState()
+      .apply((schedule) => updateTask(schedule, 'project-1-A', { duration: 9 }));
+    expect(result).toEqual({
+      ok: false,
+      error: expect.stringContaining('somente para leitura') as string,
+    });
+    expect(store.getState().schedule).toBe(before);
+    expect((await repository.get('project-1'))?.revision).toBe(0);
+
+    store.getState().setAccess(getScheduleAccess({ status: 'in_progress' }));
+    expect(
+      store.getState().apply((schedule) => updateTask(schedule, 'project-1-A', { duration: 9 })),
+    ).toEqual({
+      ok: true,
+    });
   });
 
   it('clears everything on close', async () => {

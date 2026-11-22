@@ -10,6 +10,7 @@ import {
 import type { UUID } from '@/types/project';
 import type { ProjectSchedule, ScheduleResult } from '@/types/schedule';
 
+import { FULL_ACCESS, type ScheduleAccess } from '../lib/access';
 import { computeSchedule } from '../lib/engine';
 import { ScheduleRuleError } from '../lib/errors';
 import { createEmptySchedule } from '../lib/fixtures';
@@ -43,7 +44,11 @@ export interface ScheduleState {
   result: ScheduleResult | null;
   saveStatus: SaveStatus;
   saveError: string | null;
+  /** Whether commands are accepted (see `lib/access`). */
+  access: ScheduleAccess;
 
+  /** Sets who may edit; with `canEdit: false` every command is refused. */
+  setAccess: (access: ScheduleAccess) => void;
   /** Loads a project's schedule (an empty one if it was never planned). */
   open: (projectId: UUID) => Promise<void>;
   /** Leaves the workspace; pending saves still complete. */
@@ -179,6 +184,12 @@ export function createScheduleStore(
       result: null,
       saveStatus: 'saved',
       saveError: null,
+      access: FULL_ACCESS,
+
+      setAccess: (access) => {
+        const current = get().access;
+        if (current.canEdit !== access.canEdit || current.reason !== access.reason) set({ access });
+      },
 
       open: async (projectId) => {
         session += 1;
@@ -209,6 +220,7 @@ export function createScheduleStore(
         unsubscribe = null;
         dirty = false;
         set({
+          access: FULL_ACCESS,
           projectId: null,
           status: 'idle',
           loadError: null,
@@ -220,8 +232,12 @@ export function createScheduleStore(
       },
 
       apply: (command) => {
-        const { schedule } = get();
+        const { schedule, access } = get();
         if (!schedule) return { ok: false, error: 'O cronograma ainda não foi carregado.' };
+        // The authoritative check: hidden buttons are not enough.
+        if (!access.canEdit) {
+          return { ok: false, error: access.reason ?? 'Você não pode editar este cronograma.' };
+        }
         let next: ProjectSchedule;
         try {
           next = command(schedule);
