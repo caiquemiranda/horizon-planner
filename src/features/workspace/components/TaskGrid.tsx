@@ -1,4 +1,4 @@
-import { ChevronRight, Diamond, Ellipsis, Pin, TriangleAlert } from 'lucide-react';
+import { ChevronRight, Diamond, Ellipsis, GripVertical, Pin, TriangleAlert } from 'lucide-react';
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -35,12 +35,15 @@ import {
 import {
   type ColumnDef,
   type ColumnKey,
-  COLUMNS,
-  GRID_TEMPLATE,
-  GRID_WIDTH,
+  getGridTemplate,
+  getGridWidth,
+  resolveColumns,
   WORKSPACE_METRICS,
 } from '../lib/columns';
+import { type DropTarget, getDropMove, getDropZone } from '../lib/rowDrop';
+import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { CellEditor, type EditorExit } from './CellEditor';
+import { ColumnResizer } from './ColumnResizer';
 import { RowMenu } from './RowMenu';
 
 interface TaskGridProps {
@@ -70,8 +73,6 @@ interface ActiveCell {
   rowId: UUID;
   column: ColumnKey;
 }
-
-const EDITABLE_ORDER = COLUMNS.map((column) => column.key);
 
 function isEditable(column: ColumnDef, row: TreeRow, scheduled: ScheduledTask | undefined) {
   if (column.derived) return false;
@@ -134,6 +135,15 @@ export function TaskGrid({
   onHover,
 }: TaskGridProps) {
   const { rows, result, wbs } = model;
+  const columnWidths = useWorkspaceUiStore((state) => state.columnWidths);
+  const hiddenColumns = useWorkspaceUiStore((state) => state.hiddenColumns);
+  const setColumnWidth = useWorkspaceUiStore((state) => state.setColumnWidth);
+  const columns = useMemo(
+    () => resolveColumns(columnWidths, hiddenColumns),
+    [columnWidths, hiddenColumns],
+  );
+  const columnKeys = columns.map((column) => column.key);
+  const gridTemplate = getGridTemplate(columns);
   const [active, setActive] = useState<ActiveCell | null>(null);
   const [editing, setEditing] = useState<{
     cell: ActiveCell;
@@ -156,7 +166,10 @@ export function TaskGrid({
 
   // Keep the active cell on a visible row: a collapsed or deleted row hands over to the
   // nearest visible ancestor, or the first row.
-  const activeRowId = active && rowIndexById.has(active.rowId) ? active.rowId : null;
+  const activeRowId =
+    active && rowIndexById.has(active.rowId) && columnKeys.includes(active.column)
+      ? active.rowId
+      : null;
   let resolvedActive: ActiveCell | null = active && activeRowId ? active : null;
   if (!resolvedActive && active) {
     let parentId = model.index.byId.get(active.rowId)?.parentId ?? null;
@@ -178,6 +191,62 @@ export function TaskGrid({
     }
   });
 
+  // ── Reordering rows by dragging ───────────────────────────────────────────────────
+  const [rowDrag, setRowDrag] = useState<{ id: UUID; target: DropTarget | null } | null>(null);
+  const rowDragRef = useRef(rowDrag);
+  rowDragRef.current = rowDrag;
+
+  useEffect(() => {
+    if (!rowDrag) return;
+    const scroller = (scrollerRef ?? gridRef).current;
+
+    const handleMove = (event: globalThis.PointerEvent) => {
+      const current = rowDragRef.current;
+      if (!current) return;
+      const rowElement = document
+        .elementFromPoint(event.clientX, event.clientY)
+        ?.closest<HTMLElement>('[role=row][data-task-id]');
+      const rowId = rowElement?.dataset.taskId;
+      let target: DropTarget | null = null;
+      if (rowElement && rowId && rowId !== current.id) {
+        const rect = rowElement.getBoundingClientRect();
+        const ratio = (event.clientY - rect.top) / rect.height;
+        target = { rowId, zone: getDropZone(ratio) };
+      }
+      setRowDrag({ ...current, target });
+      // Near the top or bottom of the table, scroll to reach rows out of view.
+      const rect = scroller?.getBoundingClientRect();
+      if (scroller && rect) {
+        if (event.clientY < rect.top + WORKSPACE_METRICS.headerHeight + 24)
+          scroller.scrollTop -= 12;
+        else if (event.clientY > rect.bottom - 24) scroller.scrollTop += 12;
+      }
+    };
+    const handleUp = () => {
+      const current = rowDragRef.current;
+      setRowDrag(null);
+      if (!current?.target) return;
+      const move = getDropMove(model.index, current.id, current.target);
+      if (move) actions.moveTo(current.id, move.parentId, move.position);
+    };
+    const handleKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setRowDrag(null);
+      }
+    };
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [rowDrag !== null, model.index, actions, scrollerRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const cellKey = (cell: ActiveCell) => `${cell.rowId}:${cell.column}`;
 
   const focusCell = useCallback((cell: ActiveCell) => {
@@ -195,7 +264,7 @@ export function TaskGrid({
     (cell: ActiveCell, initial?: string) => {
       if (readOnly) return;
       const row = rows[rowIndexById.get(cell.rowId) ?? -1];
-      const column = COLUMNS.find((item) => item.key === cell.column);
+      const column = columns.find((item) => item.key === cell.column);
       if (!row || !column) return;
       const scheduled = result.tasks.get(row.task.id);
       if (!isEditable(column, row, scheduled)) return;
@@ -208,7 +277,7 @@ export function TaskGrid({
         session: sessions.current,
       });
     },
-    [readOnly, rows, rowIndexById, result, model],
+    [readOnly, rows, rowIndexById, result, model, columns],
   );
 
   // Open the name editor of a task that was just created.
@@ -282,18 +351,18 @@ export function TaskGrid({
 
   const findEditableNeighbour = (from: ActiveCell, step: 1 | -1): ActiveCell | null => {
     let rowIndex = rowIndexById.get(from.rowId) ?? 0;
-    let columnIndex = EDITABLE_ORDER.indexOf(from.column);
-    for (let guard = 0; guard < rows.length * COLUMNS.length; guard += 1) {
+    let columnIndex = columnKeys.indexOf(from.column);
+    for (let guard = 0; guard < rows.length * columns.length; guard += 1) {
       columnIndex += step;
-      if (columnIndex >= COLUMNS.length) {
+      if (columnIndex >= columns.length) {
         columnIndex = 0;
         rowIndex += 1;
       } else if (columnIndex < 0) {
-        columnIndex = COLUMNS.length - 1;
+        columnIndex = columns.length - 1;
         rowIndex -= 1;
       }
       const row = rows[rowIndex];
-      const column = COLUMNS[columnIndex];
+      const column = columns[columnIndex];
       if (!row || !column) return null;
       if (isEditable(column, row, result.tasks.get(row.task.id))) {
         return { rowId: row.task.id, column: column.key };
@@ -306,13 +375,13 @@ export function TaskGrid({
     if (editing || !resolvedActive) return;
     const current = resolvedActive;
     const rowIndex = rowIndexById.get(current.rowId) ?? 0;
-    const columnIndex = EDITABLE_ORDER.indexOf(current.column);
+    const columnIndex = columnKeys.indexOf(current.column);
     const row = rows[rowIndex];
     if (!row) return;
     const id = row.task.id;
     const moveTo = (nextRow: number, nextColumn: number) => {
       const targetRow = rows[Math.max(0, Math.min(rows.length - 1, nextRow))];
-      const targetColumn = COLUMNS[Math.max(0, Math.min(COLUMNS.length - 1, nextColumn))];
+      const targetColumn = columns[Math.max(0, Math.min(columns.length - 1, nextColumn))];
       if (targetRow && targetColumn) {
         focusCell({ rowId: targetRow.task.id, column: targetColumn.key });
         onSelect(targetRow.task.id);
@@ -374,7 +443,7 @@ export function TaskGrid({
         break;
       case 'End':
         event.preventDefault();
-        moveTo(event.ctrlKey ? rows.length - 1 : rowIndex, COLUMNS.length - 1);
+        moveTo(event.ctrlKey ? rows.length - 1 : rowIndex, columns.length - 1);
         break;
       case 'Enter':
       case 'F2':
@@ -463,28 +532,34 @@ export function TaskGrid({
         tabIndex={-1}
         aria-label={label}
         aria-rowcount={rows.length + 1}
-        aria-colcount={COLUMNS.length}
+        aria-colcount={columns.length}
         aria-readonly={readOnly || undefined}
         aria-multiselectable={false}
         onKeyDown={handleGridKeyDown}
         className="relative text-[13px]"
-        style={{ width: GRID_WIDTH, minWidth: '100%' }}
+        style={{ width: getGridWidth(columns), minWidth: '100%' }}
       >
         <div
           role="row"
           aria-rowindex={1}
           className="sticky top-0 z-10 grid items-end border-b bg-background pb-1.5"
-          style={{ gridTemplateColumns: GRID_TEMPLATE, height: WORKSPACE_METRICS.headerHeight }}
+          style={{ gridTemplateColumns: gridTemplate, height: WORKSPACE_METRICS.headerHeight }}
         >
-          {COLUMNS.map((column, index) => (
+          {columns.map((column, index) => (
             <div
               key={column.key}
               role="columnheader"
               aria-colindex={index + 1}
               aria-label={column.ariaLabel}
-              className={cn('px-2 text-label', column.align === 'end' && 'text-right')}
+              className={cn('relative px-2 text-label', column.align === 'end' && 'text-right')}
             >
               {column.label}
+              <ColumnResizer
+                width={column.width}
+                onResize={(width) => {
+                  setColumnWidth(column.key, width);
+                }}
+              />
             </div>
           ))}
         </div>
@@ -521,12 +596,19 @@ export function TaskGrid({
               }}
               className={cn(
                 'group grid border-b border-timeline-grid',
+                rowDrag?.id === id && 'opacity-50',
+                rowDrag?.target?.rowId === id &&
+                  {
+                    before: 'shadow-[inset_0_2px_0_var(--ring)]',
+                    after: 'shadow-[inset_0_-2px_0_var(--ring)]',
+                    inside: 'outline-2 -outline-offset-2 outline-ring',
+                  }[rowDrag.target.zone],
                 isSelected ? 'bg-accent' : hoveredId === id ? 'bg-muted/50' : 'hover:bg-muted/50',
                 row.isFilterContext && 'text-muted-foreground',
               )}
-              style={{ gridTemplateColumns: GRID_TEMPLATE, height: WORKSPACE_METRICS.rowHeight }}
+              style={{ gridTemplateColumns: gridTemplate, height: WORKSPACE_METRICS.rowHeight }}
             >
-              {COLUMNS.map((column, columnIndex) => {
+              {columns.map((column, columnIndex) => {
                 const cell = { rowId: id, column: column.key };
                 const isActive =
                   resolvedActive?.rowId === id && resolvedActive.column === column.key;
@@ -588,6 +670,25 @@ export function TaskGrid({
                         className="flex min-w-0 flex-1 items-center gap-1"
                         style={{ paddingLeft: row.depth * WORKSPACE_METRICS.indentPx }}
                       >
+                        {!readOnly ? (
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            data-row-grip=""
+                            title="Arraste para reordenar (teclado: Alt+Shift+setas)"
+                            onPointerDown={(event) => {
+                              if (event.pointerType === 'mouse' && event.button !== 0) return;
+                              event.preventDefault();
+                              event.stopPropagation();
+                              onSelect(id);
+                              setRowDrag({ id, target: null });
+                            }}
+                            className="-ml-1 inline-flex h-6 w-3.5 shrink-0 cursor-grab touch-none items-center justify-center text-subtle-foreground opacity-0 group-hover:opacity-100"
+                          >
+                            <GripVertical className="size-3.5" />
+                          </button>
+                        ) : null}
                         {row.hasChildren ? (
                           <button
                             type="button"
