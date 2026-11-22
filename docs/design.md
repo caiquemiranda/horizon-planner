@@ -106,6 +106,9 @@ for layers that float above the page:
 
 Rules:
 
+- Feedback is small and fast: buttons scale to 97% while pressed and changing counters
+  "pop" (`animate-pop`, `--ease-spring`). Both are `motion-safe` only.
+
 - Animate `transform` and `opacity`. Avoid animating layout properties on many
   elements at once (the timeline can render hundreds of bars).
 - Exits are faster than entrances.

@@ -83,8 +83,10 @@ export function FilterMenu({ projects }: FilterMenuProps) {
           <span className="hidden sm:inline">Filtros</span>
           {activeCount > 0 ? (
             <span
+              // Re-mounts on every change so the count "pops".
+              key={activeCount}
               aria-hidden="true"
-              className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] text-primary-foreground tabular-nums"
+              className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] text-primary-foreground tabular-nums motion-safe:animate-pop"
             >
               {activeCount}
             </span>
