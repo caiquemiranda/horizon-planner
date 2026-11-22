@@ -1,6 +1,7 @@
 import {
   ArrowDown,
   ArrowUp,
+  CalendarDays,
   ChevronsDownUp,
   ChevronsUpDown,
   CornerDownRight,
@@ -40,6 +41,9 @@ interface WorkspaceToolbarProps {
   onMove: (direction: -1 | 1) => void;
   onDelete: () => void;
   onEditLinks: () => void;
+  onEditCalendar: () => void;
+  /** Editing commands are disabled; viewing stays available. */
+  readOnly?: boolean;
 }
 
 function ToolButton({
@@ -88,6 +92,8 @@ export function WorkspaceToolbar({
   onMove,
   onDelete,
   onEditLinks,
+  onEditCalendar,
+  readOnly = false,
 }: WorkspaceToolbarProps) {
   const expandAll = useWorkspaceUiStore((state) => state.expandAll);
   const collapseAll = useWorkspaceUiStore((state) => state.collapseAll);
@@ -105,6 +111,7 @@ export function WorkspaceToolbar({
   const siblings = selected ? getChildren(model.index, selected.parentId) : [];
   const position = selected ? siblings.findIndex((task) => task.id === selected.id) : -1;
   const hasSelection = selected !== undefined;
+  const canChange = hasSelection && !readOnly;
 
   return (
     <div
@@ -112,18 +119,18 @@ export function WorkspaceToolbar({
       aria-label="Ações do cronograma"
       className="no-scrollbar flex h-11 shrink-0 items-center gap-1 overflow-x-auto border-b bg-background px-2"
     >
-      <Button size="sm" onClick={onAddTask}>
+      <Button size="sm" onClick={onAddTask} disabled={readOnly}>
         <Plus />
         <span className="sr-only sm:not-sr-only">Nova tarefa</span>
       </Button>
-      <ToolButton label="Nova subtarefa" disabled={!hasSelection} onClick={onAddSubtask}>
+      <ToolButton label="Nova subtarefa" disabled={!canChange} onClick={onAddSubtask}>
         <CornerDownRight />
       </ToolButton>
       <Separator orientation="vertical" className="mx-1 h-5!" />
       <ToolButton
         label="Recuar (tornar subtarefa)"
         shortcut="Alt+Shift+→"
-        disabled={!hasSelection || position <= 0}
+        disabled={!canChange || position <= 0}
         onClick={onIndent}
       >
         <IndentIncrease />
@@ -131,7 +138,7 @@ export function WorkspaceToolbar({
       <ToolButton
         label="Avançar (subir um nível)"
         shortcut="Alt+Shift+←"
-        disabled={selected?.parentId == null}
+        disabled={readOnly || selected?.parentId == null}
         onClick={onOutdent}
       >
         <IndentDecrease />
@@ -139,7 +146,7 @@ export function WorkspaceToolbar({
       <ToolButton
         label="Mover para cima"
         shortcut="Alt+Shift+↑"
-        disabled={!hasSelection || position <= 0}
+        disabled={!canChange || position <= 0}
         onClick={() => {
           onMove(-1);
         }}
@@ -149,7 +156,7 @@ export function WorkspaceToolbar({
       <ToolButton
         label="Mover para baixo"
         shortcut="Alt+Shift+↓"
-        disabled={!hasSelection || position === -1 || position >= siblings.length - 1}
+        disabled={!canChange || position === -1 || position >= siblings.length - 1}
         onClick={() => {
           onMove(1);
         }}
@@ -181,15 +188,13 @@ export function WorkspaceToolbar({
       >
         <Link2 />
       </ToolButton>
-      <ToolButton
-        label="Excluir tarefa"
-        shortcut="Delete"
-        disabled={!hasSelection}
-        onClick={onDelete}
-      >
+      <ToolButton label="Excluir tarefa" shortcut="Delete" disabled={!canChange} onClick={onDelete}>
         <Trash2 />
       </ToolButton>
 
+      <ToolButton label="Calendário do projeto" onClick={onEditCalendar}>
+        <CalendarDays />
+      </ToolButton>
       <Separator orientation="vertical" className="mx-1 h-5!" />
       <ToolButton label="Ir para hoje" shortcut="T" onClick={goToToday}>
         <LocateFixed />
