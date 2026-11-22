@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Filters by horizon, status and category with faceted counts, an active filters bar and a filtered empty state; the project being edited stays visible.
 - Side drawer to create, edit and delete projects, with edits synced live to the timeline and saved automatically.
 - Project form with horizon suggestion from the dates, progress, category suggestions, color picker and milestones editor.
 - Projects store with optimistic updates and automatic recovery when saving fails.
