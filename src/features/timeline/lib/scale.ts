@@ -86,3 +86,28 @@ export function resizeViewport(viewport: Viewport, widthPx: number): Viewport {
 export function wheelDeltaToZoomFactor(deltaY: number, sensitivity = 0.0015): number {
   return Math.exp(-deltaY * sensitivity);
 }
+
+/**
+ * Intermediate viewport between `from` (t = 0) and `to` (t = 1) for smooth transitions.
+ * Zoom is interpolated geometrically, so the motion feels constant at every zoom level,
+ * and the day under `anchorX` moves linearly. When both viewports share the day under
+ * `anchorX` (an anchored zoom), that day stays fixed during the whole transition.
+ */
+export function interpolateViewport(
+  from: Viewport,
+  to: Viewport,
+  t: number,
+  anchorX: number = to.widthPx / 2,
+): Viewport {
+  if (t <= 0) return from;
+  if (t >= 1) return to;
+
+  const pxPerDay = Math.exp(
+    Math.log(from.pxPerDay) + (Math.log(to.pxPerDay) - Math.log(from.pxPerDay)) * t,
+  );
+  const fromAnchorDay = xToDay(anchorX, from);
+  const toAnchorDay = xToDay(anchorX, to);
+  const anchorDay = fromAnchorDay + (toAnchorDay - fromAnchorDay) * t;
+
+  return { ...to, pxPerDay, startDay: anchorDay - anchorX / pxPerDay };
+}

@@ -8,6 +8,7 @@ import {
   dayToX,
   fitRange,
   getVisibleRange,
+  interpolateViewport,
   panBy,
   resizeViewport,
   wheelDeltaToZoomFactor,
@@ -115,5 +116,35 @@ describe('navigation', () => {
     centerOn(viewport, 0);
     fitRange(viewport, 0, 10);
     expect(viewport).toEqual(snapshot);
+  });
+});
+
+describe('interpolateViewport', () => {
+  const from = { startDay: 1000, pxPerDay: 1, widthPx: 1000 };
+
+  it('returns the endpoints at t = 0 and t = 1', () => {
+    const to = { startDay: 1500, pxPerDay: 4, widthPx: 1000 };
+    expect(interpolateViewport(from, to, 0)).toBe(from);
+    expect(interpolateViewport(from, to, 1)).toBe(to);
+  });
+
+  it('interpolates zoom geometrically', () => {
+    const to = { ...from, pxPerDay: 4 };
+    expect(interpolateViewport(from, to, 0.5).pxPerDay).toBeCloseTo(2);
+  });
+
+  it('keeps the anchor day fixed during an anchored zoom', () => {
+    const anchorX = 250;
+    const to = zoomAt(from, anchorX, 8);
+    const anchorDay = xToDay(anchorX, from);
+
+    for (const t of [0.1, 0.4, 0.75]) {
+      expect(xToDay(anchorX, interpolateViewport(from, to, t, anchorX))).toBeCloseTo(anchorDay);
+    }
+  });
+
+  it('pans linearly at constant zoom', () => {
+    const to = { ...from, startDay: 1100 };
+    expect(interpolateViewport(from, to, 0.5).startDay).toBeCloseTo(1050);
   });
 });

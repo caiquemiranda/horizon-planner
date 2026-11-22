@@ -10,8 +10,9 @@ afterEach(() => {
 // jsdom does not implement these browser APIs used by the UI layer.
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
+  // Light color scheme, and reduced motion so viewport transitions apply instantly.
   value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
+    matches: query === '(prefers-reduced-motion: reduce)',
     media: query,
     onchange: null,
     addEventListener: vi.fn(),
