@@ -10,6 +10,7 @@ import {
   moveTask,
   outdentTask,
   removeDependency,
+  setCalendar,
   setPredecessors,
   shiftTask,
   type TaskPatch,
@@ -21,7 +22,7 @@ import { ScheduleRuleError } from '@/features/schedule/lib/errors';
 import { getChildren } from '@/features/schedule/lib/tree';
 import { generateScheduleId, useScheduleStore } from '@/features/schedule/store';
 import type { ISODate, UUID } from '@/types/project';
-import type { ProjectSchedule } from '@/types/schedule';
+import type { ProjectCalendar, ProjectSchedule } from '@/types/schedule';
 
 import { defaultStartFor } from '../lib/cells';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
@@ -55,6 +56,8 @@ export interface WorkspaceActions {
     patch: Partial<Pick<DependencyCandidate, 'type' | 'lag'>>,
   ) => string | null;
   removeLink: (id: UUID) => string | null;
+  /** Replaces the project calendar (reschedules everything). */
+  setCalendar: (calendar: ProjectCalendar) => string | null;
 }
 
 export function useWorkspaceActions(
@@ -169,6 +172,7 @@ export function useWorkspaceActions(
         ),
       updateLink: (id, patch) => runForMessage((schedule) => updateDependency(schedule, id, patch)),
       removeLink: (id) => runForMessage((schedule) => removeDependency(schedule, id)),
+      setCalendar: (calendar) => runForMessage((schedule) => setCalendar(schedule, calendar)),
     };
   }, [apply, show, select, setCollapsed, model, projectStart]);
 }

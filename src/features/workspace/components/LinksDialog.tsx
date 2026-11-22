@@ -26,6 +26,8 @@ interface LinksDialogProps {
   /** Link to focus when opening (e.g. the connector that was clicked). */
   focusLinkId?: UUID | null;
   onClose: () => void;
+  /** Shows the links without editing controls. */
+  readOnly?: boolean;
 }
 
 const fieldClass =
@@ -85,7 +87,14 @@ function LagInput({
  * predecessors and successors of one task. Every change goes through the domain
  * commands, so cycles and duplicates are refused with a message.
  */
-export function LinksDialog({ model, actions, taskId, focusLinkId, onClose }: LinksDialogProps) {
+export function LinksDialog({
+  model,
+  actions,
+  taskId,
+  focusLinkId,
+  onClose,
+  readOnly = false,
+}: LinksDialogProps) {
   const task = taskId ? model.index.byId.get(taskId) : undefined;
   const scheduled = taskId ? model.result.tasks.get(taskId) : undefined;
   const [error, setError] = useState<string | null>(null);
@@ -149,15 +158,20 @@ export function LinksDialog({ model, actions, taskId, focusLinkId, onClose }: Li
               focusLinkId={focusLinkId ?? null}
               report={report}
               describeLink={(link) => describeDependency(link, describe)}
+              readOnly={readOnly}
             />
-            <AddLinkForm
-              legend="Adicionar predecessora"
-              candidates={candidates}
-              model={model}
-              onAdd={(otherId, type, lag) =>
-                report(actions.addLink({ predecessorId: otherId, successorId: task.id, type, lag }))
-              }
-            />
+            {readOnly ? null : (
+              <AddLinkForm
+                legend="Adicionar predecessora"
+                candidates={candidates}
+                model={model}
+                onAdd={(otherId, type, lag) =>
+                  report(
+                    actions.addLink({ predecessorId: otherId, successorId: task.id, type, lag }),
+                  )
+                }
+              />
+            )}
             <LinkSection
               title="Sucessoras"
               emptyText="Nenhuma sucessora."
@@ -168,15 +182,20 @@ export function LinksDialog({ model, actions, taskId, focusLinkId, onClose }: Li
               focusLinkId={focusLinkId ?? null}
               report={report}
               describeLink={(link) => describeDependency(link, describe)}
+              readOnly={readOnly}
             />
-            <AddLinkForm
-              legend="Adicionar sucessora"
-              candidates={candidates}
-              model={model}
-              onAdd={(otherId, type, lag) =>
-                report(actions.addLink({ predecessorId: task.id, successorId: otherId, type, lag }))
-              }
-            />
+            {readOnly ? null : (
+              <AddLinkForm
+                legend="Adicionar sucessora"
+                candidates={candidates}
+                model={model}
+                onAdd={(otherId, type, lag) =>
+                  report(
+                    actions.addLink({ predecessorId: task.id, successorId: otherId, type, lag }),
+                  )
+                }
+              />
+            )}
           </>
         ) : null}
 
@@ -200,6 +219,7 @@ interface LinkSectionProps {
   focusLinkId: UUID | null;
   report: (message: string | null) => string | null;
   describeLink: (link: TaskDependency) => string;
+  readOnly: boolean;
 }
 
 function LinkSection({
@@ -212,6 +232,7 @@ function LinkSection({
   focusLinkId,
   report,
   describeLink,
+  readOnly,
 }: LinkSectionProps) {
   const headingId = useId();
   return (
@@ -237,39 +258,50 @@ function LinkSection({
                   {name}
                   <span className="sr-only">. {describeLink(link)}</span>
                 </span>
-                <select
-                  aria-label={`Tipo do vínculo com ${name}`}
-                  // eslint-disable-next-line jsx-a11y/no-autofocus -- opened from this link's connector
-                  autoFocus={focusLinkId === link.id}
-                  value={link.type}
-                  onChange={(event) => {
-                    report(
-                      actions.updateLink(link.id, { type: event.target.value as DependencyType }),
-                    );
-                  }}
-                  className={fieldClass}
-                >
-                  {DEPENDENCY_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {typeLabel(type)}
-                    </option>
-                  ))}
-                </select>
-                <LagInput
-                  value={link.lag}
-                  label={`Atraso em dias úteis do vínculo com ${name}`}
-                  onCommit={(lag) => report(actions.updateLink(link.id, { lag }))}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Excluir vínculo com ${name}`}
-                  onClick={() => {
-                    report(actions.removeLink(link.id));
-                  }}
-                >
-                  <Trash2 />
-                </Button>
+                {readOnly ? (
+                  <span className="text-sm text-muted-foreground">
+                    {DEPENDENCY_TYPE_META[link.type].label}
+                    {link.lag === 0 ? '' : ` ${link.lag > 0 ? '+' : ''}${String(link.lag)}d`}
+                  </span>
+                ) : (
+                  <>
+                    <select
+                      aria-label={`Tipo do vínculo com ${name}`}
+                      // eslint-disable-next-line jsx-a11y/no-autofocus -- opened from this link's connector
+                      autoFocus={focusLinkId === link.id}
+                      value={link.type}
+                      onChange={(event) => {
+                        report(
+                          actions.updateLink(link.id, {
+                            type: event.target.value as DependencyType,
+                          }),
+                        );
+                      }}
+                      className={fieldClass}
+                    >
+                      {DEPENDENCY_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {typeLabel(type)}
+                        </option>
+                      ))}
+                    </select>
+                    <LagInput
+                      value={link.lag}
+                      label={`Atraso em dias úteis do vínculo com ${name}`}
+                      onCommit={(lag) => report(actions.updateLink(link.id, { lag }))}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Excluir vínculo com ${name}`}
+                      onClick={() => {
+                        report(actions.removeLink(link.id));
+                      }}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </>
+                )}
               </li>
             );
           })}

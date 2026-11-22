@@ -1,4 +1,4 @@
-import { ArrowLeft, ListTree, Plus, SearchX } from 'lucide-react';
+import { ArrowLeft, ListTree, Lock, Plus, SearchX } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { GanttPane } from '@/features/gantt/components/GanttPane';
+import type { BarChange } from '@/features/gantt/lib/barDrag';
 import { COLOR_META } from '@/features/projects/constants';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
+import { getScheduleAccess } from '@/features/schedule/lib/access';
+import type { DependencyCandidate } from '@/features/schedule/lib/dependencies';
 import { useScheduleStore } from '@/features/schedule/store';
 import { useTimelineShortcuts } from '@/features/timeline/hooks/useTimelineShortcuts';
 import { formatDateRange } from '@/features/timeline/lib/format';
@@ -23,6 +26,7 @@ import { useWorkspaceActions } from '../hooks/useWorkspaceActions';
 import { useWorkspaceModel } from '../hooks/useWorkspaceModel';
 import { formatCellDate } from '../lib/cells';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
+import { CalendarDialog } from './CalendarDialog';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { LinksDialog } from './LinksDialog';
 import { SaveStatus } from './SaveStatus';
@@ -53,6 +57,24 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
       close();
     };
   }, [projectId, open, close, loadUi]);
+
+  // Warn before leaving with changes that are not stored yet.
+  const hasUnsavedChanges = useScheduleStore(
+    (state) =>
+      state.saveStatus === 'saving' ||
+      state.saveStatus === 'error' ||
+      state.saveStatus === 'conflict',
+  );
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => {
+      window.removeEventListener('beforeunload', warn);
+    };
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     if (!project) return;
@@ -166,7 +188,15 @@ function WorkspaceBody({ project }: { project: Project }) {
   );
   const showNotice = useNoticeStore((state) => state.show);
   const [editRequest, setEditRequest] = useState<UUID | null>(null);
+  const [isCalendarOpen, setCalendarOpen] = useState(false);
   const today = useMemo(() => getTodayDay(), []);
+  const access = useScheduleStore((state) => state.access);
+  const setAccess = useScheduleStore((state) => state.setAccess);
+  const readOnly = !access.canEdit;
+
+  useEffect(() => {
+    setAccess(getScheduleAccess(project));
+  }, [project, setAccess]);
 
   const addAndEdit = useCallback((id: UUID | null) => {
     if (id) setEditRequest(id);
@@ -229,22 +259,34 @@ function WorkspaceBody({ project }: { project: Project }) {
         onEditLinks={() => {
           if (selectedId) setLinksTarget({ taskId: selectedId, focusLinkId: null });
         }}
+        onEditCalendar={() => {
+          setCalendarOpen(true);
+        }}
+        readOnly={readOnly}
       />
+      {readOnly ? (
+        <p className="flex shrink-0 items-center gap-2 border-b bg-muted/60 px-3 py-2 text-sm">
+          <Lock aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+          {access.reason}
+        </p>
+      ) : null}
       {isEmpty ? (
         <CenteredMessage
           icon={ListTree}
           title="Nenhuma tarefa ainda"
           description="Crie a primeira tarefa e organize o projeto em fases, tarefas e subtarefas."
           action={
-            <Button
-              size="sm"
-              onClick={() => {
-                addAndEdit(actions.addTask(null));
-              }}
-            >
-              <Plus />
-              Criar primeira tarefa
-            </Button>
+            readOnly ? undefined : (
+              <Button
+                size="sm"
+                onClick={() => {
+                  addAndEdit(actions.addTask(null));
+                }}
+              >
+                <Plus />
+                Criar primeira tarefa
+              </Button>
+            )
           }
         />
       ) : model.rows.length === 0 ? (
@@ -276,6 +318,7 @@ function WorkspaceBody({ project }: { project: Project }) {
               scrollerRef={scrollerRef}
               hoveredId={hoveredId}
               onHover={setHovered}
+              readOnly={readOnly}
             />
           }
           right={
@@ -293,32 +336,38 @@ function WorkspaceBody({ project }: { project: Project }) {
                 const link = model.schedule.dependencies.find((item) => item.id === linkId);
                 if (link) setLinksTarget({ taskId: link.successorId, focusLinkId: link.id });
               }}
-              onBarChange={(taskId, change) => {
-                const error = actions.update(taskId, change.patch);
-                if (error) {
-                  showNotice(error, 'error');
-                  return;
-                }
-                // Automatic tasks never start before their predecessors allow.
-                const after = useScheduleStore.getState().result?.tasks.get(taskId);
-                if (after && after.start > change.start && after.drivingDependencyId) {
-                  const link = useScheduleStore
-                    .getState()
-                    .schedule?.dependencies.find((item) => item.id === after.drivingDependencyId);
-                  showNotice(
-                    `${model.describeTask(taskId)} não pode começar antes de ${formatCellDate(after.start)}: depende de ${link ? model.describeTask(link.predecessorId) : 'outra tarefa'}.`,
-                    'error',
-                  );
-                }
-              }}
-              onCreateLink={(candidate) => {
-                const error = actions.addLink(candidate);
-                if (error) showNotice(error, 'error');
-                else
-                  showNotice(
-                    `Vínculo criado: ${model.describeTask(candidate.predecessorId)} → ${model.describeTask(candidate.successorId)}.`,
-                  );
-              }}
+              {...(readOnly
+                ? {}
+                : {
+                    onBarChange: (taskId: UUID, change: BarChange) => {
+                      const error = actions.update(taskId, change.patch);
+                      if (error) {
+                        showNotice(error, 'error');
+                        return;
+                      }
+                      // Automatic tasks never start before their predecessors allow.
+                      const after = useScheduleStore.getState().result?.tasks.get(taskId);
+                      if (after && after.start > change.start && after.drivingDependencyId) {
+                        const link = useScheduleStore
+                          .getState()
+                          .schedule?.dependencies.find(
+                            (item) => item.id === after.drivingDependencyId,
+                          );
+                        showNotice(
+                          `${model.describeTask(taskId)} não pode começar antes de ${formatCellDate(after.start)}: depende de ${link ? model.describeTask(link.predecessorId) : 'outra tarefa'}.`,
+                          'error',
+                        );
+                      }
+                    },
+                    onCreateLink: (candidate: DependencyCandidate) => {
+                      const error = actions.addLink(candidate);
+                      if (error) showNotice(error, 'error');
+                      else
+                        showNotice(
+                          `Vínculo criado: ${model.describeTask(candidate.predecessorId)} → ${model.describeTask(candidate.successorId)}.`,
+                        );
+                    },
+                  })}
             />
           }
         />
@@ -330,6 +379,20 @@ function WorkspaceBody({ project }: { project: Project }) {
         focusLinkId={linksTarget?.focusLinkId ?? null}
         onClose={() => {
           setLinksTarget(null);
+        }}
+        readOnly={readOnly}
+      />
+      <CalendarDialog
+        open={isCalendarOpen}
+        calendar={model.schedule.calendar}
+        readOnly={readOnly}
+        onClose={() => {
+          setCalendarOpen(false);
+        }}
+        onSave={(calendar) => {
+          const error = actions.setCalendar(calendar);
+          if (!error) showNotice('Calendário salvo: as tarefas foram reagendadas.');
+          return error;
         }}
       />
       <DeleteTaskDialog
