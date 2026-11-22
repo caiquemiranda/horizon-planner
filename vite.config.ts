@@ -19,4 +19,17 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    watch: {
+      // Generated output: tests, coverage and builds rewrite hundreds of files there,
+      // which would keep the dev server busy for nothing.
+      ignored: [
+        '**/coverage/**',
+        '**/dist/**',
+        '**/test-results/**',
+        '**/playwright-report/**',
+        '**/blob-report/**',
+      ],
+    },
+  },
 });
