@@ -8,6 +8,9 @@ dist-ssr/
 
 # Test output
 coverage/
+test-results/
+playwright-report/
+blob-report/
 
 # Logs
 logs/
