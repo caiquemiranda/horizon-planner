@@ -38,6 +38,21 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 | **Portability**              | Schema-validated JSON export / import and one-click **sample data** for an instant demo.                                                                                         |
 | **Theming**                  | Dark mode by default, light mode supported, Geist typography and accessible contrast.                                                                                            |
 
+### 🗂️ Project planning workspace
+
+Open any project ("Abrir cronograma") to plan it in detail: an editable **task table (WBS)** side by side with a **Gantt chart**.
+
+| Area                  | What you get                                                                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **WBS / TreeGrid**    | Phases, tasks and subtasks at any depth, numbered `1`, `1.1`, `1.1.1`; inline editing with validation, expand/collapse, filter, keyboard navigation. |
+| **Gantt chart**       | Bars on the same rows as the table, summary brackets, milestone diamonds, today line, calendar shading, its own zoom and pan, resizable split view.  |
+| **Dependencies**      | Finish-to-start, start-to-start, finish-to-finish and start-to-finish links with lag/lead, drawn as orthogonal staircase arrows; cycles refused.     |
+| **Scheduling engine** | Working-day calendar with holidays, automatic and manual tasks, propagation through the dependency graph, summary roll-up.                           |
+| **Direct editing**    | Drag bars to move them and their edges to change dates; drag rows to reorder or nest; draw links from bar to bar.                                    |
+| **Robustness**        | Saved per project with conflict detection across tabs, read-only closed projects, row virtualization for 1 000+ tasks.                               |
+
+Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module.md) · measurements: [`docs/performance.md`](./docs/performance.md).
+
 ### ⌨️ Keyboard shortcuts
 
 | Shortcut                  | Action                               |
@@ -59,6 +74,8 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 
 <img src="docs/assets/timeline-macro-dark.png" alt="Timeline fitted to all projects, from 2026 to 2029, with the short, medium and long-term lanes" width="100%" />
 
+<img src="docs/assets/workspace-gantt-dark.png" alt="Project workspace: task table with WBS numbers next to a Gantt chart with summary bars, a milestone and staircase dependency arrows" width="100%" />
+
 |                                          Micro view (weeks / days)                                           |                                               Side drawer (light theme)                                                |
 | :----------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------: |
 | <img src="docs/assets/timeline-micro-dark.png" alt="Timeline zoomed in to weeks around today" width="420" /> | <img src="docs/assets/drawer-edit-light.png" alt="Project drawer open over the timeline in light theme" width="420" /> |
@@ -67,6 +84,7 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 <summary>More: light theme, dark drawer and phone layout</summary>
 
 <img src="docs/assets/timeline-macro-light.png" alt="Timeline fitted to all projects in light theme" width="100%" />
+<img src="docs/assets/workspace-gantt-light.png" alt="Project workspace in light theme" width="100%" />
 <img src="docs/assets/drawer-edit-dark.png" alt="Project drawer open over the timeline in dark theme" width="100%" />
 <p align="center"><img src="docs/assets/timeline-mobile-dark.png" alt="Timeline on a phone-sized screen" width="260" /></p>
 
@@ -110,7 +128,9 @@ Open <http://localhost:5173> and click **Carregar dados de exemplo** (Load sampl
 | `npm test`                        | Runs the test suite once with Vitest.                       |
 | `npm run test:watch`              | Runs Vitest in watch mode.                                  |
 | `npm run test:coverage`           | Runs the tests and writes a coverage report to `coverage/`. |
+| `npm run test:e2e`                | Runs the browser end-to-end tests (Playwright, Chrome).     |
 | `npm run screenshots`             | Builds the app and recaptures the README screenshots.       |
+| `npm run perf`                    | Measures the planning workspace with 100–1 000 tasks.       |
 
 ## 🏗️ Architecture
 
@@ -184,7 +204,7 @@ Visual decisions (colors, typography, spacing, motion and component rules) are d
 - **GitHub Flow with a `develop` branch.** `main` is protected and only receives releases; features reach `develop` through pull requests.
 - **Conventional Commits**, enforced locally by **Husky + Commitlint** and in CI on every pull request.
 - **lint-staged** runs ESLint and Prettier on staged files before each commit.
-- **CI** (GitHub Actions) runs the format check, lint, type-check, tests with coverage and the build on every pull request.
+- **CI** (GitHub Actions) runs the format check, lint, type-check, tests with coverage, the build and browser end-to-end tests on every pull request.
 - **CD** publishes the app to [GitHub Pages](https://caiquemiranda.github.io/horizon-planner/) on every push to `develop`.
 - **Semantic Versioning** with a human-readable [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -192,10 +212,11 @@ Visual decisions (colors, typography, spacing, motion and component rules) are d
 
 - [x] Repository setup, tooling and CI
 - [ ] **v0.1.0 (MVP):** interactive timeline, macro/micro zoom, drawer CRUD, filters, localStorage, JSON import/export, sample data
-- [ ] Drag and resize bars directly on the timeline to change dates
-- [ ] Dependencies between projects (finish-to-start arrows)
+- [x] Project planning workspace: WBS table, Gantt chart, dependencies, scheduling engine
+- [x] Drag and resize bars to change dates (in the project workspace)
+- [x] Row virtualization (project workspace)
+- [ ] Critical path (CPM) and baselines
 - [ ] Undo / redo (command history)
-- [ ] Row virtualization for very large portfolios
 - [ ] Command palette (`Ctrl + K`)
 - [ ] PWA with offline support
 - [ ] Backend sync (REST API + authentication) through a new `ProjectRepository` implementation

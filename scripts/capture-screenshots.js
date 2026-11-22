@@ -37,6 +37,8 @@ const SHOTS = [
   { name: 'drawer-edit-dark', theme: 'dark', arrange: openDrawer },
   { name: 'drawer-edit-light', theme: 'light', arrange: openDrawer },
   { name: 'timeline-mobile-dark', theme: 'dark', viewport: PHONE, arrange: fitAll },
+  { name: 'workspace-gantt-dark', theme: 'dark', arrange: openWorkspace },
+  { name: 'workspace-gantt-light', theme: 'light', arrange: openWorkspace },
 ];
 
 /** @param {Page} page */
@@ -56,6 +58,25 @@ async function openDrawer(page) {
   await page.keyboard.press('t');
   await page.locator('li button', { hasText: DRAWER_PROJECT }).click();
   await page.getByRole('dialog').getByLabel('Título', { exact: true }).waitFor();
+}
+
+/**
+ * The industrial sample project's schedule: table, Gantt bars and dependency arrows.
+ * @param {Page} page
+ */
+async function openWorkspace(page) {
+  await page.locator('li button', { hasText: 'Implantação de Sistema Industrial' }).click();
+  await page.getByRole('link', { name: 'Abrir cronograma' }).click();
+  await page.getByRole('treegrid').waitFor();
+  await page.locator('[data-link-id]').first().waitFor();
+  // Select a task so its row, bar and links are highlighted.
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'Aquisição' })
+    .first()
+    .getByRole('gridcell')
+    .nth(1)
+    .click();
 }
 
 /** @param {Page} page */

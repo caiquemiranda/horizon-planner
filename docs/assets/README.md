@@ -4,17 +4,19 @@ This folder holds the visual assets used by the main [`README.md`](../../README.
 
 ## Assets
 
-| File                       | Shows                                                      | Captured by           |
-| -------------------------- | ---------------------------------------------------------- | --------------------- |
-| `timeline-macro-dark.png`  | All projects fitted on screen, the three horizon lanes     | `npm run screenshots` |
-| `timeline-macro-light.png` | Same view in light theme                                   | `npm run screenshots` |
-| `timeline-micro-dark.png`  | Weeks zoom centered on today, with milestones              | `npm run screenshots` |
-| `drawer-edit-dark.png`     | Side drawer editing a project, timeline visible behind it  | `npm run screenshots` |
-| `drawer-edit-light.png`    | Same view in light theme                                   | `npm run screenshots` |
-| `timeline-mobile-dark.png` | Phone layout (390×844)                                     | `npm run screenshots` |
-| `demo-zoom.gif`            | Smooth `Ctrl + Scroll` zoom from macro to micro (optional) | By hand               |
-| `demo-drawer.gif`          | Clicking a bar and editing progress live (optional)        | By hand               |
-| `social-preview.png`       | 1280×640 image for _Settings → Social preview_ on GitHub   | By hand               |
+| File                        | Shows                                                            | Captured by           |
+| --------------------------- | ---------------------------------------------------------------- | --------------------- |
+| `timeline-macro-dark.png`   | All projects fitted on screen, the three horizon lanes           | `npm run screenshots` |
+| `timeline-macro-light.png`  | Same view in light theme                                         | `npm run screenshots` |
+| `timeline-micro-dark.png`   | Weeks zoom centered on today, with milestones                    | `npm run screenshots` |
+| `drawer-edit-dark.png`      | Side drawer editing a project, timeline visible behind it        | `npm run screenshots` |
+| `drawer-edit-light.png`     | Same view in light theme                                         | `npm run screenshots` |
+| `timeline-mobile-dark.png`  | Phone layout (390×844)                                           | `npm run screenshots` |
+| `workspace-gantt-dark.png`  | Project workspace: task table, Gantt chart and dependency arrows | `npm run screenshots` |
+| `workspace-gantt-light.png` | Same view in light theme                                         | `npm run screenshots` |
+| `demo-zoom.gif`             | Smooth `Ctrl + Scroll` zoom from macro to micro (optional)       | By hand               |
+| `demo-drawer.gif`           | Clicking a bar and editing progress live (optional)              | By hand               |
+| `social-preview.png`        | 1280×640 image for _Settings → Social preview_ on GitHub         | By hand               |
 
 ## Naming convention
 
