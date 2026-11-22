@@ -20,13 +20,17 @@ const { rulerHeight, laneHeaderHeight, rowHeight, sidebarWidth } = TIMELINE_METR
 
 interface TimelineProps {
   projects: readonly Project[];
+  /** Project open in the drawer, highlighted on the timeline. */
+  selectedProjectId?: UUID | null;
+  /** Must be stable. */
+  onSelectProject?: (projectId: UUID) => void;
 }
 
 /**
  * Gantt-like timeline: a fixed sidebar with the horizon lanes on the left and the
  * time canvas on the right. Only the canvas width feeds the viewport.
  */
-export function Timeline({ projects }: TimelineProps) {
+export function Timeline({ projects, selectedProjectId = null, onSelectProject }: TimelineProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -86,6 +90,8 @@ export function Timeline({ projects }: TimelineProps) {
               onToggleLane={toggleLane}
               hoveredProjectId={hoveredProjectId}
               onHoverChange={setHoveredProjectId}
+              selectedProjectId={selectedProjectId}
+              {...(onSelectProject ? { onSelectProject } : {})}
             />
           </section>
 
@@ -134,6 +140,8 @@ export function Timeline({ projects }: TimelineProps) {
                   layout={bar}
                   rowTop={position.top}
                   highlighted={hoveredProjectId === bar.projectId}
+                  selected={selectedProjectId === bar.projectId}
+                  {...(onSelectProject ? { onSelect: onSelectProject } : {})}
                   onHoverChange={setHoveredProjectId}
                 />
               );

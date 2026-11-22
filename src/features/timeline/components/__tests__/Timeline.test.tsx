@@ -47,7 +47,7 @@ describe('Timeline', () => {
       }),
     ]);
 
-    const bar = screen.getByRole('button', { name: /Mudança/ });
+    const bar = screen.getByRole('button', { name: /Mudança/, pressed: false });
     expect(bar.style.left).toBe('100px');
     expect(bar.style.width).toBe('100px');
   });
@@ -72,7 +72,9 @@ describe('Timeline', () => {
       }),
     ]);
 
-    expect(screen.queryByRole('button', { name: /Ano que vem/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Ano que vem/, pressed: false }),
+    ).not.toBeInTheDocument();
   });
 
   it('collapses and expands a lane', async () => {
@@ -83,10 +85,12 @@ describe('Timeline', () => {
     await user.click(toggle);
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('button', { name: /Reforma/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Reforma/, pressed: false }),
+    ).not.toBeInTheDocument();
 
     await user.click(toggle);
-    expect(screen.getByRole('button', { name: /Reforma/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Reforma/, pressed: false })).toBeInTheDocument();
   });
 
   it('draws milestones inside the bar', () => {
@@ -106,7 +110,7 @@ describe('Timeline', () => {
       }),
     ]);
 
-    const bar = screen.getByRole('button', { name: /Lançamento/ });
+    const bar = screen.getByRole('button', { name: /Lançamento/, pressed: false });
     const milestone = bar.querySelector<HTMLElement>('[data-milestone-id]');
     // 5.5 days after the start of the bar, at 10 px/day.
     expect(milestone?.style.left).toBe('55px');
@@ -124,7 +128,7 @@ describe('Timeline', () => {
       }),
     ]);
 
-    await user.hover(screen.getByRole('button', { name: /Mudança/ }));
+    await user.hover(screen.getByRole('button', { name: /Mudança/, pressed: false }));
 
     await screen.findByRole('tooltip');
     const tooltip = document.querySelector('[data-slot="tooltip-content"]');
@@ -138,7 +142,7 @@ describe('Timeline', () => {
     const user = userEvent.setup();
     renderTimeline([makeProject({ title: 'Reforma' })]);
 
-    const bar = screen.getByRole('button', { name: /Reforma/ });
+    const bar = screen.getByRole('button', { name: /Reforma/, pressed: false });
     const row = screen.getByText('Reforma', { selector: 'li span' }).closest('li');
 
     await user.hover(bar);
@@ -180,7 +184,7 @@ describe('Timeline', () => {
   it('pans when dragging and swallows the click that ends the drag', () => {
     renderTimeline([makeProject({ title: 'Reforma' })]);
     const canvas = screen.getByRole('region', { name: 'Linha do tempo' });
-    const bar = screen.getByRole('button', { name: /Reforma/ });
+    const bar = screen.getByRole('button', { name: /Reforma/, pressed: false });
     canvas.setPointerCapture = () => undefined;
     const onClick = vi.fn();
     canvas.addEventListener('click', onClick);
@@ -202,7 +206,7 @@ describe('Timeline', () => {
   it('keeps a short press as a normal click', () => {
     renderTimeline([makeProject({ title: 'Reforma' })]);
     const canvas = screen.getByRole('region', { name: 'Linha do tempo' });
-    const bar = screen.getByRole('button', { name: /Reforma/ });
+    const bar = screen.getByRole('button', { name: /Reforma/, pressed: false });
     const onClick = vi.fn();
     canvas.addEventListener('click', onClick);
 
@@ -214,5 +218,40 @@ describe('Timeline', () => {
 
     expect(useViewportStore.getState().viewport.startDay).toBe(MARCH_1);
     expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('selects a project from its bar or its sidebar row', async () => {
+    const user = userEvent.setup();
+    const project = makeProject({ title: 'Reforma' });
+    const onSelectProject = vi.fn();
+    render(
+      <TooltipProvider>
+        <Timeline projects={[project]} selectedProjectId={null} onSelectProject={onSelectProject} />
+      </TooltipProvider>,
+    );
+    act(() => {
+      useViewportStore.setState({ viewport: { startDay: MARCH_1, pxPerDay: 10, widthPx: 1000 } });
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Reforma', pressed: false }));
+    await user.click(screen.getByText('Reforma', { selector: 'li button span' }));
+
+    expect(onSelectProject).toHaveBeenNthCalledWith(1, project.id);
+    expect(onSelectProject).toHaveBeenNthCalledWith(2, project.id);
+  });
+
+  it('marks the selected project', () => {
+    const project = makeProject({ title: 'Reforma' });
+    render(
+      <TooltipProvider>
+        <Timeline projects={[project]} selectedProjectId={project.id} />
+      </TooltipProvider>,
+    );
+    act(() => {
+      useViewportStore.setState({ viewport: { startDay: MARCH_1, pxPerDay: 10, widthPx: 1000 } });
+    });
+
+    expect(screen.getByRole('button', { name: 'Reforma', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { current: true })).toHaveTextContent('Reforma');
   });
 });
