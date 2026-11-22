@@ -24,7 +24,8 @@ const STATUS_CLASS_NAMES: Record<ProjectStatus, string> = {
   in_progress: '',
   paused: 'bar-striped',
   completed: 'opacity-70',
-  cancelled: 'opacity-45 [&_[data-slot=bar-title]]:line-through',
+  // Faded and grayed, but the title keeps readable contrast (WCAG AA).
+  cancelled: 'grayscale [&>[aria-hidden]]:opacity-50 [&_[data-slot=bar-title]]:line-through',
 };
 
 interface ProjectBarProps {

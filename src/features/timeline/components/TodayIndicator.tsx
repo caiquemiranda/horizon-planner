@@ -29,7 +29,7 @@ export function TodayIndicator({ viewport, today, variant }: TodayIndicatorProps
         )}
       />
       {variant === 'ruler' ? (
-        <span className="absolute bottom-1.5 left-0 -translate-x-1/2 rounded-full bg-today px-2 py-px text-[10px] font-semibold text-white ring-2 ring-background">
+        <span className="absolute bottom-1.5 left-0 -translate-x-1/2 rounded-full bg-today px-2 py-px text-[10px] font-semibold text-today-foreground ring-2 ring-background">
           Hoje
         </span>
       ) : null}
