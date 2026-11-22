@@ -5,6 +5,7 @@ import type { Project } from '@/types/project';
 
 import { type ProjectFormValues, toFormValues, validateForm } from '../lib/form';
 import { useProjectsStore } from '../store/projectsStore';
+import { MilestonesEditor } from './MilestonesEditor';
 import { ProjectForm } from './ProjectForm';
 
 interface ProjectEditorProps {
@@ -39,7 +40,17 @@ export function ProjectEditor({ project, categories }: ProjectEditorProps) {
         errors={validation.errors}
         categories={categories}
         onChange={handleChange}
-      />
+      >
+        <MilestonesEditor
+          milestones={values.milestones}
+          errors={validation.errors}
+          startDate={values.startDate}
+          endDate={values.endDate}
+          onChange={(milestones) => {
+            handleChange({ milestones });
+          }}
+        />
+      </ProjectForm>
       <p
         role="status"
         className="sticky bottom-0 flex items-center gap-1.5 border-t bg-background px-4 py-3 text-xs text-muted-foreground"
