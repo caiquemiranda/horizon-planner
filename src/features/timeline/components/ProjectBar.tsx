@@ -32,6 +32,10 @@ interface ProjectBarProps {
   /** Top of the project's row, in px from the top of the timeline body. */
   rowTop: number;
   highlighted?: boolean;
+  /** The project open in the drawer. */
+  selected?: boolean;
+  /** Must be stable. */
+  onSelect?: (projectId: UUID) => void;
   /** Called with the project id on pointer enter and `null` on leave. Must be stable. */
   onHoverChange?: (projectId: UUID | null) => void;
 }
@@ -41,6 +45,8 @@ export const ProjectBar = memo(function ProjectBar({
   layout,
   rowTop,
   highlighted = false,
+  selected = false,
+  onSelect,
   onHoverChange,
 }: ProjectBarProps) {
   const { x, width, milestoneXs } = layout;
@@ -64,7 +70,10 @@ export const ProjectBar = memo(function ProjectBar({
           type="button"
           data-project-id={project.id}
           data-highlighted={highlighted || undefined}
+          data-selected={selected || undefined}
           aria-label={project.title}
+          aria-pressed={selected}
+          onClick={() => onSelect?.(project.id)}
           onPointerEnter={() => onHoverChange?.(project.id)}
           onPointerLeave={() => onHoverChange?.(null)}
           className={cn(
@@ -73,6 +82,7 @@ export const ProjectBar = memo(function ProjectBar({
             'bg-[color-mix(in_oklab,var(--project-color)_16%,var(--surface-sunken))]',
             'transition-[box-shadow,filter,opacity] duration-(--duration-fast) ease-out-expo',
             'hover:brightness-110 data-highlighted:shadow-[0_0_0_1px_var(--project-color)]',
+            'data-selected:z-10 data-selected:shadow-[0_0_0_2px_var(--project-color),0_4px_12px_-2px_color-mix(in_oklab,var(--project-color)_45%,transparent)]',
             'focus-visible:shadow-[0_0_0_2px_var(--project-color)] focus-visible:outline-none',
             STATUS_CLASS_NAMES[project.status],
           )}

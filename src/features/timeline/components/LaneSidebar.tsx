@@ -15,6 +15,8 @@ interface LaneSidebarProps {
   onToggleLane: (horizon: Horizon) => void;
   hoveredProjectId?: UUID | null;
   onHoverChange?: (projectId: UUID | null) => void;
+  selectedProjectId?: UUID | null;
+  onSelectProject?: (projectId: UUID) => void;
 }
 
 /** Left column: lane headers (collapsible) and one title per project row. */
@@ -24,6 +26,8 @@ export function LaneSidebar({
   onToggleLane,
   hoveredProjectId = null,
   onHoverChange,
+  selectedProjectId = null,
+  onSelectProject,
 }: LaneSidebarProps) {
   return (
     <>
@@ -73,30 +77,38 @@ export function LaneSidebar({
                   <li
                     key={projectId}
                     data-highlighted={hoveredProjectId === projectId || undefined}
+                    data-selected={selectedProjectId === projectId || undefined}
                     onPointerEnter={() => onHoverChange?.(projectId)}
                     onPointerLeave={() => onHoverChange?.(null)}
-                    className="flex items-center gap-2 border-b border-timeline-grid pr-3 pl-8 transition-colors duration-(--duration-fast) data-highlighted:bg-accent/60"
+                    className="border-b border-timeline-grid transition-colors duration-(--duration-fast) data-highlighted:bg-accent/60 data-selected:bg-accent"
                     style={{ height: rowHeight }}
                   >
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        'size-2 shrink-0 rounded-[3px]',
-                        COLOR_META[project.color].swatchClassName,
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'truncate text-sm',
-                        STATUS_META[project.status].isClosed && 'text-muted-foreground',
-                        project.status === 'cancelled' && 'line-through',
-                      )}
+                    <button
+                      type="button"
+                      aria-current={selectedProjectId === projectId || undefined}
+                      onClick={() => onSelectProject?.(projectId)}
+                      className="flex size-full items-center gap-2 pr-3 pl-8 text-left outline-none focus-visible:bg-accent"
                     >
-                      {project.title}
-                    </span>
-                    <span className="ml-auto font-mono text-[11px] text-muted-foreground tabular-nums">
-                      {project.progress}%
-                    </span>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          'size-2 shrink-0 rounded-[3px]',
+                          COLOR_META[project.color].swatchClassName,
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          'truncate text-sm',
+                          STATUS_META[project.status].isClosed && 'text-muted-foreground',
+                          project.status === 'cancelled' && 'line-through',
+                        )}
+                      >
+                        {project.title}
+                      </span>
+                      <span className="ml-auto font-mono text-[11px] text-muted-foreground tabular-nums">
+                        {project.progress}%
+                      </span>
+                    </button>
                   </li>
                 );
               })}
