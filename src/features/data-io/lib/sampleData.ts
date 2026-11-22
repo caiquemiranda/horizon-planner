@@ -1,6 +1,10 @@
+import { computeSchedule } from '@/features/schedule/lib/engine';
+import { createIndustrialSchedule } from '@/features/schedule/lib/fixtures';
+import { getProjectSyncPatch } from '@/features/schedule/lib/portfolioSync';
 import { dayToIsoDate, isoDateToDay } from '@/features/timeline/lib/time';
 import { createId } from '@/lib/id';
 import type { Horizon, ISODate, Project, ProjectColor, ProjectStatus, UUID } from '@/types/project';
+import type { ProjectSchedule } from '@/types/schedule';
 
 interface SampleMilestone {
   title: string;
@@ -147,10 +151,58 @@ export interface SampleDataOptions {
   now?: Date;
 }
 
-/** Builds the sample projects around `today`. Every call returns fresh ids. */
-export function createSampleProjects(
+/** How many days before today the detailed sample schedule starts. */
+const INDUSTRIAL_START_OFFSET = -6;
+
+export interface SampleData {
+  projects: Project[];
+  /** Detailed plans (WBS, links, calendar) for some of the projects. */
+  schedules: ProjectSchedule[];
+}
+
+/**
+ * Sample portfolio plus one fully planned project, "Implantação de Sistema Industrial",
+ * whose dates and progress come from its schedule. Every call returns fresh ids.
+ */
+export function createSampleData(today: ISODate, options: SampleDataOptions = {}): SampleData {
+  const { generateId = createId, now = new Date() } = options;
+  const projects = createPortfolio(today, { generateId, now });
+  const projectId = generateId();
+  const schedule = createIndustrialSchedule({
+    projectId,
+    start: dayToIsoDate(isoDateToDay(today) + INDUSTRIAL_START_OFFSET),
+    generateId: () => generateId(),
+    now,
+  });
+  const timestamp = now.toISOString();
+  const base: Project = {
+    id: projectId,
+    title: 'Implantação de Sistema Industrial',
+    description: 'Cronograma detalhado com fases, dependências entre tarefas e marco de aceite.',
+    horizon: 'short',
+    category: 'Trabalho',
+    status: 'in_progress',
+    color: 'red',
+    startDate: today,
+    endDate: today,
+    progress: 0,
+    milestones: [],
+    sortOrder: projects.filter((project) => project.horizon === 'short').length,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  const industrial = { ...base, ...getProjectSyncPatch(base, computeSchedule(schedule)) };
+  return { projects: [...projects, industrial], schedules: [schedule] };
+}
+
+/** The sample projects alone (see `createSampleData`). */
+export function createSampleProjects(today: ISODate, options: SampleDataOptions = {}): Project[] {
+  return createSampleData(today, options).projects;
+}
+
+function createPortfolio(
   today: ISODate,
-  { generateId = createId, now = new Date() }: SampleDataOptions = {},
+  { generateId, now }: Required<SampleDataOptions>,
 ): Project[] {
   const todayDay = isoDateToDay(today);
   const timestamp = now.toISOString();
