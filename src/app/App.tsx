@@ -1,9 +1,12 @@
-import { Plus, SearchX } from 'lucide-react';
+import { FlaskConical, Plus, SearchX } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Button } from '@/components/ui/button';
+import { DataMenu } from '@/features/data-io/components/DataMenu';
+import { DataNotice } from '@/features/data-io/components/DataNotice';
+import { useDataActions } from '@/features/data-io/hooks/useDataActions';
 import { ActiveFiltersBar } from '@/features/filters/components/ActiveFiltersBar';
 import { FilterMenu } from '@/features/filters/components/FilterMenu';
 import { useFilteredProjects } from '@/features/filters/hooks/useFilteredProjects';
@@ -29,6 +32,7 @@ export function App() {
   const openCreate = useDrawerStore((state) => state.openCreate);
   const clearFilters = useFiltersStore((state) => state.clearAll);
   const filtered = useFilteredProjects(projects, selectedProjectId);
+  const { loadSample } = useDataActions();
 
   useEffect(() => {
     void load();
@@ -45,10 +49,22 @@ export function App() {
     projects.length === 0 ? (
       <TimelineEmptyState
         action={
-          <Button size="sm" onClick={openCreate}>
-            <Plus />
-            Criar projeto
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button size="sm" onClick={openCreate}>
+              <Plus />
+              Criar projeto
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void loadSample();
+              }}
+            >
+              <FlaskConical />
+              Carregar dados de exemplo
+            </Button>
+          </div>
         }
       />
     ) : (
@@ -70,6 +86,7 @@ export function App() {
         actions={
           <>
             <NewProjectButton />
+            <DataMenu />
             <ThemeToggle />
           </>
         }
@@ -92,6 +109,7 @@ export function App() {
 
       <ProjectPanel onProjectCreated={revealProject} />
       <ProjectsErrorAlert />
+      <DataNotice />
     </div>
   );
 }
