@@ -12,6 +12,8 @@ export interface LaneLayoutOptions {
   headerHeight: number;
   /** Horizons whose rows are hidden (only the header is shown). */
   collapsed?: ReadonlySet<Horizon>;
+  /** Lanes to show, in display order (default: all of them). */
+  horizons?: readonly Horizon[];
 }
 
 export interface LaneLayout {
@@ -49,15 +51,15 @@ export function compareProjects(a: Project, b: Project): number {
 
 /**
  * Stacks the Short, Medium and Long-term lanes vertically, one project per row.
- * Every lane is always present so the UI can show empty states.
+ * Every requested lane is present, even empty, so the UI can show empty states.
  */
 export function layoutLanes(projects: readonly Project[], options: LaneLayoutOptions): LanesLayout {
-  const { rowHeight, headerHeight, collapsed = new Set<Horizon>() } = options;
+  const { rowHeight, headerHeight, collapsed = new Set<Horizon>(), horizons = HORIZONS } = options;
   const rows = new Map<UUID, RowPosition>();
   const lanes: LaneLayout[] = [];
   let top = 0;
 
-  for (const horizon of HORIZONS) {
+  for (const horizon of horizons) {
     const laneProjects = projects
       .filter((project) => project.horizon === horizon)
       .sort(compareProjects);

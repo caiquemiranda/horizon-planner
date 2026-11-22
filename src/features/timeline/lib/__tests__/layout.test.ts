@@ -94,6 +94,17 @@ describe('layoutLanes', () => {
     });
     expect(rows.size).toBe(0);
   });
+
+  it('lays out only the requested lanes', () => {
+    const short = makeProject({ horizon: 'short' });
+    const long = makeProject({ horizon: 'long' });
+
+    const { lanes, rows } = layoutLanes([short, long], { ...options, horizons: ['long'] });
+
+    expect(lanes.map((lane) => [lane.horizon, lane.top])).toEqual([['long', 0]]);
+    expect(rows.get(long.id)).toEqual({ horizon: 'long', row: 0, top: 32 });
+    expect(rows.has(short.id)).toBe(false);
+  });
 });
 
 describe('computeBarGeometry', () => {
