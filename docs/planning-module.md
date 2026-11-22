@@ -189,6 +189,29 @@ schedule; switching projects remounts it from a clean state.
     Every path goes through the domain commands: self links, duplicates, links to summary
     tasks and cycles are refused with a message, and nothing changes.
 
+## Editing on the chart and the table
+
+- **Move a bar** by dragging its body; **resize** it from either edge (the cursor changes
+  over the 6 px end zones). A dashed preview with the new dates follows the pointer, the
+  change is saved once on release, and `Esc` cancels. The chart scrolls when the pointer
+  nears its left or right edge.
+  - Moving keeps the duration in working days; the finish edge changes the duration and
+    keeps the start; the start edge changes the start and keeps the finish. Never below
+    one working day (use "Converter em marco" for a milestone).
+  - Snap follows the zoom: days, weeks when zoomed out, about a month beyond.
+  - An automatic task dropped before what its links allow stays at the link bound, and a
+    message names the predecessor holding it. Summary bars cannot be dragged: their dates
+    come from their subtasks.
+- **Link handles** sit just outside a bar's ends, so the ends stay free for resizing.
+- **Reorder rows** by dragging the grip in front of a task name: the top or bottom of the
+  target row places it before or after, the middle makes it a subtask. The same moves are
+  available from the keyboard (Alt+Shift+arrows). Invalid moves are refused with a reason.
+- **Columns** can be resized from their header edge and shown or hidden in the "Colunas"
+  menu (the name is always visible); both are remembered per project. Column widths only
+  change the table, so rows and bars stay aligned.
+- The chart's single-key shortcuts and bar dragging are mouse/keyboard conveniences; every
+  change remains possible from the table cells.
+
 ## Delivery plan
 
 | PR  | Block                       | Content                                                                                     | Status  |
@@ -198,7 +221,7 @@ schedule; switching projects remounts it from a clean state.
 | 3   | `feat/workspace-treegrid`   | Project route, workspace page, editable TreeGrid with WBS, expand/collapse, row actions     | PR 20   |
 | 4   | `feat/gantt-chart`          | Gantt pane: time scale, bars, summaries, milestones, today line, synced rows and selection  | PR 21   |
 | 5   | `feat/gantt-dependencies`   | Orthogonal connector router, SVG layer, link editing (cell, dialog, drag from bar)          | PR 22   |
-| 6   | `feat/gantt-editing`        | Bar drag and resize with preview and snap, context menu, reorder, column and split sizing   | Planned |
+| 6   | `feat/gantt-editing`        | Bar drag and resize with preview and snap, row drag-and-drop, column sizing and visibility  | PR 23   |
 | 7   | `feat/workspace-robustness` | Calendar settings, conflicts across tabs, permissions gate, narrow screens, error recovery  | Planned |
 | 8   | `test/planning-e2e`         | Row virtualization, performance measurements, end-to-end tests, screenshots, final report   | Planned |
 
@@ -226,7 +249,7 @@ implemented** or **Blocked**, with evidence.
 | Editing a task reschedules its successors                              | Implemented/Tested | `workspaceFlows.test.tsx`, `engine.test.ts`                                                         |
 | Engine respects working days, weekends and date conventions            | Implemented/Tested | `calendar.test.ts`, `engine.test.ts`                                                                |
 | Dependency cycles rejected without corrupting state                    | Implemented/Tested | `dependencies.test.ts`, `commands.test.ts`, `linkFlows.test.tsx`                                    |
-| Bar drag/resize updates dates and the TreeGrid                         | Not implemented    | PR 6                                                                                                |
+| Bar drag/resize updates dates and the TreeGrid                         | Implemented/Tested | `barDrag.test.ts`, `editingFlows.test.tsx`; checked in Chrome                                       |
 | Table edits update bars, connectors and summaries                      | Implemented/Tested | `ganttFlows.test.tsx`, `connectorLayout.test.ts`                                                    |
 | No data from another project when switching quickly                    | Implemented/Tested | `workspaceFlows.test.tsx`, `scheduleStore.test.ts`                                                  |
 | Data and links persist after refresh                                   | Implemented/Tested | `ScheduleRepository.test.ts`; reload checked in Chrome                                              |
