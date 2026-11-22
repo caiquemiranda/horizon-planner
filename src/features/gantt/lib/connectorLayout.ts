@@ -37,6 +37,8 @@ export function layoutConnectors(
   result: ScheduleResult,
   viewport: Viewport,
   rowHeight: number,
+  /** Rendered rows; links entirely above or below them are skipped. */
+  rowRange: { first: number; last: number } = { first: 0, last: Number.POSITIVE_INFINITY },
   margin = 400,
 ): ConnectorShape[] {
   const rowIndex = new Map<UUID, number>(rows.map((row, index) => [row.task.id, index]));
@@ -46,6 +48,9 @@ export function layoutConnectors(
     const predecessorRow = rowIndex.get(dependency.predecessorId);
     const successorRow = rowIndex.get(dependency.successorId);
     if (predecessorRow === undefined || successorRow === undefined) continue;
+    // Entirely above or below the rendered rows: it cannot cross the visible area.
+    if (Math.max(predecessorRow, successorRow) < rowRange.first) continue;
+    if (Math.min(predecessorRow, successorRow) > rowRange.last) continue;
 
     const predecessor = result.tasks.get(dependency.predecessorId);
     const successor = result.tasks.get(dependency.successorId);

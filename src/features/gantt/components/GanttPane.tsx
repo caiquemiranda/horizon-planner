@@ -20,6 +20,7 @@ import { usePointerNavigation } from '@/features/timeline/hooks/usePointerNaviga
 import { useWheelNavigation } from '@/features/timeline/hooks/useWheelNavigation';
 import { centerOn, fitRange } from '@/features/timeline/lib/scale';
 import { useViewportStoreApi } from '@/features/timeline/store/viewportContext';
+import { useRowWindow } from '@/features/workspace/hooks/useRowWindow';
 import type { WorkspaceModel } from '@/features/workspace/hooks/useWorkspaceModel';
 import { WORKSPACE_METRICS } from '@/features/workspace/lib/columns';
 import type { UUID } from '@/types/project';
@@ -175,21 +176,32 @@ export function GanttPane({
     [model.calendar],
   );
 
+  // The same rows as the table's rendered window: off-screen bars are not in the DOM.
+  const rowWindow = useRowWindow(scrollerRef, model.rows.length, {
+    rowHeight,
+    offsetTop: headerHeight,
+  });
+  const { first, last } = rowWindow;
+
   const bars = useMemo(
     () =>
-      model.rows.flatMap((row, index) => {
+      model.rows.slice(first, last + 1).flatMap((row, offset) => {
+        const index = first + offset;
         const task = model.result.tasks.get(row.task.id);
         if (!task) return [];
         const geometry = getBarGeometry(task, index, viewport, rowHeight);
         return isHorizontallyVisible(geometry, viewport) ? [{ row, task, geometry }] : [];
       }),
-    [model, viewport],
+    [model, viewport, first, last],
   );
 
   const connectors = useMemo(
     () =>
-      layoutConnectors(model.schedule.dependencies, model.rows, model.result, viewport, rowHeight),
-    [model, viewport],
+      layoutConnectors(model.schedule.dependencies, model.rows, model.result, viewport, rowHeight, {
+        first,
+        last,
+      }),
+    [model, viewport, first, last],
   );
 
   const [drag, setDrag] = useState<LinkDrag | null>(null);
