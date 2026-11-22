@@ -52,6 +52,22 @@ describe('Timeline', () => {
     expect(bar.style.width).toBe('100px');
   });
 
+  it('describes each bar for screen readers', () => {
+    renderTimeline([
+      makeProject({
+        title: 'Mudança',
+        status: 'paused',
+        startDate: '2026-03-11' as ISODate,
+        endDate: '2026-03-20' as ISODate,
+        progress: 20,
+      }),
+    ]);
+
+    expect(
+      screen.getByRole('button', { name: 'Mudança', pressed: false }),
+    ).toHaveAccessibleDescription('Pausado, 11 – 20 mar 2026, 20% concluído');
+  });
+
   it('lists projects by horizon in the sidebar', () => {
     renderTimeline([
       makeProject({ title: 'Curso de inglês', horizon: 'medium' }),

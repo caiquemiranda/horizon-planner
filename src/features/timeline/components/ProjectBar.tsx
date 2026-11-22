@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { type CSSProperties, memo } from 'react';
+import { type CSSProperties, memo, useId } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { COLOR_META } from '@/features/projects/constants';
@@ -8,6 +8,7 @@ import type { Project, ProjectStatus, UUID } from '@/types/project';
 import type { ProjectBarLayout } from '@/types/timeline';
 
 import { TIMELINE_METRICS } from '../constants';
+import { describeProject } from '../lib/format';
 import { ProjectTooltipContent } from './ProjectTooltipContent';
 
 /** Vertical gap between the bar and its row edges. */
@@ -54,6 +55,7 @@ export const ProjectBar = memo(function ProjectBar({
   // Keeps the title readable when the bar starts before the visible area.
   const labelOffset = Math.max(0, Math.min(-x, width - MIN_LABEL_WIDTH_PX));
   const isCompleted = project.status === 'completed';
+  const descriptionId = useId();
 
   const style = {
     '--project-color': `var(${COLOR_META[project.color].cssVar})`,
@@ -72,6 +74,8 @@ export const ProjectBar = memo(function ProjectBar({
           data-highlighted={highlighted || undefined}
           data-selected={selected || undefined}
           aria-label={project.title}
+          // Overrides the tooltip's own reference, which only exists while it is open.
+          aria-describedby={descriptionId}
           aria-pressed={selected}
           onClick={() => onSelect?.(project.id)}
           onPointerEnter={() => onHoverChange?.(project.id)}
@@ -122,6 +126,10 @@ export const ProjectBar = memo(function ProjectBar({
               {project.progress}%
             </span>
           ) : null}
+
+          <span id={descriptionId} hidden>
+            {describeProject(project)}
+          </span>
 
           {milestoneXs.map((milestoneX, index) => {
             const milestone = project.milestones[index];

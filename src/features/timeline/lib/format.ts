@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-import type { ISODate } from '@/types/project';
+import { STATUS_META } from '@/features/projects/constants';
+import type { ISODate, Project } from '@/types/project';
 import type { DayNumber } from '@/types/timeline';
 
 import { dayToLocalDate, isoDateToDay, isoRangeToDays } from './time';
@@ -59,4 +60,24 @@ export function formatVisibleRange(from: DayNumber, to: DayNumber): string {
   // `to` is exclusive: the last visible moment belongs to the previous day at most.
   const end = format(dayToLocalDate(Math.max(from, to - 1e-6)), 'MMM yyyy', { locale: ptBR });
   return start === end ? start : `${start} – ${end}`;
+}
+
+/**
+ * Spoken summary of a bar, e.g. "Em andamento, 11 – 20 mar 2026, 45% concluído,
+ * 1 de 2 marcos concluídos". Screen readers get what the bar shows visually.
+ */
+export function describeProject(project: Project): string {
+  const parts = [
+    STATUS_META[project.status].label,
+    formatDateRange(project.startDate, project.endDate),
+    `${String(project.progress)}% concluído`,
+  ];
+  const total = project.milestones.length;
+  if (total > 0) {
+    const done = project.milestones.filter((milestone) => milestone.completed).length;
+    parts.push(
+      `${String(done)} de ${String(total)} ${total === 1 ? 'marco concluído' : 'marcos concluídos'}`,
+    );
+  }
+  return parts.join(', ');
 }
