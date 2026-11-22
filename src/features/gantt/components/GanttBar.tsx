@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type PointerEvent } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getDisplayFinish } from '@/features/schedule/lib/engine';
@@ -12,7 +12,11 @@ import { cn } from '@/lib/utils';
 import type { ScheduledTask } from '@/types/schedule';
 import type { DayNumber } from '@/types/timeline';
 
+import type { BarDragMode } from '../lib/barDrag';
 import type { BarGeometry } from '../lib/geometry';
+
+/** Width of the zones at a bar's ends that resize instead of moving. */
+export const RESIZE_ZONE_PX = 6;
 
 interface GanttBarProps {
   geometry: BarGeometry;
@@ -23,6 +27,10 @@ interface GanttBarProps {
   selected: boolean;
   highlighted: boolean;
   manual: boolean;
+  /** Starts a move or resize; omitted for summaries and when read-only. */
+  onDragStart?: (event: PointerEvent<HTMLElement>, mode: BarDragMode) => void;
+  /** Faded while a drag preview shows the new position. */
+  dimmed?: boolean;
 }
 
 /**
@@ -41,7 +49,29 @@ export const GanttBar = memo(function GanttBar({
   selected,
   highlighted,
   manual,
+  onDragStart,
+  dimmed = false,
 }: GanttBarProps) {
+  const draggable = onDragStart !== undefined && task.kind !== 'summary';
+  const dragProps = draggable
+    ? {
+        'data-no-pan': '',
+        onPointerDown: (event: PointerEvent<HTMLElement>) => {
+          if (event.pointerType === 'mouse' && event.button !== 0) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const offset = event.clientX - rect.left;
+          const mode: BarDragMode =
+            task.kind === 'milestone'
+              ? 'move'
+              : offset <= RESIZE_ZONE_PX
+                ? 'start'
+                : offset >= rect.width - RESIZE_ZONE_PX
+                  ? 'finish'
+                  : 'move';
+          onDragStart(event, mode);
+        },
+      }
+    : {};
   const status = getTaskStatus(task, today);
   const hasIssues = task.issues.length > 0;
   const finish = getDisplayFinish(task);
@@ -51,7 +81,8 @@ export const GanttBar = memo(function GanttBar({
       <div
         data-bar-id={task.id}
         data-kind="milestone"
-        className="absolute"
+        {...dragProps}
+        className={cn('absolute', draggable && 'cursor-grab', dimmed && 'opacity-40')}
         style={{
           left: geometry.x - geometry.height / 2,
           top: geometry.top,
@@ -92,7 +123,10 @@ export const GanttBar = memo(function GanttBar({
       <div
         data-bar-id={task.id}
         data-kind="task"
+        {...dragProps}
         className={cn(
+          draggable && 'cursor-grab',
+          dimmed && 'opacity-40',
           'absolute overflow-hidden rounded-[4px] border border-[color-mix(in_oklab,var(--gantt-bar)_70%,transparent)] bg-[color-mix(in_oklab,var(--gantt-bar)_28%,var(--surface-sunken))]',
           selected && 'ring-2 ring-ring ring-offset-1 ring-offset-background',
           highlighted && 'brightness-110',
@@ -110,6 +144,19 @@ export const GanttBar = memo(function GanttBar({
           className="h-full bg-[color-mix(in_oklab,var(--gantt-bar)_75%,transparent)]"
           style={{ width: `${String(task.progress)}%` }}
         />
+        {draggable ? (
+          <>
+            {/* Cursor hints only: the handler picks the mode from the pointer position. */}
+            <span
+              className="absolute inset-y-0 left-0 cursor-ew-resize"
+              style={{ width: RESIZE_ZONE_PX }}
+            />
+            <span
+              className="absolute inset-y-0 right-0 cursor-ew-resize"
+              style={{ width: RESIZE_ZONE_PX }}
+            />
+          </>
+        ) : null}
       </div>
     );
 

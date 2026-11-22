@@ -21,6 +21,7 @@ import type { Project, UUID } from '@/types/project';
 
 import { useWorkspaceActions } from '../hooks/useWorkspaceActions';
 import { useWorkspaceModel } from '../hooks/useWorkspaceModel';
+import { formatCellDate } from '../lib/cells';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { LinksDialog } from './LinksDialog';
@@ -291,6 +292,24 @@ function WorkspaceBody({ project }: { project: Project }) {
               onOpenLink={(linkId) => {
                 const link = model.schedule.dependencies.find((item) => item.id === linkId);
                 if (link) setLinksTarget({ taskId: link.successorId, focusLinkId: link.id });
+              }}
+              onBarChange={(taskId, change) => {
+                const error = actions.update(taskId, change.patch);
+                if (error) {
+                  showNotice(error, 'error');
+                  return;
+                }
+                // Automatic tasks never start before their predecessors allow.
+                const after = useScheduleStore.getState().result?.tasks.get(taskId);
+                if (after && after.start > change.start && after.drivingDependencyId) {
+                  const link = useScheduleStore
+                    .getState()
+                    .schedule?.dependencies.find((item) => item.id === after.drivingDependencyId);
+                  showNotice(
+                    `${model.describeTask(taskId)} não pode começar antes de ${formatCellDate(after.start)}: depende de ${link ? model.describeTask(link.predecessorId) : 'outra tarefa'}.`,
+                    'error',
+                  );
+                }
               }}
               onCreateLink={(candidate) => {
                 const error = actions.addLink(candidate);

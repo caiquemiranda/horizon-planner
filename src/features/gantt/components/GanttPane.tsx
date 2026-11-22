@@ -25,9 +25,11 @@ import { WORKSPACE_METRICS } from '@/features/workspace/lib/columns';
 import type { UUID } from '@/types/project';
 import type { DayNumber } from '@/types/timeline';
 
+import { type BarChange, type BarDragMode, getBarChange, snapDelta } from '../lib/barDrag';
 import { layoutConnectors } from '../lib/connectorLayout';
 import { linkTypeFor } from '../lib/connectors';
 import { getBarGeometry, isHorizontallyVisible } from '../lib/geometry';
+import { BarDragPreview } from './BarDragPreview';
 import { ConnectorLayer } from './ConnectorLayer';
 import { GanttBar } from './GanttBar';
 
@@ -47,7 +49,26 @@ interface GanttPaneProps {
   activeLinkId?: UUID | null;
   /** Creates a link drawn by dragging from a bar end; omitted when read-only. */
   onCreateLink?: (link: DependencyCandidate) => void;
+  /** Applies a bar move or resize when it is released; omitted when read-only. */
+  onBarChange?: (taskId: UUID, change: BarChange) => void;
 }
+
+interface BarDragState {
+  taskId: UUID;
+  mode: BarDragMode;
+  originX: number;
+  /** Viewport start when the drag began, to account for auto-scroll. */
+  originStartDay: number;
+  pointerX: number;
+  /** Past the click threshold: a real drag, not a click. */
+  moved: boolean;
+}
+
+const DRAG_THRESHOLD_PX = 3;
+/** Distance between a bar edge and its link handle. */
+const LINK_HANDLE_OFFSET_PX = 11;
+const AUTO_SCROLL_EDGE_PX = 32;
+const AUTO_SCROLL_STEP_PX = 12;
 
 interface LinkDrag {
   fromId: UUID;
@@ -86,6 +107,7 @@ export function GanttPane({
   onOpenLink,
   activeLinkId = null,
   onCreateLink,
+  onBarChange,
 }: GanttPaneProps) {
   const store = useViewportStoreApi();
   const viewport = store((state) => state.viewport);
@@ -212,6 +234,87 @@ export function GanttPane({
     });
   };
 
+  // ── Moving and resizing bars ──────────────────────────────────────────────────────
+  const [barDrag, setBarDrag] = useState<BarDragState | null>(null);
+  const barDragRef = useRef(barDrag);
+  barDragRef.current = barDrag;
+
+  const startBarDrag = useCallback(
+    (taskId: UUID, event: PointerEvent<HTMLElement>, mode: BarDragMode) => {
+      setBarDrag({
+        taskId,
+        mode,
+        originX: event.clientX,
+        originStartDay: store.getState().viewport.startDay,
+        pointerX: event.clientX,
+        moved: false,
+      });
+    },
+    [store],
+  );
+
+  const barPreview = useMemo(() => {
+    if (!barDrag?.moved) return null;
+    const task = model.result.tasks.get(barDrag.taskId);
+    if (!task) return null;
+    const { pxPerDay, startDay } = viewport;
+    // Pointer travel plus any auto-scroll since the drag started, in days.
+    const deltaPx =
+      barDrag.pointerX - barDrag.originX + (startDay - barDrag.originStartDay) * pxPerDay;
+    const change = getBarChange(task, barDrag.mode, snapDelta(deltaPx, pxPerDay), model.calendar);
+    return change ? { task, change } : null;
+  }, [barDrag, model, viewport]);
+
+  useEffect(() => {
+    if (!barDrag) return;
+    const body = bodyRef.current;
+
+    const handleMove = (event: globalThis.PointerEvent) => {
+      const current = barDragRef.current;
+      if (!current) return;
+      const moved = current.moved || Math.abs(event.clientX - current.originX) > DRAG_THRESHOLD_PX;
+      setBarDrag({ ...current, pointerX: event.clientX, moved });
+      // Near the chart's edges the timeline scrolls, so a bar can travel beyond the view.
+      const rect = body?.getBoundingClientRect();
+      if (moved && rect) {
+        if (event.clientX < rect.left + AUTO_SCROLL_EDGE_PX)
+          store.getState().panBy(-AUTO_SCROLL_STEP_PX);
+        else if (event.clientX > rect.right - AUTO_SCROLL_EDGE_PX)
+          store.getState().panBy(AUTO_SCROLL_STEP_PX);
+      }
+    };
+    const handleUp = () => {
+      const current = barDragRef.current;
+      setBarDrag(null);
+      if (!current?.moved) return;
+      // A finished drag is not also a click on the row.
+      swallowNextClick.current = true;
+      const preview = barPreviewRef.current;
+      if (preview) onBarChange?.(current.taskId, preview.change);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setBarDrag(null);
+      }
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    window.addEventListener('pointercancel', handleUp);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [barDrag !== null, onBarChange, store]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const barPreviewRef = useRef(barPreview);
+  barPreviewRef.current = barPreview;
+  const swallowNextClick = useRef(false);
+
   const rowAt = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return model.rows[Math.floor((event.clientY - rect.top) / rowHeight)];
@@ -252,6 +355,10 @@ export function GanttPane({
             backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${String(rowHeight - 1)}px, var(--timeline-grid) ${String(rowHeight - 1)}px ${String(rowHeight)}px)`,
           }}
           onClick={(event) => {
+            if (swallowNextClick.current) {
+              swallowNextClick.current = false;
+              return;
+            }
             const row = rowAt(event);
             if (row) onSelect(row.task.id);
           }}
@@ -293,8 +400,23 @@ export function GanttPane({
               selected={row.task.id === selectedId}
               highlighted={row.task.id === hoveredId}
               manual={row.task.mode === 'manual'}
+              dimmed={barPreview?.task.id === row.task.id}
+              {...(onBarChange
+                ? {
+                    onDragStart: (event: PointerEvent<HTMLElement>, mode: BarDragMode) => {
+                      startBarDrag(row.task.id, event, mode);
+                    },
+                  }
+                : {})}
             />
           ))}
+          {barPreview ? (
+            <BarDragPreview
+              preview={barPreview}
+              rowIndex={model.rows.findIndex((row) => row.task.id === barPreview.task.id)}
+              viewport={viewport}
+            />
+          ) : null}
           {onCreateLink
             ? bars
                 .filter(
@@ -308,6 +430,9 @@ export function GanttPane({
                     const x =
                       edge === 'start' ? geometry.x - half : geometry.x + geometry.width + half;
                     const origin = { x, y: geometry.centerY };
+                    // Just outside the bar, so its edges stay free for resizing.
+                    const handleX =
+                      x + (edge === 'start' ? -LINK_HANDLE_OFFSET_PX : LINK_HANDLE_OFFSET_PX);
                     return (
                       <button
                         key={`${row.task.id}-${edge}`}
@@ -328,7 +453,7 @@ export function GanttPane({
                           event.stopPropagation();
                         }}
                         className="absolute z-10 size-3 -translate-x-1/2 -translate-y-1/2 cursor-crosshair touch-none rounded-full border-2 border-background bg-ring shadow-sm"
-                        style={{ left: x, top: geometry.centerY }}
+                        style={{ left: handleX, top: geometry.centerY }}
                       />
                     );
                   }),
