@@ -130,6 +130,12 @@ describe('Timeline', () => {
     const milestone = bar.querySelector<HTMLElement>('[data-milestone-id]');
     // 5.5 days after the start of the bar, at 10 px/day.
     expect(milestone?.style.left).toBe('55px');
+    // Painted under the title, which comes later in the DOM.
+    const title = bar.querySelector('[data-slot="bar-title"]');
+    expect(title).not.toBeNull();
+    expect(milestone?.compareDocumentPosition(title as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 
   it('shows the project summary in a tooltip on hover', async () => {

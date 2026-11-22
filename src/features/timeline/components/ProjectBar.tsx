@@ -60,6 +60,7 @@ export const ProjectBar = memo(function ProjectBar({
 
   const style = {
     '--project-color': `var(${COLOR_META[project.color].cssVar})`,
+    '--bar-fill': 'color-mix(in oklab, var(--project-color) 16%, var(--surface-sunken))',
     left: x,
     top: rowTop + BAR_INSET_Y,
     width,
@@ -84,7 +85,7 @@ export const ProjectBar = memo(function ProjectBar({
           className={cn(
             'group absolute flex items-center gap-1.5 overflow-hidden rounded-md border pr-2 pl-2.5 text-left',
             'border-[color-mix(in_oklab,var(--project-color)_50%,transparent)]',
-            'bg-[color-mix(in_oklab,var(--project-color)_16%,var(--surface-sunken))]',
+            'bg-(--bar-fill)',
             'transition-[box-shadow,filter,opacity] duration-(--duration-fast) ease-out-expo',
             'hover:brightness-110 data-highlighted:shadow-[0_0_0_1px_var(--project-color)]',
             'data-selected:z-10 data-selected:shadow-[0_0_0_2px_var(--project-color),0_4px_12px_-2px_color-mix(in_oklab,var(--project-color)_45%,transparent)]',
@@ -105,33 +106,7 @@ export const ProjectBar = memo(function ProjectBar({
             style={{ width: `${String(project.progress)}%` }}
           />
 
-          {width >= MIN_LABEL_WIDTH_PX ? (
-            <span
-              className="relative flex min-w-0 items-center gap-1"
-              style={{ transform: `translateX(${String(labelOffset)}px)` }}
-            >
-              {isCompleted ? (
-                <Check aria-hidden="true" className="size-3 shrink-0 text-(--project-color)" />
-              ) : null}
-              <span data-slot="bar-title" className="truncate text-xs font-medium text-foreground">
-                {project.title}
-              </span>
-            </span>
-          ) : null}
-
-          {width >= MIN_PERCENT_WIDTH_PX && !isCompleted ? (
-            <span
-              aria-hidden="true"
-              className="relative ml-auto font-mono text-[10px] text-muted-foreground tabular-nums"
-            >
-              {project.progress}%
-            </span>
-          ) : null}
-
-          <span id={descriptionId} hidden>
-            {describeProject(project)}
-          </span>
-
+          {/* Drawn before the labels so the title and percentage paint over the diamonds. */}
           {milestoneXs.map((milestoneX, index) => {
             const milestone = project.milestones[index];
             if (!milestone) return null;
@@ -149,6 +124,37 @@ export const ProjectBar = memo(function ProjectBar({
               />
             );
           })}
+
+          {width >= MIN_LABEL_WIDTH_PX ? (
+            <span
+              className="relative flex min-w-0 items-center gap-1"
+              style={{ transform: `translateX(${String(labelOffset)}px)` }}
+            >
+              {isCompleted ? (
+                <Check aria-hidden="true" className="size-3 shrink-0 text-(--project-color)" />
+              ) : null}
+              <span
+                data-slot="bar-title"
+                // A halo in the bar fill keeps the title readable over a milestone.
+                className="truncate text-xs font-medium text-foreground [text-shadow:0_0_3px_var(--bar-fill),0_0_2px_var(--bar-fill)]"
+              >
+                {project.title}
+              </span>
+            </span>
+          ) : null}
+
+          {width >= MIN_PERCENT_WIDTH_PX && !isCompleted ? (
+            <span
+              aria-hidden="true"
+              className="relative ml-auto font-mono text-[10px] text-muted-foreground tabular-nums"
+            >
+              {project.progress}%
+            </span>
+          ) : null}
+
+          <span id={descriptionId} hidden>
+            {describeProject(project)}
+          </span>
         </button>
       </TooltipTrigger>
       <TooltipContent variant="card" side="top" align="center" sideOffset={8} collisionPadding={12}>
