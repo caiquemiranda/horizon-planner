@@ -10,7 +10,7 @@ export function App() {
   return (
     <div className="flex h-svh flex-col overflow-hidden">
       <AppHeader actions={<ThemeToggle />}>
-        <TimelineToolbar />
+        <TimelineToolbar projects={projects} />
       </AppHeader>
 
       <main className="relative flex min-h-0 flex-1 flex-col bg-surface-sunken">

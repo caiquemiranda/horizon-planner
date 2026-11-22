@@ -51,6 +51,8 @@ export interface ViewportState {
    * With `smooth`, consecutive calls accumulate on the running transition's target.
    */
   zoomAt: (anchorX: number, factor: number, options?: { smooth?: boolean }) => void;
+  /** Multiplies the zoom by `factor` around `anchorX` (center by default). Animated. */
+  zoomBy: (factor: number, anchorX?: number) => void;
   /** Sets an absolute zoom level, anchored on the center by default. Animated. */
   zoomTo: (pxPerDay: number, anchorX?: number) => void;
   /** Positive values move forward in time. Immediate, cancels any transition. */
@@ -124,6 +126,11 @@ export const useViewportStore = create<ViewportState>()((set, get) => {
       }
       stopTransition();
       set((state) => ({ viewport: zoomAt(state.viewport, anchorX, factor) }));
+    },
+    zoomBy: (factor, anchorX) => {
+      const target = destination();
+      const anchor = anchorX ?? target.widthPx / 2;
+      animateTo(zoomAt(target, anchor, factor), { anchorX: anchor });
     },
     zoomTo: (pxPerDay, anchorX) => {
       animateTo(zoomTo(destination(), pxPerDay, anchorX), { anchorX });
