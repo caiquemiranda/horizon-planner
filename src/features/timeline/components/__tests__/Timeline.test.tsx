@@ -157,4 +157,23 @@ describe('Timeline', () => {
     expect(canvas).toHaveClass('overflow-clip');
     expect(canvas).not.toHaveClass('overflow-hidden');
   });
+
+  it('zooms on Ctrl + wheel and leaves plain scrolling alone', () => {
+    renderTimeline();
+    const canvas = screen.getByRole('region', { name: 'Linha do tempo' });
+
+    const zoom = new WheelEvent('wheel', {
+      deltaY: -100,
+      ctrlKey: true,
+      cancelable: true,
+      bubbles: true,
+    });
+    canvas.dispatchEvent(zoom);
+    expect(zoom.defaultPrevented).toBe(true);
+    expect(useViewportStore.getState().viewport.pxPerDay).toBeGreaterThan(10);
+
+    const scroll = new WheelEvent('wheel', { deltaY: 100, cancelable: true, bubbles: true });
+    canvas.dispatchEvent(scroll);
+    expect(scroll.defaultPrevented).toBe(false);
+  });
 });

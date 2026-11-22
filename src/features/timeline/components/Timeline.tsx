@@ -5,6 +5,7 @@ import type { Horizon, Project, UUID } from '@/types/project';
 import { TIMELINE_METRICS } from '../constants';
 import { useElementWidth } from '../hooks/useElementWidth';
 import { useTodayDay } from '../hooks/useTodayDay';
+import { useWheelNavigation } from '../hooks/useWheelNavigation';
 import { computeBarLayouts, layoutLanes } from '../lib/layout';
 import { useViewportStore } from '../store/viewportStore';
 import { GridLines } from './GridLines';
@@ -25,6 +26,7 @@ interface TimelineProps {
  * time canvas on the right. Only the canvas width feeds the viewport.
  */
 export function Timeline({ projects }: TimelineProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const viewport = useViewportStore((state) => state.viewport);
   const setWidth = useViewportStore((state) => state.setWidth);
@@ -33,6 +35,7 @@ export function Timeline({ projects }: TimelineProps) {
   const [hoveredProjectId, setHoveredProjectId] = useState<UUID | null>(null);
 
   useElementWidth(canvasRef, setWidth);
+  useWheelNavigation(rootRef, canvasRef);
 
   const { lanes, rows, totalHeight } = useMemo(
     () => layoutLanes(projects, { rowHeight, headerHeight: laneHeaderHeight, collapsed }),
@@ -56,7 +59,7 @@ export function Timeline({ projects }: TimelineProps) {
   }, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 border-b bg-background" style={{ height: rulerHeight }}>
         <div className="flex shrink-0 items-end border-r px-4 pb-2" style={{ width: sidebarWidth }}>
           <span className="text-label">Horizontes</span>
