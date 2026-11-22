@@ -198,3 +198,12 @@
 @utility text-label {
   @apply text-[11px] font-medium tracking-wider text-muted-foreground uppercase;
 }
+
+/* Paused projects on the timeline */
+@utility bar-striped {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    color-mix(in oklab, var(--project-color, var(--foreground)) 22%, transparent) 6px 8px
+  );
+}

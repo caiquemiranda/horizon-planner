@@ -1,27 +1,55 @@
-import { useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { HORIZON_META } from '@/features/projects/constants';
-import { HORIZONS } from '@/types/project';
+import type { Horizon, Project } from '@/types/project';
 
 import { TIMELINE_METRICS } from '../constants';
 import { useElementWidth } from '../hooks/useElementWidth';
+import { computeBarLayouts, layoutLanes } from '../lib/layout';
 import { useViewportStore } from '../store/viewportStore';
 import { GridLines } from './GridLines';
+import { LaneSidebar } from './LaneSidebar';
+import { ProjectBar } from './ProjectBar';
 import { TimelineEmptyState } from './TimelineEmptyState';
 import { TimeRuler } from './TimeRuler';
 
-const { rulerHeight, laneHeaderHeight, sidebarWidth } = TIMELINE_METRICS;
+const { rulerHeight, laneHeaderHeight, rowHeight, sidebarWidth } = TIMELINE_METRICS;
+
+interface TimelineProps {
+  projects: readonly Project[];
+}
 
 /**
  * Gantt-like timeline: a fixed sidebar with the horizon lanes on the left and the
  * time canvas on the right. Only the canvas width feeds the viewport.
  */
-export function Timeline() {
+export function Timeline({ projects }: TimelineProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const viewport = useViewportStore((state) => state.viewport);
   const setWidth = useViewportStore((state) => state.setWidth);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<Horizon>>(() => new Set());
 
   useElementWidth(canvasRef, setWidth);
+
+  const { lanes, rows, totalHeight } = useMemo(
+    () => layoutLanes(projects, { rowHeight, headerHeight: laneHeaderHeight, collapsed }),
+    [projects, collapsed],
+  );
+  const bars = useMemo(
+    () => computeBarLayouts(projects, rows, viewport),
+    [projects, rows, viewport],
+  );
+  const projectsById = useMemo(
+    () => new Map(projects.map((project) => [project.id, project])),
+    [projects],
+  );
+
+  const toggleLane = useCallback((horizon: Horizon) => {
+    setCollapsed((current) => {
+      const next = new Set(current);
+      if (!next.delete(horizon)) next.add(horizon);
+      return next;
+    });
+  }, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -41,29 +69,53 @@ export function Timeline() {
             className="shrink-0 border-r bg-background"
             style={{ width: sidebarWidth }}
           >
-            {HORIZONS.map((horizon) => {
-              const meta = HORIZON_META[horizon];
-              return (
-                <div
-                  key={horizon}
-                  className="flex items-center gap-2 border-b px-4"
-                  style={{ height: laneHeaderHeight }}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="size-2 rounded-full"
-                    style={{ backgroundColor: `var(${meta.cssVar})` }}
-                  />
-                  <span className="text-sm font-medium">{meta.label}</span>
-                  <span className="truncate text-xs text-muted-foreground">{meta.description}</span>
-                </div>
-              );
-            })}
+            <LaneSidebar lanes={lanes} projectsById={projectsById} onToggleLane={toggleLane} />
           </section>
 
-          <div ref={canvasRef} className="relative min-w-0 flex-1 overflow-hidden">
+          <div
+            ref={canvasRef}
+            role="region"
+            aria-label="Linha do tempo"
+            className="relative min-w-0 flex-1 overflow-hidden"
+            style={{ minHeight: totalHeight }}
+          >
             <GridLines viewport={viewport} />
-            <TimelineEmptyState />
+
+            {lanes.map((lane) => (
+              <div key={lane.horizon} aria-hidden="true" className="pointer-events-none">
+                <div
+                  className="absolute inset-x-0 border-b bg-background/40"
+                  style={{ top: lane.top, height: laneHeaderHeight }}
+                />
+                {lane.projectIds.map((projectId, row) => (
+                  <div
+                    key={projectId}
+                    className="absolute inset-x-0 border-b border-timeline-grid"
+                    style={{
+                      top: lane.top + laneHeaderHeight + row * rowHeight,
+                      height: rowHeight,
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+
+            {bars.map((bar) => {
+              const project = projectsById.get(bar.projectId);
+              const position = rows.get(bar.projectId);
+              if (!project || !position) return null;
+
+              return (
+                <ProjectBar
+                  key={bar.projectId}
+                  project={project}
+                  layout={bar}
+                  rowTop={position.top}
+                />
+              );
+            })}
+
+            {projects.length === 0 ? <TimelineEmptyState /> : null}
           </div>
         </div>
       </div>

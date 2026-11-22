@@ -75,17 +75,19 @@ interface ColorMeta {
    * Never build these class names dynamically.
    */
   swatchClassName: string;
+  /** Tailwind palette variable, emitted because `swatchClassName` uses it. */
+  cssVar: `--color-${ProjectColor}-500`;
 }
 
 export const COLOR_META = {
-  slate: { label: 'Ardósia', swatchClassName: 'bg-slate-500' },
-  blue: { label: 'Azul', swatchClassName: 'bg-blue-500' },
-  violet: { label: 'Violeta', swatchClassName: 'bg-violet-500' },
-  pink: { label: 'Rosa', swatchClassName: 'bg-pink-500' },
-  red: { label: 'Vermelho', swatchClassName: 'bg-red-500' },
-  orange: { label: 'Laranja', swatchClassName: 'bg-orange-500' },
-  amber: { label: 'Âmbar', swatchClassName: 'bg-amber-500' },
-  green: { label: 'Verde', swatchClassName: 'bg-green-500' },
-  teal: { label: 'Turquesa', swatchClassName: 'bg-teal-500' },
-  cyan: { label: 'Ciano', swatchClassName: 'bg-cyan-500' },
+  slate: { label: 'Ardósia', swatchClassName: 'bg-slate-500', cssVar: '--color-slate-500' },
+  blue: { label: 'Azul', swatchClassName: 'bg-blue-500', cssVar: '--color-blue-500' },
+  violet: { label: 'Violeta', swatchClassName: 'bg-violet-500', cssVar: '--color-violet-500' },
+  pink: { label: 'Rosa', swatchClassName: 'bg-pink-500', cssVar: '--color-pink-500' },
+  red: { label: 'Vermelho', swatchClassName: 'bg-red-500', cssVar: '--color-red-500' },
+  orange: { label: 'Laranja', swatchClassName: 'bg-orange-500', cssVar: '--color-orange-500' },
+  amber: { label: 'Âmbar', swatchClassName: 'bg-amber-500', cssVar: '--color-amber-500' },
+  green: { label: 'Verde', swatchClassName: 'bg-green-500', cssVar: '--color-green-500' },
+  teal: { label: 'Turquesa', swatchClassName: 'bg-teal-500', cssVar: '--color-teal-500' },
+  cyan: { label: 'Ciano', swatchClassName: 'bg-cyan-500', cssVar: '--color-cyan-500' },
 } as const satisfies Record<ProjectColor, ColorMeta>;
