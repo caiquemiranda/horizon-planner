@@ -35,12 +35,13 @@ export function TimelineToolbar({ projects }: TimelineToolbarProps) {
   });
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="outline" size="sm" onClick={goToToday}>
             <LocateFixed />
-            Hoje
+            {/* Icon only on phones, still named for screen readers. */}
+            <span className="sr-only sm:not-sr-only">Hoje</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent>

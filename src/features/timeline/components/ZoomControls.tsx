@@ -66,7 +66,7 @@ export function ZoomControls({ projects }: ZoomControlsProps) {
               variant="ghost"
               size="sm"
               aria-label={`Nível de zoom: ${currentPreset.label}`}
-              className="w-30 justify-between rounded-none border-x px-2.5 font-normal"
+              className="w-24 justify-between rounded-none border-x px-2.5 font-normal sm:w-30"
             >
               {currentPreset.label}
               <ChevronDown className="text-muted-foreground" />
