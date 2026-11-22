@@ -1,6 +1,9 @@
+import { ChartGantt } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
+import { buttonVariants } from '@/components/ui/button-variants';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
+import { projectHref } from '@/lib/router';
 import type { Project } from '@/types/project';
 
 import { useDrawerStore } from '../store/drawerStore';
@@ -46,6 +49,17 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
       open={isOpen}
       onClose={close}
       title={isCreating ? 'Novo projeto' : (project?.title ?? '')}
+      headerActions={
+        project ? (
+          <a
+            href={projectHref(project.id)}
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          >
+            <ChartGantt />
+            Abrir cronograma
+          </a>
+        ) : null
+      }
       description={
         isCreating
           ? 'Preencha os dados para criar um projeto.'
