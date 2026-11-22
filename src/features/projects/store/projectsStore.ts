@@ -5,6 +5,7 @@ import {
   type ProjectRepository,
   projectRepository,
   ProjectValidationError,
+  scheduleRepository,
 } from '@/services/persistence';
 import type { Project, ProjectDraft, ProjectPatch, UUID } from '@/types/project';
 
@@ -46,6 +47,11 @@ export function describeError(error: unknown): string {
 export interface ProjectsStoreOptions {
   /** Clock for the optimistic `updatedAt`; the repository sets the persisted value. */
   now?: () => Date;
+  /**
+   * Called after a project is deleted, to remove data that belongs to it (its schedule).
+   * Failures only leave unreachable data behind, so they are logged, not shown.
+   */
+  onRemoved?: (id: UUID) => Promise<void>;
 }
 
 export type ProjectsStore = UseBoundStore<StoreApi<ProjectsState>>;
@@ -53,7 +59,7 @@ export type ProjectsStore = UseBoundStore<StoreApi<ProjectsState>>;
 /** Factory so tests can inject an in-memory repository. */
 export function createProjectsStore(
   repository: ProjectRepository,
-  { now = () => new Date() }: ProjectsStoreOptions = {},
+  { now = () => new Date(), onRemoved }: ProjectsStoreOptions = {},
 ): ProjectsStore {
   return create<ProjectsState>()((set, get) => {
     /** Reloads the list after a failed optimistic change. */
@@ -118,6 +124,15 @@ export function createProjectsStore(
           await repository.remove(id);
         } catch (error) {
           await resync(error);
+          return;
+        }
+        try {
+          await onRemoved?.(id);
+        } catch (error) {
+          console.warn(
+            '[persistence] Não foi possível apagar os dados do projeto removido.',
+            error,
+          );
         }
       },
 
@@ -139,4 +154,7 @@ export function createProjectsStore(
 }
 
 /** The app's projects store, backed by the configured repository. */
-export const useProjectsStore = createProjectsStore(projectRepository);
+export const useProjectsStore = createProjectsStore(projectRepository, {
+  // Deleting a project deletes its schedule: no orphaned plans are left in storage.
+  onRemoved: (id) => scheduleRepository.remove(id),
+});

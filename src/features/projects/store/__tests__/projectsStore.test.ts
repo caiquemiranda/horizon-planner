@@ -90,6 +90,20 @@ describe('projectsStore', () => {
     expect(store.getState().error).toBeTruthy();
   });
 
+  it('removes the data that belongs to a deleted project, only when deleted', async () => {
+    const onRemoved = vi.fn(() => Promise.resolve());
+    store = createProjectsStore(repository, { onRemoved });
+    const [first, second] = await seed();
+    if (!first || !second) throw new Error('seed failed');
+
+    await store.getState().remove(first.id);
+    expect(onRemoved).toHaveBeenCalledWith(first.id);
+
+    vi.spyOn(repository, 'remove').mockRejectedValueOnce(new PersistenceError('unavailable', 'x'));
+    await store.getState().remove(second.id);
+    expect(onRemoved).toHaveBeenCalledTimes(1);
+  });
+
   it('removes optimistically and restores on failure', async () => {
     const [first, second] = await seed(2);
     if (!first || !second) throw new Error('seed failed');
