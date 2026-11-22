@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Row virtualization in the project workspace (1 000 tasks: DOM 45 000 → 1 900 elements, edits reflected in about 0.15 s), browser end-to-end tests in CI, performance measurements (`npm run perf`, `docs/performance.md`) and workspace screenshots.
 - Project calendar settings (working weekdays and holidays), read-only schedules for completed or cancelled projects enforced by the workspace store, and a warning before leaving with unsaved changes.
 - Direct editing: drag Gantt bars to move tasks and their edges to change dates (with a preview, scale-aware snapping and auto-scroll), drag table rows to reorder or nest tasks, and resize or hide table columns per project.
 - Dependency connectors on the Gantt: orthogonal staircase arrows for finish-to-start, start-to-start, finish-to-finish and start-to-finish links, hidden while an end is collapsed, plus a links dialog and drag-from-bar to create, edit and delete links. Refused actions show a warning icon.
