@@ -1,6 +1,7 @@
-import { ChartGantt } from 'lucide-react';
+import { ChartGantt, Maximize2 } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { projectHref } from '@/lib/router';
@@ -22,6 +23,7 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
   const view = useDrawerStore((state) => state.view);
   const close = useDrawerStore((state) => state.close);
   const openProject = useDrawerStore((state) => state.openProject);
+  const expand = useDrawerStore((state) => state.expand);
   const projects = useProjectsStore((state) => state.projects);
   const status = useProjectsStore((state) => state.status);
 
@@ -54,13 +56,26 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
       title={isCreating ? 'Novo projeto' : (project?.title ?? '')}
       headerActions={
         project ? (
-          <a
-            href={projectHref(project.id)}
-            className={buttonVariants({ variant: 'outline', size: 'sm' })}
-          >
-            <ChartGantt />
-            Abrir cronograma
-          </a>
+          <>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Expandir cronograma"
+              title="Expandir cronograma (sem sair desta página)"
+              onClick={() => {
+                expand(project.id);
+              }}
+            >
+              <Maximize2 />
+            </Button>
+            <a
+              href={projectHref(project.id)}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              <ChartGantt />
+              Abrir cronograma
+            </a>
+          </>
         ) : null
       }
       description={

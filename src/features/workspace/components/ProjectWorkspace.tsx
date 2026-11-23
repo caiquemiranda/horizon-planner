@@ -1,5 +1,6 @@
 import { ArrowLeft, ListTree, Lock, Plus, SearchX } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dialog } from 'radix-ui';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
@@ -36,6 +37,13 @@ import { WorkspaceToolbar } from './WorkspaceToolbar';
 
 interface ProjectWorkspaceProps {
   projectId: UUID;
+  /**
+   * `page`: the `#/projetos/<id>` route. `dialog`: the same workspace inside the expanded
+   * project dialog, without changing the route (see `ExpandedProjectDialog`).
+   */
+  presentation?: 'page' | 'dialog';
+  /** Header actions in the dialog presentation: open the full page, close. */
+  dialogActions?: ReactNode;
 }
 
 /**
@@ -43,7 +51,13 @@ interface ProjectWorkspaceProps {
  * and the task table. Mounted with `key={projectId}`, so switching projects always
  * starts from a clean state.
  */
-export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
+export function ProjectWorkspace({
+  projectId,
+  presentation = 'page',
+  dialogActions,
+}: ProjectWorkspaceProps) {
+  const isDialog = presentation === 'dialog';
+  const Main = isDialog ? 'div' : 'main';
   const projectsStatus = useProjectsStore((state) => state.status);
   const project = useProjectsStore((state) => state.projects.find((item) => item.id === projectId));
   const open = useScheduleStore((state) => state.open);
@@ -77,51 +91,59 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   }, [hasUnsavedChanges]);
 
   useEffect(() => {
-    if (!project) return;
+    // The dialog sits over another page, which keeps its own title.
+    if (!project || isDialog) return;
     const previous = document.title;
     document.title = `${project.title} · Horizon`;
     return () => {
       document.title = previous;
     };
-  }, [project]);
+  }, [project, isDialog]);
 
   const isLoadingProjects = projectsStatus === 'idle' || projectsStatus === 'loading';
 
   return (
-    <div className="flex h-svh flex-col overflow-hidden">
-      <a
-        href="#workspace"
-        onClick={(event) => {
-          event.preventDefault();
-          document.getElementById('workspace')?.focus();
-        }}
-        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-popover focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
-      >
-        Pular para as tarefas
-      </a>
-      <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b glass px-3 sm:px-4">
+    <div className={cn('flex flex-col overflow-hidden', isDialog ? 'h-full' : 'h-svh')}>
+      {isDialog ? null : (
         <a
-          href={PORTFOLIO_HREF}
-          className={cn(
-            buttonVariants({ variant: 'ghost', size: 'sm' }),
-            '-ml-1.5 text-muted-foreground',
-          )}
+          href="#workspace"
+          onClick={(event) => {
+            event.preventDefault();
+            document.getElementById('workspace')?.focus();
+          }}
+          className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-popover focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
         >
-          <ArrowLeft />
-          <Logo className="size-5" />
-          <span className="sr-only sm:not-sr-only">Portfólio</span>
+          Pular para as tarefas
         </a>
-        <span aria-hidden="true" className="text-subtle-foreground">
-          /
-        </span>
-        {project ? <ProjectTitle project={project} /> : null}
+      )}
+      <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b glass px-3 sm:px-4">
+        {isDialog ? null : (
+          <>
+            <a
+              href={PORTFOLIO_HREF}
+              className={cn(
+                buttonVariants({ variant: 'ghost', size: 'sm' }),
+                '-ml-1.5 text-muted-foreground',
+              )}
+            >
+              <ArrowLeft />
+              <Logo className="size-5" />
+              <span className="sr-only sm:not-sr-only">Portfólio</span>
+            </a>
+            <span aria-hidden="true" className="text-subtle-foreground">
+              /
+            </span>
+          </>
+        )}
+        {project ? <ProjectTitle project={project} asDialogTitle={isDialog} /> : null}
         <div className="ml-auto flex items-center gap-2">
           <SaveStatus />
-          <ThemeToggle />
+          {isDialog ? dialogActions : <ThemeToggle />}
         </div>
       </header>
 
-      <main
+      {/* Inside the dialog the page behind already has the `main` landmark. */}
+      <Main
         id="workspace"
         tabIndex={-1}
         className="flex min-h-0 flex-1 flex-col bg-surface-sunken outline-none"
@@ -145,19 +167,30 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
             }
           />
         )}
-      </main>
+      </Main>
     </div>
   );
 }
 
-function ProjectTitle({ project }: { project: Project }) {
+function ProjectTitle({ project, asDialogTitle }: { project: Project; asDialogTitle: boolean }) {
+  const title = <h1 className="truncate text-[15px] font-semibold">{project.title}</h1>;
   return (
     <div className="flex min-w-0 items-center gap-2">
       <span
         aria-hidden="true"
         className={cn('size-2.5 shrink-0 rounded-full', COLOR_META[project.color].swatchClassName)}
       />
-      <h1 className="truncate text-[15px] font-semibold">{project.title}</h1>
+      {asDialogTitle ? (
+        <Dialog.Title asChild>
+          <h2 className="truncate text-[15px] font-semibold">
+            {/* Distinct from the project panel, which is also named after the project. */}
+            <span className="sr-only">Cronograma de </span>
+            {project.title}
+          </h2>
+        </Dialog.Title>
+      ) : (
+        title
+      )}
       <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums md:inline">
         {formatDateRange(project.startDate, project.endDate)} · {project.progress}%
       </span>

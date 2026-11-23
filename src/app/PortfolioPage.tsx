@@ -27,6 +27,7 @@ import { TimelineToolbar } from '@/features/timeline/components/TimelineToolbar'
 import { isRangeVisible } from '@/features/timeline/lib/layout';
 import { isoRangeToDays } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
+import { ExpandedProjectDialog } from '@/features/workspace/components/ExpandedProjectDialog';
 import { HIDDEN_HREF, PORTFOLIO_HREF, TRASH_HREF } from '@/lib/router';
 import type { Project } from '@/types/project';
 
@@ -56,6 +57,7 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
   );
   const openProject = useDrawerStore((state) => state.openProject);
   const openCreate = useDrawerStore((state) => state.openCreate);
+  const expandedProjectId = useDrawerStore((state) => state.expandedProjectId);
   const clearFilters = useFiltersStore((state) => state.clearAll);
   const filtered = useFilteredProjects(projects, selectedProjectId);
   const { loadSample } = useDataActions();
@@ -160,7 +162,10 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
       >
         <FilterMenu projects={projects} />
         {/* Zoom "fit" and shortcuts act on what is on screen. */}
-        <TimelineToolbar projects={filtered.projects} />
+        <TimelineToolbar
+          projects={filtered.projects}
+          shortcutsEnabled={expandedProjectId === null}
+        />
       </AppHeader>
 
       <div className="flex min-h-0 flex-1">
@@ -183,6 +188,7 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
       </div>
 
       <ProjectPanel onProjectCreated={revealProject} />
+      <ExpandedProjectDialog />
     </div>
   );
 }
