@@ -13,8 +13,8 @@ its acceptance tests pass in CI.
 | 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Delivered | #29          | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
 | 4     | `feat/expanded-project-dialog`  | REQ-04              | Delivered | #30          | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
 | 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Delivered | #31          | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
-| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | In review | —            | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
-| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Pending   | —            | —                                                                                                                  |
+| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Delivered | #32          | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
+| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | In review | —            | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
 | 8     | `feat/portfolio-statistics`     | REQ-05              | Pending   | —            | —                                                                                                                  |
 | 9     | `test/project-experience-e2e`   | Scenarios A–C       | Pending   | —            | —                                                                                                                  |
 
@@ -170,6 +170,40 @@ its acceptance tests pass in CI.
   existing behavior (save status with retry, nothing lost in memory).
 - Tests: 756 Vitest tests passing (26 new) and 8 Playwright tests; Chrome check of the
   dialog, the toolbar count and the saved result after reload, no console errors.
+
+### 7 · `feat/schedule-forecast`
+
+- `computeForecast` in `src/features/schedule/lib/forecast.ts`: the plan replayed from
+  what happened. Done tasks stay on their actual dates (a typed 100% without dates stays
+  where the plan put it); the remaining work (`duration - completedWork`, whole working
+  days) of every other task starts no earlier than the data date (today, or the next
+  working day when today's work on it is confirmed); not started tasks keep their
+  requested start and follow their predecessors' forecasts through the same links
+  (`linkBound`, shared with the engine) and calendar.
+- Pure function of (schedule, today): no stored forecast, no background job. The same day
+  computed twice gives the same result, a repeated confirmation changes nothing, and a
+  confirmation recorded later for an earlier day gives the corrected forecast. This is
+  how the idempotency and "consistent even if nobody opens the app" requirements are met
+  in a local app without a server.
+- Variance in working days; causes = tasks on the driving path whose own deviation (late
+  or early) moved the finish, shown as "Por que mudou".
+- Baseline (`ScheduleBaseline` in the schedule, storage version 3): saved, updated or
+  removed only on request; never moved by edits, check-ins or the forecast.
+- UI: a strip below the toolbar with "Término planejado", "Previsão" (+/- working days)
+  and "Linha de base"; "Detalhes da previsão" with the explanation and the baseline
+  actions. Suspended for postponed and closed projects. The Gantt bars keep showing the
+  plan, so bars, connectors and rows stay aligned.
+- Spec 10.8 scenarios as unit tests: 1, 2, 3, 4, 5, 6 (one day earlier, not two), 7, 8,
+  9, 11, 14 ✅; 10 (postponed or closed projects get no running forecast) ✅ in the UI;
+  12 and 13 were covered by order 6.
+- Not done: a log of forecast changes (`ScheduleForecastLog`). The forecast is derived on
+  read, so storing it would only create data that can go stale; the inputs that explain
+  it (check-ins with their dates, baseline) are stored. Postponed projects do not
+  re-forecast on resume automatically: the plan stays and the forecast restarts from today.
+- Tests: 779 Vitest tests passing (23 new) and 8 Playwright tests; Chrome check on the
+  sample schedule (a task on the driving path with 1,2 days left on its last planned day
+  gives +1 working day; completing a late task with slack changes nothing), no console
+  errors.
 
 ## Impediments
 
