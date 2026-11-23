@@ -37,7 +37,7 @@ describe('export', () => {
 
     expect(text.endsWith('\n')).toBe(true);
     expect(parseBackup(text)).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-11-22T15:30:00.000Z',
       projects,
       schedules: [],

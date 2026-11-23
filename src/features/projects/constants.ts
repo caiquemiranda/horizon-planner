@@ -1,7 +1,7 @@
 import type { Horizon, ProjectColor, ProjectStatus } from '@/types/project';
 
 /** Current version of the persisted / exported data format. */
-export const SNAPSHOT_SCHEMA_VERSION = 1 as const;
+export const SNAPSHOT_SCHEMA_VERSION = 2 as const;
 
 /** Validation limits shared by the schemas and the form. */
 export const FIELD_LIMITS = {
@@ -10,6 +10,7 @@ export const FIELD_LIMITS = {
   categoryMax: 40,
   milestoneTitleMax: 120,
   milestonesMax: 50,
+  lifecycleReasonMax: 500,
 } as const;
 
 export const DEFAULT_HORIZON: Horizon = 'short';
@@ -63,9 +64,10 @@ interface StatusMeta {
 export const STATUS_META = {
   planned: { label: 'Planejado', isClosed: false },
   in_progress: { label: 'Em andamento', isClosed: false },
-  paused: { label: 'Pausado', isClosed: false },
+  paused: { label: 'Adiado', isClosed: false },
   completed: { label: 'Concluído', isClosed: true },
-  cancelled: { label: 'Cancelado', isClosed: true },
+  // Closed without success (given up or interrupted).
+  cancelled: { label: 'Não concluído', isClosed: true },
 } as const satisfies Record<ProjectStatus, StatusMeta>;
 
 interface ColorMeta {

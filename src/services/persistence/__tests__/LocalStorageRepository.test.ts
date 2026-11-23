@@ -33,7 +33,7 @@ describe('LocalStorageRepository', () => {
   it('writes a versioned snapshot after each mutation', async () => {
     const project = await createRepository().create(makeDraft());
 
-    expect(storedSnapshot()).toMatchObject({ schemaVersion: 1, projects: [project] });
+    expect(storedSnapshot()).toMatchObject({ schemaVersion: 2, projects: [project] });
   });
 
   it('persists data across instances', async () => {
@@ -84,7 +84,7 @@ describe('LocalStorageRepository', () => {
       expect(storage.getItem(DEFAULT_STORAGE_KEY)).toBe('{not json');
 
       await repository.create(makeDraft());
-      expect(storedSnapshot()).toMatchObject({ schemaVersion: 1 });
+      expect(storedSnapshot()).toMatchObject({ schemaVersion: 2 });
     });
   });
 

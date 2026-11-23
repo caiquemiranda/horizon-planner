@@ -25,6 +25,11 @@ interface ProjectFormProps {
   categories?: readonly string[];
   /** Extra sections rendered after the main fields (e.g. milestones). */
   children?: ReactNode;
+  /**
+   * Statuses offered in the form (a new project). Omitted when editing: an existing
+   * project changes status through its lifecycle actions.
+   */
+  statusOptions?: readonly ProjectStatus[];
 }
 
 function isHorizon(value: string): value is Horizon {
@@ -47,6 +52,7 @@ export function ProjectForm({
   onChange,
   categories = [],
   children,
+  statusOptions,
 }: ProjectFormProps) {
   const categoriesId = useId();
   const colorLabelId = useId();
@@ -110,27 +116,29 @@ export function ProjectForm({
           )}
         </FormField>
 
-        <FormField label="Status" error={errors.status}>
-          {(controlProps) => (
-            <Select
-              value={values.status}
-              onValueChange={(value) => {
-                if (isStatus(value)) onChange({ status: value });
-              }}
-            >
-              <SelectTrigger className="w-full" {...controlProps}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROJECT_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {STATUS_META[status].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
+        {statusOptions && (
+          <FormField label="Status" error={errors.status}>
+            {(controlProps) => (
+              <Select
+                value={values.status}
+                onValueChange={(value) => {
+                  if (isStatus(value)) onChange({ status: value });
+                }}
+              >
+                <SelectTrigger className="w-full" {...controlProps}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {STATUS_META[status].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FormField>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

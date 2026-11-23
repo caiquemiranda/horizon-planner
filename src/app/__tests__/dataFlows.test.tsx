@@ -118,7 +118,7 @@ describe('data flows', () => {
       reader.readAsText(exported);
     });
     expect(JSON.parse(text)).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       projects: [{ title: 'Piano' }],
     });
     expect(screen.getByText('Backup exportado com 1 projeto.')).toBeInTheDocument();

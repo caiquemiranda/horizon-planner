@@ -65,7 +65,7 @@ describe('Timeline', () => {
 
     expect(
       screen.getByRole('button', { name: 'Mudança', pressed: false }),
-    ).toHaveAccessibleDescription('Pausado, 11 – 20 mar 2026, 20% concluído');
+    ).toHaveAccessibleDescription('Adiado, 11 – 20 mar 2026, 20% concluído');
   });
 
   it('lists projects by horizon in the sidebar', () => {

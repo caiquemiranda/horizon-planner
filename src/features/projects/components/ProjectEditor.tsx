@@ -46,7 +46,11 @@ export function ProjectEditor({ project, categories, onDeleted }: ProjectEditorP
     setValues(next);
 
     const result = validateForm(next);
-    if (result.success) void update(project.id, result.draft);
+    if (result.success) {
+      // The status is changed by the lifecycle section, never by the form.
+      const { status: _status, ...fields } = result.draft;
+      void update(project.id, fields);
+    }
   }
 
   return (

@@ -1,5 +1,7 @@
 import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
+import { createInitialLifecycle } from '@/features/projects/lib/lifecycle';
 import { projectDraftSchema, projectSchema, snapshotSchema } from '@/features/projects/schemas';
+import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { createId } from '@/lib/id';
 import type { Project, ProjectDraft, ProjectPatch, UUID } from '@/types/project';
 
@@ -56,9 +58,11 @@ export class InMemoryRepository implements ProjectRepository {
       const parsed = projectDraftSchema.safeParse(draft);
       if (!parsed.success) throw new ProjectValidationError(parsed.error.issues);
 
-      const timestamp = this.now().toISOString();
+      const now = this.now();
+      const timestamp = now.toISOString();
       const project: Project = {
         ...parsed.data,
+        lifecycle: createInitialLifecycle(parsed.data.status, getTodayIsoDate(now), timestamp),
         id: this.generateId(),
         sortOrder: this.nextSortOrder(parsed.data.horizon),
         createdAt: timestamp,

@@ -10,6 +10,7 @@ import {
   suggestHorizon,
   validateForm,
 } from '../lib/form';
+import { INITIAL_STATUSES } from '../lib/lifecycle';
 import { useProjectsStore } from '../store/projectsStore';
 import { MilestonesEditor } from './MilestonesEditor';
 import { ProjectForm } from './ProjectForm';
@@ -76,6 +77,7 @@ export function ProjectCreator({ today, categories, onCreated, onCancel }: Proje
         values={values}
         errors={visibleErrors}
         categories={categories}
+        statusOptions={INITIAL_STATUSES}
         onChange={handleChange}
       >
         <MilestonesEditor
