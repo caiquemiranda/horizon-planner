@@ -11,18 +11,24 @@ interface UseTimelineShortcutsOptions {
   /** Range used by "fit" (`F`), e.g. every visible project or the whole schedule. */
   getFitRange: () => { start: number; end: number } | null;
   onShowHelp?: () => void;
+  /** `false` while another surface owns the keyboard, e.g. a dialog over this page. */
+  enabled?: boolean;
 }
 
 /** Global keyboard shortcuts for the timeline (ignored while typing in a field). */
-export function useTimelineShortcuts({ getFitRange, onShowHelp }: UseTimelineShortcutsOptions) {
+export function useTimelineShortcuts({
+  getFitRange,
+  onShowHelp,
+  enabled = true,
+}: UseTimelineShortcutsOptions) {
   const viewportStore = useViewportStoreApi();
   // Latest values without re-subscribing the listener on every render.
-  const latest = useRef({ getFitRange, onShowHelp });
-  latest.current = { getFitRange, onShowHelp };
+  const latest = useRef({ getFitRange, onShowHelp, enabled });
+  latest.current = { getFitRange, onShowHelp, enabled };
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.repeat) return;
+      if (event.defaultPrevented || event.repeat || !latest.current.enabled) return;
 
       const action = resolveShortcut({
         key: event.key,

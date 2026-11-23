@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { getDisplayFinish } from '@/features/schedule/lib/engine';
 import type { TreeRow } from '@/features/schedule/lib/tree';
 import { dayToIsoDate } from '@/features/timeline/lib/time';
+import { holdEscape } from '@/lib/escapeGuard';
 import { cn } from '@/lib/utils';
 import type { UUID } from '@/types/project';
 import type { ScheduledTask } from '@/types/schedule';
@@ -261,7 +262,10 @@ export function TaskGrid({
     window.addEventListener('pointerup', handleUp);
     window.addEventListener('pointercancel', handleUp);
     window.addEventListener('keydown', handleKey);
+    // Escape cancels the drag, not the dialog the table may be in.
+    const releaseEscape = holdEscape();
     return () => {
+      releaseEscape();
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup', handleUp);
       window.removeEventListener('pointercancel', handleUp);

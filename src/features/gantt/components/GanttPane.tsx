@@ -23,6 +23,7 @@ import { useViewportStoreApi } from '@/features/timeline/store/viewportContext';
 import { useRowWindow } from '@/features/workspace/hooks/useRowWindow';
 import type { WorkspaceModel } from '@/features/workspace/hooks/useWorkspaceModel';
 import { WORKSPACE_METRICS } from '@/features/workspace/lib/columns';
+import { holdEscape } from '@/lib/escapeGuard';
 import type { UUID } from '@/types/project';
 import type { DayNumber } from '@/types/timeline';
 
@@ -320,7 +321,10 @@ export function GanttPane({
     window.addEventListener('pointerup', handleUp);
     window.addEventListener('pointercancel', handleUp);
     window.addEventListener('keydown', handleKey);
+    // Escape cancels the drag, not the dialog the chart may be in.
+    const releaseEscape = holdEscape();
     return () => {
+      releaseEscape();
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup', handleUp);
       window.removeEventListener('pointercancel', handleUp);
