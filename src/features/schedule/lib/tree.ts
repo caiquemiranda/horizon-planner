@@ -381,3 +381,12 @@ export function findHierarchyProblems(tasks: readonly ScheduleTask[]): string[] 
   }
   return problems;
 }
+
+/**
+ * Leaf tasks (tasks without subtasks, milestones included) that are not done yet.
+ * Summary tasks never count: their work is their subtasks'.
+ */
+export function countPendingLeafTasks(tasks: readonly ScheduleTask[]): number {
+  const parents = new Set(tasks.map((task) => task.parentId));
+  return tasks.filter((task) => !parents.has(task.id) && task.progress < 100).length;
+}

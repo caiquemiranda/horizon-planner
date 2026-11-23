@@ -14,10 +14,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
+import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import type { Project } from '@/types/project';
 
 import { type ProjectFormValues, toFormValues, validateForm } from '../lib/form';
 import { useProjectsStore } from '../store/projectsStore';
+import { LifecycleSection } from './LifecycleSection';
 import { MilestonesEditor } from './MilestonesEditor';
 import { ProjectForm } from './ProjectForm';
 
@@ -55,6 +57,7 @@ export function ProjectEditor({ project, categories, onDeleted }: ProjectEditorP
 
   return (
     <>
+      <LifecycleSection project={project} today={getTodayIsoDate()} />
       <ProjectForm
         values={values}
         errors={validation.errors}
