@@ -83,8 +83,8 @@ working day, Monday 30/11. This is covered by tests.
   hierarchy and sibling order, and change when tasks are reorganized.
 - Tasks with children are **summary tasks**: start = earliest descendant start, finish =
   latest descendant finish, duration = working days in between (parallel children are
-  never added up), progress = leaf progress weighted by working-day duration (plain
-  average when only milestones are below).
+  never added up), progress = average of the leaf tasks below, each weighing the same
+  (milestones only when they are all there is; see `schedule/lib/progress.ts`).
 - Indent makes a task the last child of the sibling above; outdent places it right after
   its former parent. Moving a task into itself or its descendants is rejected.
 - **Delete** removes the task, its descendants and every link that touches them, after a

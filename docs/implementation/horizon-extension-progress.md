@@ -11,8 +11,8 @@ its acceptance tests pass in CI.
 | 1     | `feat/project-lifecycle`        | REQ-01              | Delivered | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome                            |
 | 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Delivered | #28          | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
 | 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Delivered | #29          | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
-| 4     | `feat/expanded-project-dialog`  | REQ-04              | In review | —            | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
-| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Pending   | —            | —                                                                                                                  |
+| 4     | `feat/expanded-project-dialog`  | REQ-04              | Delivered | #30          | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
+| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | In review | —            | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
 | 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Pending   | —            | —                                                                                                                  |
 | 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Pending   | —            | —                                                                                                                  |
 | 8     | `feat/portfolio-statistics`     | REQ-05              | Pending   | —            | —                                                                                                                  |
@@ -118,6 +118,27 @@ its acceptance tests pass in CI.
   rows and bars aligned inside it (0 px) ✅; opening the full page navigates correctly ✅.
 - Tests: 709 Vitest tests passing (8 new) and 8 Playwright tests; Chrome check at
   1 440 px and 390 px, no console errors.
+
+### 5 · `feat/task-based-progress`
+
+- One rule in `src/features/schedule/lib/progress.ts`, used by the engine for summaries
+  and the project: only leaf tasks count, each weighs the same, a task contributes its own
+  percentage, milestones count only when they are all there is, no eligible task gives
+  0%, and rounding never shows 100% while work remains (nor 0% once work started).
+- The engine reports `completion` (eligible tasks and how many are done); the workspace
+  header shows "27% · 2 de 9 tarefas concluídas".
+- The portfolio keeps receiving the value through `portfolioSync.ts`, so the timeline
+  bar, the drawer, the modal and the table show the same number.
+- REQ-08: bar drawing untouched. Before/after in Chrome on the sample schedule (same edits):
+  Engenharia 83% → 67%, Suprimentos 29% → 20%, project 28% → 27%; bars, fill, colors and
+  positions identical. `GanttBar.test.tsx` pins geometry, fill width (0–100%, any zoom),
+  summary brackets and milestone diamonds.
+- Not done (documented): a weighted mode (effort, points) is not offered; durations are
+  not effort, and there is no effort field yet.
+- Acceptance (REQ-03): 4 tasks, 1 done = 25%, 2 done = 50% ✅; 2 phases × 2 tasks = 4
+  tasks ✅; reopening lowers it ✅; reordering does not change it ✅; postponed or closed
+  projects keep their progress ✅ (no transition touches it); bars unchanged ✅.
+- Tests: 730 Vitest tests passing (21 new) and 8 Playwright tests.
 
 ## Impediments
 

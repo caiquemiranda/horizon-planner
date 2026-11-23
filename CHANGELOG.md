@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Issue templates (bug report, feature request) and a pull request template.
 - README, contributing guide, MIT license, architecture decision records and screenshot capture guide.
 
+### Changed
+
+- Summary and project progress count tasks: every leaf task weighs the same (instead of being weighted by its duration), milestones count only when they are all there is, and 100% means every task is done. The project header shows how many tasks are done. The bars look the same.
+
 ### Fixed
 
 - Milestone diamonds no longer cover the bar title and progress percentage.
