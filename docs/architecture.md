@@ -82,3 +82,11 @@ Lightweight ADRs that capture the key technical decisions behind Horizon. Each r
 **Decision.** Implement the scheduling domain as pure TypeScript in `src/features/schedule/lib`: a WBS tree module, a dependency graph module and a scheduling engine, plus domain commands that are the only way to change a schedule. Rendering stays in DOM/SVG on top of the existing scale engine (ADR-001). Conventions and policies are documented in [`docs/planning-module.md`](./planning-module.md).
 
 **Consequences.** No license cost or lock-in, and the engine is testable without a browser. Advanced features (critical path, baselines, resource leveling) must be built on top of it when needed.
+
+## ADR-008: Project lifecycle as transitions, separate from plan and progress
+
+**Context.** A project's status was a free select. Statuses such as "postponed" or "closed without success" need a reason and dates, the history must survive reopening, and statistics need the day a project started, finished or was closed. Status, plan, progress, visibility and forecast are different facts that must not overwrite each other.
+
+**Decision.** Keep the stored status values and change them only through the transitions in `src/features/projects/lib/lifecycle.ts` (start, postpone, resume, complete, close, reopen), which validate the request and return the new `status` and `lifecycle` (actual start, completion or closing date and reason, postponement, history). The projects store exposes `transition` and its `update` ignores status fields. "Late" is derived from the plan and today, never stored. Snapshots move to version 2 with a migration that backfills only what version 1 data shows. Details and the plan of the related changes are in [`docs/implementation/horizon-extension-audit.md`](./implementation/horizon-extension-audit.md).
+
+**Consequences.** Every status change is explained and kept, and no transition can move the plan or the progress. Imports and backups of version 1 keep working through the migration. Anything that sets a status (imports, sample data) must also provide a lifecycle.
