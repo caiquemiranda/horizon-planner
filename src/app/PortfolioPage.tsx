@@ -1,4 +1,4 @@
-import { EyeOff, FlaskConical, Plus, SearchX } from 'lucide-react';
+import { EyeOff, FlaskConical, Inbox, Plus, SearchX } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -11,10 +11,14 @@ import { ActiveFiltersBar } from '@/features/filters/components/ActiveFiltersBar
 import { FilterMenu } from '@/features/filters/components/FilterMenu';
 import { useFilteredProjects } from '@/features/filters/hooks/useFilteredProjects';
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
+import {
+  NavigationDrawerButton,
+  NavigationRail,
+  SECTION_META,
+} from '@/features/projects/components/NavigationSidebar';
 import { NewProjectButton } from '@/features/projects/components/NewProjectButton';
 import { ProjectPanel } from '@/features/projects/components/ProjectPanel';
-import { ProjectViewsMenu } from '@/features/projects/components/ProjectViewsMenu';
-import { selectByPlacement } from '@/features/projects/lib/visibility';
+import { isInSection, type TimelineSection } from '@/features/projects/lib/sections';
 import { selectEditingProjectId, useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { Timeline } from '@/features/timeline/components/Timeline';
@@ -23,15 +27,33 @@ import { TimelineToolbar } from '@/features/timeline/components/TimelineToolbar'
 import { isRangeVisible } from '@/features/timeline/lib/layout';
 import { isoRangeToDays } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
-import { HIDDEN_HREF, TRASH_HREF } from '@/lib/router';
+import { HIDDEN_HREF, PORTFOLIO_HREF, TRASH_HREF } from '@/lib/router';
 import type { Project } from '@/types/project';
 
-/** The portfolio: every project on the strategic timeline. */
-export function PortfolioPage() {
+interface PortfolioPageProps {
+  /** Which visible projects to draw (see `features/projects/lib/sections.ts`). */
+  section: TimelineSection;
+}
+
+/** The portfolio: the projects of one section on the strategic timeline. */
+export function PortfolioPage({ section }: PortfolioPageProps) {
   const allProjects = useProjectsStore((state) => state.projects);
-  // Hidden and trashed projects have their own pages (see ProjectViewsMenu).
-  const projects = useMemo(() => selectByPlacement(allProjects, 'listed'), [allProjects]);
   const selectedProjectId = useDrawerStore(selectEditingProjectId);
+  // Hidden and trashed projects have their own pages. The project open in the drawer
+  // stays drawn while visible, so changing its status never makes it vanish mid-edit.
+  const visibleCount = useMemo(
+    () => allProjects.filter((project) => isInSection(project, 'all')).length,
+    [allProjects],
+  );
+  const projects = useMemo(
+    () =>
+      allProjects.filter(
+        (project) =>
+          isInSection(project, section) ||
+          (project.id === selectedProjectId && isInSection(project, 'all')),
+      ),
+    [allProjects, section, selectedProjectId],
+  );
   const openProject = useDrawerStore((state) => state.openProject);
   const openCreate = useDrawerStore((state) => state.openCreate);
   const clearFilters = useFiltersStore((state) => state.clearAll);
@@ -67,7 +89,7 @@ export function PortfolioPage() {
           </div>
         }
       />
-    ) : projects.length === 0 ? (
+    ) : visibleCount === 0 ? (
       // Everything is hidden or in the trash: never offer to replace that data here.
       <TimelineEmptyState
         icon={EyeOff}
@@ -86,6 +108,17 @@ export function PortfolioPage() {
               Ver lixeira
             </a>
           </div>
+        }
+      />
+    ) : projects.length === 0 ? (
+      <TimelineEmptyState
+        icon={Inbox}
+        title={`Nenhum projeto em “${SECTION_META[section].label}”`}
+        description="Os outros projetos estão nas demais seções."
+        action={
+          <a href={PORTFOLIO_HREF} className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+            Ver todos os projetos
+          </a>
         }
       />
     ) : (
@@ -116,10 +149,10 @@ export function PortfolioPage() {
         Pular para a linha do tempo
       </a>
       <AppHeader
+        leading={<NavigationDrawerButton current={section} />}
         actions={
           <>
             <NewProjectButton />
-            <ProjectViewsMenu />
             <DataMenu />
             <ThemeToggle />
           </>
@@ -130,20 +163,24 @@ export function PortfolioPage() {
         <TimelineToolbar projects={filtered.projects} />
       </AppHeader>
 
-      <main
-        id="timeline"
-        tabIndex={-1}
-        className="relative flex min-h-0 flex-1 flex-col bg-surface-sunken outline-none"
-      >
-        <ActiveFiltersBar matchCount={filtered.matchCount} totalCount={projects.length} />
-        <Timeline
-          projects={filtered.projects}
-          horizons={filtered.horizons}
-          selectedProjectId={selectedProjectId}
-          onSelectProject={openProject}
-          emptyState={emptyState}
-        />
-      </main>
+      <div className="flex min-h-0 flex-1">
+        <NavigationRail current={section} />
+        <main
+          id="timeline"
+          tabIndex={-1}
+          aria-label={SECTION_META[section].label}
+          className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface-sunken outline-none"
+        >
+          <ActiveFiltersBar matchCount={filtered.matchCount} totalCount={projects.length} />
+          <Timeline
+            projects={filtered.projects}
+            horizons={filtered.horizons}
+            selectedProjectId={selectedProjectId}
+            onSelectProject={openProject}
+            emptyState={emptyState}
+          />
+        </main>
+      </div>
 
       <ProjectPanel onProjectCreated={revealProject} />
     </div>

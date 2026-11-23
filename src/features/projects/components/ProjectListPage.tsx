@@ -1,4 +1,4 @@
-import { ArrowLeft, ChartGantt, Eye, RotateCcw, Trash2 } from 'lucide-react';
+import { ChartGantt, Eye, RotateCcw, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -17,13 +17,14 @@ import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { formatDateRange } from '@/features/timeline/lib/format';
-import { PORTFOLIO_HREF, projectHref } from '@/lib/router';
+import { projectHref } from '@/lib/router';
 import type { Project } from '@/types/project';
 
 import { COLOR_META } from '../constants';
 import { type ProjectPlacement, selectByPlacement } from '../lib/visibility';
 import { useProjectsStore } from '../store/projectsStore';
 import { StatusPill } from './LifecycleSection';
+import { NavigationDrawerButton, NavigationRail } from './NavigationSidebar';
 
 type ListPlacement = Exclude<ProjectPlacement, 'listed'>;
 
@@ -59,38 +60,39 @@ export function ProjectListPage({ placement }: ProjectListPageProps) {
 
   return (
     <div className="flex h-svh flex-col overflow-hidden">
-      <AppHeader actions={<ThemeToggle />}>
-        <a href={PORTFOLIO_HREF} className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
-          <ArrowLeft />
-          Portfólio
-        </a>
-      </AppHeader>
+      <AppHeader
+        leading={<NavigationDrawerButton current={placement} />}
+        actions={<ThemeToggle />}
+      />
 
-      <main className="flex-1 overflow-y-auto bg-surface-sunken">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">{copy.title}</h2>
-            <p className="text-sm text-muted-foreground">{copy.description}</p>
+      <div className="flex min-h-0 flex-1">
+        <NavigationRail current={placement} />
+        <main className="min-w-0 flex-1 overflow-y-auto bg-surface-sunken">
+          <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold">{copy.title}</h2>
+              <p className="text-sm text-muted-foreground">{copy.description}</p>
+            </div>
+
+            {projects.length === 0 ? (
+              <p className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
+                {copy.empty}
+              </p>
+            ) : (
+              <ul aria-label={copy.title} className="flex flex-col gap-2">
+                {projects.map((project) => (
+                  <ProjectRow
+                    key={project.id}
+                    project={project}
+                    placement={placement}
+                    onDelete={setToDelete}
+                  />
+                ))}
+              </ul>
+            )}
           </div>
-
-          {projects.length === 0 ? (
-            <p className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
-              {copy.empty}
-            </p>
-          ) : (
-            <ul aria-label={copy.title} className="flex flex-col gap-2">
-              {projects.map((project) => (
-                <ProjectRow
-                  key={project.id}
-                  project={project}
-                  placement={placement}
-                  onDelete={setToDelete}
-                />
-              ))}
-            </ul>
-          )}
-        </div>
-      </main>
+        </main>
+      </div>
 
       <AlertDialog
         open={toDelete !== null}

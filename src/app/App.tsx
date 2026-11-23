@@ -25,7 +25,7 @@ export function App() {
       ) : route.name === 'hidden' || route.name === 'trash' ? (
         <ProjectListPage placement={route.name === 'hidden' ? 'hidden' : 'trash'} />
       ) : (
-        <PortfolioPage />
+        <PortfolioPage section={route.section} />
       )}
       <ProjectsErrorAlert />
       <DataNotice />
