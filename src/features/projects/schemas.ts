@@ -104,6 +104,8 @@ const projectFieldsSchema = z.object({
     error: `Um projeto pode ter no máximo ${FIELD_LIMITS.milestonesMax} marcos.`,
   }),
   lifecycle: lifecycleSchema,
+  hiddenAt: isoDateTimeSchema.nullable(),
+  deletedAt: isoDateTimeSchema.nullable(),
   sortOrder: z.number().int().nonnegative(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
@@ -159,7 +161,15 @@ export const projectSchema = projectFieldsSchema.superRefine(checkDateInvariants
 
 /** Input for creating a project (identity, ordering and audit fields are generated). */
 export const projectDraftSchema = projectFieldsSchema
-  .omit({ id: true, sortOrder: true, createdAt: true, updatedAt: true, lifecycle: true })
+  .omit({
+    id: true,
+    sortOrder: true,
+    createdAt: true,
+    updatedAt: true,
+    lifecycle: true,
+    hiddenAt: true,
+    deletedAt: true,
+  })
   .superRefine(checkDateInvariants);
 
 export const snapshotSchema = z

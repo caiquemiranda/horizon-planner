@@ -63,6 +63,8 @@ export class InMemoryRepository implements ProjectRepository {
       const project: Project = {
         ...parsed.data,
         lifecycle: createInitialLifecycle(parsed.data.status, getTodayIsoDate(now), timestamp),
+        hiddenAt: null,
+        deletedAt: null,
         id: this.generateId(),
         sortOrder: this.nextSortOrder(parsed.data.horizon),
         createdAt: timestamp,

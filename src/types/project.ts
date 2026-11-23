@@ -105,6 +105,16 @@ export interface Project {
   progress: number;
   milestones: Milestone[];
   lifecycle: ProjectLifecycle;
+  /**
+   * When the user hid the project from the default lists. A display preference: the
+   * project keeps its status, data and statistics. `null` when shown.
+   */
+  hiddenAt: ISODateTime | null;
+  /**
+   * When the project was moved to the trash (soft delete). Restoring sets it back to
+   * `null`; only the trash offers permanent deletion.
+   */
+  deletedAt: ISODateTime | null;
   /** Manual ordering inside the horizon lane. */
   sortOrder: number;
   createdAt: ISODateTime;
@@ -114,18 +124,25 @@ export interface Project {
 /** Fields the user provides when creating a project. */
 export type ProjectDraft = Omit<
   Project,
-  'id' | 'createdAt' | 'updatedAt' | 'sortOrder' | 'lifecycle'
+  'id' | 'createdAt' | 'updatedAt' | 'sortOrder' | 'lifecycle' | 'hiddenAt' | 'deletedAt'
 >;
 
 /** Partial update applied to an existing project by the repository. */
-export type ProjectPatch = Partial<ProjectDraft> & { lifecycle?: ProjectLifecycle };
+export type ProjectPatch = Partial<ProjectDraft> &
+  Partial<Pick<Project, 'lifecycle' | 'hiddenAt' | 'deletedAt'>>;
 
-/** What the editor may change directly: status goes through a lifecycle transition. */
-export type ProjectFieldsPatch = Omit<ProjectPatch, 'status' | 'lifecycle'>;
+/**
+ * What the editor may change directly: status goes through a lifecycle transition and
+ * visibility through the hide / trash actions.
+ */
+export type ProjectFieldsPatch = Omit<
+  ProjectPatch,
+  'status' | 'lifecycle' | 'hiddenAt' | 'deletedAt'
+>;
 
 /** Shape used for JSON export / import and for `localStorage`. */
 export interface HorizonSnapshot {
-  schemaVersion: 2;
+  schemaVersion: 3;
   exportedAt: ISODateTime;
   projects: Project[];
 }

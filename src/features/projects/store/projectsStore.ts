@@ -8,7 +8,13 @@ import {
   ProjectValidationError,
   scheduleRepository,
 } from '@/services/persistence';
-import type { Project, ProjectDraft, ProjectFieldsPatch, UUID } from '@/types/project';
+import type {
+  Project,
+  ProjectDraft,
+  ProjectFieldsPatch,
+  ProjectPatch,
+  UUID,
+} from '@/types/project';
 
 import { applyTransition, LifecycleError, type TransitionRequest } from '../lib/lifecycle';
 
@@ -34,8 +40,18 @@ export interface ProjectsState {
    * failures are handled like `update`.
    */
   transition: (id: UUID, request: TransitionRequest, pendingTasks?: number) => Promise<void>;
-  /** Optimistic, with the same recovery as `update`. */
-  remove: (id: UUID) => Promise<void>;
+  /** Hides the project from the default lists (a display preference). Optimistic. */
+  hide: (id: UUID) => Promise<void>;
+  unhide: (id: UUID) => Promise<void>;
+  /** Soft delete: the project goes to the trash with all its data. Optimistic. */
+  moveToTrash: (id: UUID) => Promise<void>;
+  /** Takes the project out of the trash, keeping its status and hidden flag. */
+  restore: (id: UUID) => Promise<void>;
+  /**
+   * Deletes a project and its schedule for good. Only for projects in the trash: anything
+   * else is ignored, so no other path can skip the trash. Optimistic.
+   */
+  deletePermanently: (id: UUID) => Promise<void>;
   /**
    * Replaces every project (import, sample data, "clear all"). Persists first, so a
    * failure leaves both the list and the storage untouched.
@@ -81,6 +97,40 @@ export function createProjectsStore(
       }
     }
 
+    /**
+     * Applies a patch the stores computed (status, visibility): visible at once, then
+     * persisted; on failure the list is reloaded from the repository.
+     */
+    async function applyPatch(id: UUID, patch: ProjectPatch, timestamp: string) {
+      set((state) => ({
+        projects: state.projects.map((item) =>
+          item.id === id ? { ...item, ...patch, updatedAt: timestamp } : item,
+        ),
+      }));
+      try {
+        const saved = await repository.update(id, patch);
+        set((state) => ({
+          projects: state.projects.map((item) =>
+            item.id === id ? { ...item, updatedAt: saved.updatedAt } : item,
+          ),
+        }));
+      } catch (error) {
+        await resync(error);
+      }
+    }
+
+    /** Sets a visibility timestamp, only when it changes. */
+    async function setVisibility(
+      id: UUID,
+      field: 'hiddenAt' | 'deletedAt',
+      on: boolean,
+    ): Promise<void> {
+      const project = get().projects.find((item) => item.id === id);
+      if (!project || (project[field] !== null) === on) return;
+      const timestamp = now().toISOString();
+      await applyPatch(id, { [field]: on ? timestamp : null }, timestamp);
+    }
+
     return {
       projects: [],
       status: 'idle',
@@ -107,8 +157,14 @@ export function createProjectsStore(
       },
 
       update: async (id, fields) => {
-        // Status and lifecycle only change through `transition`, even from untyped callers.
-        const { status: _status, lifecycle: _lifecycle, ...patch } = fields as Project;
+        // Status, lifecycle and visibility have their own actions, even for untyped callers.
+        const {
+          status: _status,
+          lifecycle: _lifecycle,
+          hiddenAt: _hiddenAt,
+          deletedAt: _deletedAt,
+          ...patch
+        } = fields as Project;
         const timestamp = now().toISOString();
         set((state) => ({
           projects: state.projects.map((project) =>
@@ -138,24 +194,16 @@ export function createProjectsStore(
           now: clock.toISOString(),
           pendingTasks,
         });
-        set((state) => ({
-          projects: state.projects.map((item) =>
-            item.id === id ? { ...item, ...patch, updatedAt: clock.toISOString() } : item,
-          ),
-        }));
-        try {
-          const saved = await repository.update(id, patch);
-          set((state) => ({
-            projects: state.projects.map((item) =>
-              item.id === id ? { ...item, updatedAt: saved.updatedAt } : item,
-            ),
-          }));
-        } catch (error) {
-          await resync(error);
-        }
+        await applyPatch(id, patch, clock.toISOString());
       },
 
-      remove: async (id) => {
+      hide: (id) => setVisibility(id, 'hiddenAt', true),
+      unhide: (id) => setVisibility(id, 'hiddenAt', false),
+      moveToTrash: (id) => setVisibility(id, 'deletedAt', true),
+      restore: (id) => setVisibility(id, 'deletedAt', false),
+
+      deletePermanently: async (id) => {
+        if (get().projects.find((project) => project.id === id)?.deletedAt == null) return;
         set((state) => ({ projects: state.projects.filter((project) => project.id !== id) }));
         try {
           await repository.remove(id);

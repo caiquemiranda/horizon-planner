@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
+
 import { PersistenceError, ProjectValidationError } from '../errors';
 import { InMemoryRepository } from '../InMemoryRepository';
 import { migrateSnapshot } from '../migrations';
@@ -8,7 +10,11 @@ import { createDependencies, makeDraft } from './helpers';
 async function validSnapshot() {
   const repository = new InMemoryRepository([], createDependencies());
   const project = await repository.create(makeDraft());
-  return { schemaVersion: 2, exportedAt: '2026-11-21T12:00:00.000Z', projects: [project] };
+  return {
+    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+    exportedAt: '2026-11-21T12:00:00.000Z',
+    projects: [project],
+  };
 }
 
 describe('migrateSnapshot', () => {
@@ -28,9 +34,9 @@ describe('migrateSnapshot', () => {
   });
 
   it('rejects data from a newer app version', () => {
-    expect(() => migrateSnapshot({ schemaVersion: 3, projects: [] })).toThrow(
-      expect.objectContaining({ reason: 'unsupported-version' }),
-    );
+    expect(() =>
+      migrateSnapshot({ schemaVersion: SNAPSHOT_SCHEMA_VERSION + 1, projects: [] }),
+    ).toThrow(expect.objectContaining({ reason: 'unsupported-version' }));
   });
 
   it('wraps validation errors with their cause', async () => {
@@ -47,6 +53,19 @@ describe('migrateSnapshot', () => {
     expect(thrown).toBeInstanceOf(PersistenceError);
     expect(thrown).toMatchObject({ reason: 'corrupted' });
     expect((thrown as PersistenceError).cause).toBeInstanceOf(ProjectValidationError);
+  });
+
+  it('v2 → v3: every project starts visible and outside the trash', async () => {
+    const { projects } = await validSnapshot();
+    const v2 = projects.map(({ hiddenAt: _h, deletedAt: _d, ...project }) => project);
+    const migrated = migrateSnapshot({
+      schemaVersion: 2,
+      exportedAt: '2026-11-21T12:00:00.000Z',
+      projects: v2,
+    });
+    expect(migrated.projects).toEqual(
+      projects.map((project) => ({ ...project, hiddenAt: null, deletedAt: null })),
+    );
   });
 
   describe('v1 → v2: lifecycle backfill', () => {
@@ -77,7 +96,7 @@ describe('migrateSnapshot', () => {
         exportedAt: '2026-11-21T12:00:00.000Z',
         projects: [v1Project(status)],
       });
-      expect(snapshot.schemaVersion).toBe(2);
+      expect(snapshot.schemaVersion).toBe(SNAPSHOT_SCHEMA_VERSION);
       const [project] = snapshot.projects;
       if (!project) throw new Error('project lost in migration');
       return project;
@@ -135,12 +154,16 @@ describe('migrateSnapshot', () => {
           calls.push(2);
           return { ...data, schemaVersion: 3 };
         }),
+        3: vi.fn((data: Record<string, unknown>) => {
+          calls.push(3);
+          return { ...data, schemaVersion: 4 };
+        }),
       };
 
-      // The current schema only validates v2, so the final validation fails on purpose:
+      // The current schema does not validate v4, so the final validation fails on purpose:
       // this test only asserts the order in which migrations run.
-      expect(() => migrateSnapshot(snapshot, migrations, 3)).toThrow();
-      expect(calls).toEqual([1, 2]);
+      expect(() => migrateSnapshot(snapshot, migrations, 4)).toThrow();
+      expect(calls).toEqual([1, 2, 3]);
     });
 
     it('fails when a migration step is missing', () => {

@@ -25,8 +25,11 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
   const projects = useProjectsStore((state) => state.projects);
   const status = useProjectsStore((state) => state.status);
 
+  // A project in the trash cannot be edited: it is restored first, from the trash.
   const project =
-    view.mode === 'edit' ? projects.find((item) => item.id === view.projectId) : undefined;
+    view.mode === 'edit'
+      ? projects.find((item) => item.id === view.projectId && item.deletedAt === null)
+      : undefined;
   const categories = useMemo(
     () =>
       [...new Set(projects.flatMap((item) => (item.category ? [item.category] : [])))].sort(
@@ -35,7 +38,7 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
     [projects],
   );
 
-  // A project deleted elsewhere (or a stale id) closes the panel.
+  // A project deleted or trashed elsewhere (or a stale id) closes the panel.
   const isMissing = view.mode === 'edit' && status === 'ready' && !project;
   useEffect(() => {
     if (isMissing) close();
@@ -82,7 +85,7 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
           key={project.id}
           project={project}
           categories={categories}
-          onDeleted={close}
+          onDismissed={close}
         />
       ) : null}
     </ProjectDrawer>

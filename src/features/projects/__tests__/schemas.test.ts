@@ -40,6 +40,8 @@ function makeProject(overrides: Partial<ProjectInput> = {}): ProjectInput {
       postponement: null,
       history: [],
     },
+    hiddenAt: null,
+    deletedAt: null,
     sortOrder: 0,
     createdAt: '2026-01-10T12:00:00.000Z',
     updatedAt: '2026-01-10T12:00:00.000Z',
@@ -157,6 +159,8 @@ describe('projectDraftSchema', () => {
       createdAt: _c,
       updatedAt: _u,
       lifecycle: _l,
+      hiddenAt: _h,
+      deletedAt: _d,
       ...draft
     } = makeProject({
       startDate: '2026-05-05',
@@ -169,7 +173,7 @@ describe('projectDraftSchema', () => {
 
 describe('snapshotSchema', () => {
   const snapshot = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     exportedAt: '2026-11-21T18:00:00.000-03:00',
     projects: [makeProject()],
   };
@@ -183,7 +187,7 @@ describe('snapshotSchema', () => {
   });
 
   it('rejects an unsupported schema version', () => {
-    expect(issuePaths(snapshotSchema, { ...snapshot, schemaVersion: 3 })).toEqual([
+    expect(issuePaths(snapshotSchema, { ...snapshot, schemaVersion: 4 })).toEqual([
       'schemaVersion',
     ]);
   });

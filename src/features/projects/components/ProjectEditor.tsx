@@ -1,19 +1,8 @@
-import { CircleAlert, CircleCheck, Trash2 } from 'lucide-react';
+import { CircleAlert, CircleCheck, EyeOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { buttonVariants } from '@/components/ui/button-variants';
+import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import type { Project } from '@/types/project';
 
@@ -26,8 +15,8 @@ import { ProjectForm } from './ProjectForm';
 interface ProjectEditorProps {
   project: Project;
   categories: readonly string[];
-  /** Called after the project is deleted. */
-  onDeleted: () => void;
+  /** Called after the project is hidden or moved to the trash (it leaves the list). */
+  onDismissed: () => void;
 }
 
 /**
@@ -37,9 +26,13 @@ interface ProjectEditorProps {
  *
  * Mount with `key={project.id}` so switching projects resets the form.
  */
-export function ProjectEditor({ project, categories, onDeleted }: ProjectEditorProps) {
+export function ProjectEditor({ project, categories, onDismissed }: ProjectEditorProps) {
   const update = useProjectsStore((state) => state.update);
-  const remove = useProjectsStore((state) => state.remove);
+  const hide = useProjectsStore((state) => state.hide);
+  const unhide = useProjectsStore((state) => state.unhide);
+  const moveToTrash = useProjectsStore((state) => state.moveToTrash);
+  const restore = useProjectsStore((state) => state.restore);
+  const showNotice = useNoticeStore((state) => state.show);
   const [values, setValues] = useState<ProjectFormValues>(() => toFormValues(project));
   const validation = validateForm(values);
 
@@ -90,39 +83,46 @@ export function ProjectEditor({ project, categories, onDeleted }: ProjectEditorP
           )}
         </p>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 />
-              Excluir
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir “{project.title}”?</AlertDialogTitle>
-              <AlertDialogDescription>
-                O projeto, seus marcos e seu cronograma (tarefas e vínculos) serão removidos. Esta
-                ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                className={buttonVariants({ variant: 'destructive' })}
-                onClick={() => {
-                  void remove(project.id);
-                  onDeleted();
-                }}
-              >
-                Excluir projeto
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/*
+         * Hiding and deleting are different on purpose: hiding only takes the project out
+         * of the default lists; deleting moves it to the trash. Both can be undone.
+         */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={() => {
+            void hide(project.id);
+            onDismissed();
+            showNotice(`“${project.title}” foi ocultado.`, 'success', {
+              label: 'Desfazer',
+              run: () => {
+                void unhide(project.id);
+              },
+            });
+          }}
+        >
+          <EyeOff />
+          Ocultar
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => {
+            void moveToTrash(project.id);
+            onDismissed();
+            showNotice(`“${project.title}” foi movido para a lixeira.`, 'success', {
+              label: 'Desfazer',
+              run: () => {
+                void restore(project.id);
+              },
+            });
+          }}
+        >
+          <Trash2 />
+          Excluir
+        </Button>
       </div>
     </>
   );

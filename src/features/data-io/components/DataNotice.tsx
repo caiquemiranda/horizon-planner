@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useNoticeStore } from '../store/noticeStore';
 
 export const NOTICE_DURATION_MS = 4000;
+/** Longer when the notice offers an action, so there is time to reach it. */
+export const NOTICE_WITH_ACTION_DURATION_MS = 8000;
 
 /** Confirmation toast for data actions. The live region is always mounted so it is announced. */
 export function DataNotice() {
@@ -13,14 +15,15 @@ export function DataNotice() {
   const id = useNoticeStore((state) => state.id);
   const tone = useNoticeStore((state) => state.tone);
   const dismiss = useNoticeStore((state) => state.dismiss);
+  const action = useNoticeStore((state) => state.action);
 
   useEffect(() => {
     if (!message) return;
-    const timer = setTimeout(dismiss, NOTICE_DURATION_MS);
+    const timer = setTimeout(dismiss, action ? NOTICE_WITH_ACTION_DURATION_MS : NOTICE_DURATION_MS);
     return () => {
       clearTimeout(timer);
     };
-  }, [message, id, dismiss]);
+  }, [message, id, dismiss, action]);
 
   return (
     <div
@@ -38,6 +41,18 @@ export function DataNotice() {
             <CircleCheck aria-hidden="true" className="size-4 shrink-0 text-green-500" />
           )}
           <p className="flex-1">{message}</p>
+          {action ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                dismiss();
+                action.run();
+              }}
+            >
+              {action.label}
+            </Button>
+          ) : null}
           <Button variant="ghost" size="icon-xs" aria-label="Fechar aviso" onClick={dismiss}>
             <X />
           </Button>

@@ -19,6 +19,7 @@ export type SnapshotMigration = (snapshot: UnknownRecord) => UnknownRecord;
  */
 export const SNAPSHOT_MIGRATIONS: Readonly<Partial<Record<number, SnapshotMigration>>> = {
   1: addLifecycle,
+  2: addVisibility,
 };
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -34,6 +35,18 @@ function isRecord(value: unknown): value is UnknownRecord {
  * - postponed projects get an empty reason and no dates ("sem previsão informada");
  * - `history` stays empty: no event is invented.
  */
+/** v2 → v3: every project starts visible and outside the trash. */
+function addVisibility(snapshot: UnknownRecord): UnknownRecord {
+  const projects = Array.isArray(snapshot.projects) ? snapshot.projects : [];
+  return {
+    ...snapshot,
+    schemaVersion: 3,
+    projects: projects.map((project: unknown) =>
+      isRecord(project) ? { ...project, hiddenAt: null, deletedAt: null } : project,
+    ),
+  };
+}
+
 function addLifecycle(snapshot: UnknownRecord): UnknownRecord {
   const projects = Array.isArray(snapshot.projects) ? snapshot.projects : [];
   return {

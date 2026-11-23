@@ -96,26 +96,105 @@ describe('projectsStore', () => {
     const [first, second] = await seed();
     if (!first || !second) throw new Error('seed failed');
 
-    await store.getState().remove(first.id);
+    await store.getState().moveToTrash(first.id);
+    await store.getState().deletePermanently(first.id);
     expect(onRemoved).toHaveBeenCalledWith(first.id);
 
+    await store.getState().moveToTrash(second.id);
     vi.spyOn(repository, 'remove').mockRejectedValueOnce(new PersistenceError('unavailable', 'x'));
-    await store.getState().remove(second.id);
+    await store.getState().deletePermanently(second.id);
     expect(onRemoved).toHaveBeenCalledTimes(1);
   });
 
-  it('removes optimistically and restores on failure', async () => {
+  it('deletes permanently from the trash only, and restores on failure', async () => {
     const [first, second] = await seed(2);
     if (!first || !second) throw new Error('seed failed');
 
-    await store.getState().remove(first.id);
-    expect(store.getState().projects).toEqual([second]);
+    // Not in the trash: nothing happens.
+    await store.getState().deletePermanently(first.id);
+    expect(store.getState().projects.map((project) => project.id)).toEqual([first.id, second.id]);
 
+    await store.getState().moveToTrash(first.id);
+    await store.getState().deletePermanently(first.id);
+    expect(store.getState().projects.map((project) => project.id)).toEqual([second.id]);
+    await expect(repository.get(first.id)).resolves.toBeNull();
+
+    await store.getState().moveToTrash(second.id);
     vi.spyOn(repository, 'remove').mockRejectedValueOnce(
       new PersistenceError('unavailable', 'blocked'),
     );
-    await store.getState().remove(second.id);
-    expect(store.getState().projects).toEqual([second]);
+    await store.getState().deletePermanently(second.id);
+    expect(store.getState().projects.map((project) => project.id)).toEqual([second.id]);
+  });
+
+  describe('visibility and trash', () => {
+    const NOW = '2026-05-01T10:00:00.000Z';
+
+    async function stored(id: string) {
+      const project = await repository.get(id);
+      if (!project) throw new Error('missing');
+      return project;
+    }
+
+    it('hides and unhides without touching status, dates or progress', async () => {
+      const [first] = await seed(1);
+      if (!first) throw new Error('seed failed');
+
+      await store.getState().hide(first.id);
+      expect(store.getState().projects[0]?.hiddenAt).toBe(NOW);
+      const hidden = await stored(first.id);
+      expect(hidden.hiddenAt).toBe(NOW);
+      expect(hidden).toMatchObject({
+        status: first.status,
+        startDate: first.startDate,
+        endDate: first.endDate,
+        progress: first.progress,
+        lifecycle: first.lifecycle,
+        deletedAt: null,
+      });
+
+      await store.getState().unhide(first.id);
+      expect((await stored(first.id)).hiddenAt).toBeNull();
+    });
+
+    it('trashes and restores, keeping the hidden flag', async () => {
+      const [first] = await seed(1);
+      if (!first) throw new Error('seed failed');
+
+      await store.getState().hide(first.id);
+      await store.getState().moveToTrash(first.id);
+      expect(await stored(first.id)).toMatchObject({ hiddenAt: NOW, deletedAt: NOW });
+
+      await store.getState().restore(first.id);
+      expect(await stored(first.id)).toMatchObject({ hiddenAt: NOW, deletedAt: null });
+    });
+
+    it('ignores repeated actions (a double click changes nothing more)', async () => {
+      const [first] = await seed(1);
+      if (!first) throw new Error('seed failed');
+      const update = vi.spyOn(repository, 'update');
+
+      await store.getState().moveToTrash(first.id);
+      await store.getState().moveToTrash(first.id);
+      await store.getState().restore(first.id);
+      await store.getState().restore(first.id);
+      expect(update).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps visibility out of field updates', async () => {
+      const [first] = await seed(1);
+      if (!first) throw new Error('seed failed');
+      const patch = { title: 'Novo', deletedAt: NOW, hiddenAt: NOW } as unknown as Parameters<
+        ReturnType<typeof store.getState>['update']
+      >[1];
+
+      await store.getState().update(first.id, patch);
+      expect(await stored(first.id)).toMatchObject({
+        title: 'Novo',
+        hiddenAt: null,
+        deletedAt: null,
+      });
+    });
   });
 
   it('replaces every project after persisting them', async () => {
