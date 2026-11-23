@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Daily check-ins: "Atividades do dia" confirms the work of each task planned for a day (or an earlier day) and lists late ones; each task keeps the work done and its actual dates, and one confirmed day of a 5-day task counts 20% without closing it.
 - Expanded project view: the planning workspace in a large dialog over the current page (light backdrop blur, same data and bars as the full page), without changing the route.
 - Collapsible navigation sidebar with sections (all, active, postponed, not completed, completed, hidden, trash) and their counts, each at its own address; a drawer on phones.
 - Hidden projects and a trash: hide a project from the default lists or delete it into a restorable trash (both with undo), each on its own page; permanent deletion only from the trash. Data moves to format version 3.
