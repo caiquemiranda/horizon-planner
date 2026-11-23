@@ -32,6 +32,7 @@ import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { CalendarDialog } from './CalendarDialog';
 import { DailyCheckInDialog } from './DailyCheckInDialog';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
+import { ForecastPanel } from './ForecastPanel';
 import { LinksDialog } from './LinksDialog';
 import { SaveStatus } from './SaveStatus';
 import { SplitView } from './SplitView';
@@ -328,6 +329,7 @@ function WorkspaceBody({ project }: { project: Project }) {
         dailyPending={readOnly ? 0 : dailyPending}
         readOnly={readOnly}
       />
+      <ForecastPanel project={project} model={model} actions={actions} readOnly={readOnly} />
       {readOnly ? (
         <p className="flex shrink-0 items-center gap-2 border-b bg-muted/60 px-3 py-2 text-sm">
           <Lock aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />

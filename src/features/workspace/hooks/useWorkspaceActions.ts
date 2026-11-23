@@ -24,7 +24,9 @@ import {
   updateTask,
 } from '@/features/schedule/lib/commands';
 import { type DependencyCandidate, parsePredecessors } from '@/features/schedule/lib/dependencies';
+import { computeSchedule } from '@/features/schedule/lib/engine';
 import { ScheduleRuleError } from '@/features/schedule/lib/errors';
+import { clearBaseline, saveBaseline } from '@/features/schedule/lib/forecast';
 import { getChildren } from '@/features/schedule/lib/tree';
 import { generateScheduleId, useScheduleStore } from '@/features/schedule/store';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
@@ -69,6 +71,9 @@ export interface WorkspaceActions {
   checkIn: (request: CheckInRequest) => string | null;
   completeOn: (taskId: UUID, workDate: ISODate) => string | null;
   undoCheckIn: (taskId: UUID, workDate: ISODate) => string | null;
+  /** Saves the current plan as the baseline, or removes it. */
+  saveBaseline: () => string | null;
+  clearBaseline: () => string | null;
 }
 
 export function useWorkspaceActions(
@@ -209,6 +214,13 @@ export function useWorkspaceActions(
 
       undoCheckIn: (taskId, workDate) =>
         runForMessage((schedule) => removeCheckIn(schedule, taskId, workDate)),
+
+      saveBaseline: () =>
+        runForMessage((schedule) =>
+          saveBaseline(schedule, computeSchedule(schedule), new Date().toISOString()),
+        ),
+
+      clearBaseline: () => runForMessage((schedule) => clearBaseline(schedule)),
     };
   }, [apply, show, select, setCollapsed, model, projectStart]);
 }

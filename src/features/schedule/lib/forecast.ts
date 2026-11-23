@@ -290,3 +290,10 @@ export function saveBaseline(
 export function clearBaseline(schedule: ProjectSchedule): ProjectSchedule {
   return { ...schedule, baseline: null };
 }
+
+/** "+1 dia útil", "-2 dias úteis", "no prazo". */
+export function formatVariance(days: number): string {
+  if (days === 0) return 'no prazo';
+  const size = Math.abs(days) === 1 ? '1 dia útil' : `${String(Math.abs(days))} dias úteis`;
+  return `${days > 0 ? '+' : '-'}${size}`;
+}
