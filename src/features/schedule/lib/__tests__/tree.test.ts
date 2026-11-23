@@ -7,6 +7,7 @@ import { ScheduleRuleError } from '../errors';
 import {
   buildTreeIndex,
   copyTaskTree,
+  countPendingLeafTasks,
   findHierarchyProblems,
   flattenVisibleRows,
   getDescendantIds,
@@ -210,5 +211,18 @@ describe('findHierarchyProblems', () => {
     expect(problems.some((problem) => problem.includes('ciclo'))).toBe(true);
     expect(problems.some((problem) => problem.includes('inexistente'))).toBe(true);
     expect(problems.some((problem) => problem.includes('duplicada'))).toBe(true);
+  });
+});
+
+describe('countPendingLeafTasks', () => {
+  it('counts unfinished leaves only, never summaries', () => {
+    const tasks = [
+      makeTask({ id: 'phase', progress: 0 }),
+      makeTask({ id: 'a', parentId: 'phase', progress: 100 }),
+      makeTask({ id: 'b', parentId: 'phase', progress: 30 }),
+      makeTask({ id: 'm', duration: 0, progress: 0 }),
+    ];
+    expect(countPendingLeafTasks(tasks)).toBe(2);
+    expect(countPendingLeafTasks([])).toBe(0);
   });
 });
