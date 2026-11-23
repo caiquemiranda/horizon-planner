@@ -93,6 +93,19 @@ export interface DailyCheckIn {
   recordedAt: ISODateTime;
 }
 
+/**
+ * A copy of the plan's dates at one moment ("linha de base"). Saved only on request and
+ * never moved by edits, confirmations or the forecast, so the original commitment and the
+ * variance against it stay visible.
+ */
+export interface ScheduleBaseline {
+  savedAt: ISODateTime;
+  /** Last working day of the plan when saved. */
+  finish: ISODate;
+  /** Planned start and last working day of every leaf task when saved. */
+  tasks: Record<UUID, { start: ISODate; finish: ISODate }>;
+}
+
 export const DEPENDENCY_TYPES = ['FS', 'SS', 'FF', 'SF'] as const;
 export type DependencyType = (typeof DEPENDENCY_TYPES)[number];
 
@@ -114,6 +127,8 @@ export interface ProjectSchedule {
   dependencies: TaskDependency[];
   /** Daily confirmations of work, oldest first. */
   checkIns: DailyCheckIn[];
+  /** The approved plan saved by the user, kept as the reference; `null` until saved. */
+  baseline: ScheduleBaseline | null;
   updatedAt: ISODateTime;
 }
 

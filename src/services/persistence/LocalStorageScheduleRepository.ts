@@ -14,11 +14,13 @@ export const SCHEDULE_KEY_PREFIX = 'horizon-planner:schedule:';
 /**
  * Version of the stored envelope; bump it with a migration when the format changes.
  * - 1: tasks, links and calendar;
- * - 2: work done per task, actual dates and daily check-ins. Version 1 is read as is: the
- *   schedule schema fills the new fields (`schedule/schemas.ts`, `upgradeTask`).
+ * - 2: work done per task, actual dates and daily check-ins;
+ * - 3: the baseline.
+ * Older versions are read as is: the schedule schema fills the new fields
+ * (`schedule/schemas.ts`).
  */
-export const SCHEDULE_STORAGE_VERSION = 2;
-const READABLE_VERSIONS: readonly number[] = [1, 2];
+export const SCHEDULE_STORAGE_VERSION = 3;
+const READABLE_VERSIONS: readonly number[] = [1, 2, 3];
 
 interface StoredSchedule {
   schemaVersion: number;
