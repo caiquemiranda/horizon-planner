@@ -3,6 +3,7 @@ import type { ISODate, UUID } from '@/types/project';
 import type { DependencyType, ProjectSchedule, ScheduleTask } from '@/types/schedule';
 
 import { createWorkCalendar, DEFAULT_CALENDAR } from './calendar';
+import { workFromProgress } from './checkIns';
 
 /**
  * Deterministic demo schedule "Implantação de Sistema Industrial" (spec section 13).
@@ -105,6 +106,9 @@ export function createIndustrialSchedule({
       start: firstDay,
       duration: task.duration ?? 1,
       progress: task.progress ?? 0,
+      completedWork: workFromProgress(task.progress ?? 0, task.duration ?? 1),
+      actualStart: null,
+      actualFinish: null,
     };
   });
 
@@ -120,6 +124,7 @@ export function createIndustrialSchedule({
       type,
       lag: 0,
     })),
+    checkIns: [],
     updatedAt: now.toISOString(),
   };
 }
@@ -132,6 +137,7 @@ export function createEmptySchedule(projectId: UUID, now = new Date()): ProjectS
     calendar: DEFAULT_CALENDAR,
     tasks: [],
     dependencies: [],
+    checkIns: [],
     updatedAt: now.toISOString(),
   };
 }

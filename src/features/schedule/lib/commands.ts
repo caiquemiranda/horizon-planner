@@ -8,6 +8,7 @@ import type {
   TaskDependency,
 } from '@/types/schedule';
 
+import { workFromProgress } from './checkIns';
 import {
   assertValidDependency,
   type DependencyCandidate,
@@ -179,7 +180,11 @@ export function createTask(
     start: checkDate(draft.start),
     duration: checkDuration(draft.duration),
     progress: checkProgress(draft.progress ?? 0),
+    completedWork: 0,
+    actualStart: null,
+    actualFinish: null,
   };
+  task.completedWork = workFromProgress(task.progress, task.duration);
   return {
     schedule: withTasks(schedule, insertTask(schedule.tasks, task, draft.parentId, draft.position)),
     taskId: task.id,
@@ -218,6 +223,11 @@ export function updateTask(schedule: ProjectSchedule, id: UUID, patch: TaskPatch
   if (patch.start !== undefined) next.start = checkDate(patch.start);
   if (patch.duration !== undefined) next.duration = checkDuration(patch.duration);
   if (patch.progress !== undefined) next.progress = checkProgress(patch.progress);
+  // The percentage the user sees is kept; the work behind it follows it.
+  if (patch.duration !== undefined || patch.progress !== undefined) {
+    next.completedWork = workFromProgress(next.progress, next.duration);
+    if (next.progress < 100) next.actualFinish = null;
+  }
 
   return withTasks(
     schedule,
@@ -244,6 +254,7 @@ export function deleteTask(
       ...schedule,
       tasks,
       dependencies: schedule.dependencies.filter((link) => !removedDependencyIds.has(link.id)),
+      checkIns: schedule.checkIns.filter((checkIn) => !removedIds.has(checkIn.taskId)),
     },
     removedTaskIds: removedIds,
     removedDependencyIds,

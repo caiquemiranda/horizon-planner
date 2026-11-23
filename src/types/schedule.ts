@@ -58,8 +58,39 @@ export interface ScheduleTask {
    * range is derived from their descendants.
    */
   duration: number;
-  /** Integer 0–100. Ignored for summary tasks (rolled up). */
+  /** Integer 0–100. Ignored for summary tasks (rolled up). Derived from `completedWork`. */
   progress: number;
+  /**
+   * Working days of work already done (0 to `duration`). The precise quantity behind
+   * `progress`: daily check-ins add to it, and editing the percentage sets it. The rest,
+   * `duration - completedWork`, is the remaining work used by the forecast.
+   */
+  completedWork: number;
+  /** First day work was confirmed (daily check-ins). */
+  actualStart: ISODate | null;
+  /** Day the last remaining work was confirmed; `null` while the task is not done. */
+  actualFinish: ISODate | null;
+}
+
+/**
+ * - `done`: the work planned for that day was done (`units` working days of it);
+ * - `not_done`: it was not done that day (a fact the user states, never assumed).
+ * A day without a check-in is "pending confirmation", not "not done".
+ */
+export const CHECK_IN_STATES = ['done', 'not_done'] as const;
+export type CheckInState = (typeof CHECK_IN_STATES)[number];
+
+/** What was confirmed for one task on one working date. At most one per task and date. */
+export interface DailyCheckIn {
+  id: UUID;
+  taskId: UUID;
+  /** The day the work refers to (may be earlier than when it was recorded). */
+  workDate: ISODate;
+  state: CheckInState;
+  /** Working days of work done that day; 0 for `not_done`. */
+  units: number;
+  /** When it was recorded, for the audit trail. */
+  recordedAt: ISODateTime;
 }
 
 export const DEPENDENCY_TYPES = ['FS', 'SS', 'FF', 'SF'] as const;
@@ -81,6 +112,8 @@ export interface ProjectSchedule {
   calendar: ProjectCalendar;
   tasks: ScheduleTask[];
   dependencies: TaskDependency[];
+  /** Daily confirmations of work, oldest first. */
+  checkIns: DailyCheckIn[];
   updatedAt: ISODateTime;
 }
 
