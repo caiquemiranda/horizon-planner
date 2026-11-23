@@ -11,6 +11,8 @@ export function useProjectShortcuts() {
       if (event.defaultPrevented || event.repeat) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       if (isEditableTarget(event.target)) return;
+      // The expanded project dialog owns the keyboard while it is open.
+      if (useDrawerStore.getState().expandedProjectId !== null) return;
       if (event.key !== 'n' && event.key !== 'N') return;
 
       event.preventDefault();

@@ -16,10 +16,12 @@ import { ZoomControls } from './ZoomControls';
 
 interface TimelineToolbarProps {
   projects: readonly Project[];
+  /** `false` while a dialog over the page owns the keyboard. */
+  shortcutsEnabled?: boolean;
 }
 
 /** Timeline actions shown in the app header. */
-export function TimelineToolbar({ projects }: TimelineToolbarProps) {
+export function TimelineToolbar({ projects, shortcutsEnabled = true }: TimelineToolbarProps) {
   const store = useViewportStoreApi();
   const goToToday = store((state) => state.goToToday);
   const rangeLabel = store((state) => {
@@ -31,6 +33,7 @@ export function TimelineToolbar({ projects }: TimelineToolbarProps) {
 
   useTimelineShortcuts({
     getFitRange: () => getProjectsExtent(projects),
+    enabled: shortcutsEnabled,
     onShowHelp: () => {
       setHelpOpen(true);
     },

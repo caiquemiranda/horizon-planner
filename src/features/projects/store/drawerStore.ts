@@ -7,6 +7,10 @@ export type DrawerView =
 
 interface DrawerState {
   view: DrawerView;
+  /** Project shown in the expanded dialog over the current page (the route does not change). */
+  expandedProjectId: UUID | null;
+  expand: (projectId: UUID) => void;
+  closeExpanded: () => void;
   openProject: (projectId: UUID) => void;
   openCreate: () => void;
   close: () => void;
@@ -15,6 +19,13 @@ interface DrawerState {
 /** Which project the side drawer shows (UI state, not persisted). */
 export const useDrawerStore = create<DrawerState>()((set) => ({
   view: { mode: 'closed' },
+  expandedProjectId: null,
+  expand: (projectId) => {
+    set({ expandedProjectId: projectId });
+  },
+  closeExpanded: () => {
+    set({ expandedProjectId: null });
+  },
   openProject: (projectId) => {
     set({ view: { mode: 'edit', projectId } });
   },
