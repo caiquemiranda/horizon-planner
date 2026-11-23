@@ -46,9 +46,10 @@ interface Bound {
   dependency: TaskDependency;
 }
 
-function linkBound(
+/** Earliest start a link allows (shared by the plan and the forecast). */
+export function linkBound(
   link: TaskDependency,
-  predecessor: ScheduledTask,
+  predecessor: Pick<ScheduledTask, 'start' | 'finish'>,
   duration: number,
   calendar: WorkCalendar,
 ): DayNumber {

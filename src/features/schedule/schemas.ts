@@ -98,6 +98,15 @@ export const projectScheduleSchema = z
     dependencies: z.array(dependencySchema),
     // Absent in schedules stored before daily check-ins.
     checkIns: z.array(checkInSchema).max(100_000).default([]),
+    // Absent in schedules stored before baselines.
+    baseline: z
+      .object({
+        savedAt: isoDateTimeSchema,
+        finish: isoDateSchema,
+        tasks: z.record(idSchema, z.object({ start: isoDateSchema, finish: isoDateSchema })),
+      })
+      .nullable()
+      .default(null),
     updatedAt: isoDateTimeSchema,
   })
   .superRefine((schedule, ctx) => {

@@ -125,6 +125,7 @@ export function createIndustrialSchedule({
       lag: 0,
     })),
     checkIns: [],
+    baseline: null,
     updatedAt: now.toISOString(),
   };
 }
@@ -138,6 +139,7 @@ export function createEmptySchedule(projectId: UUID, now = new Date()): ProjectS
     tasks: [],
     dependencies: [],
     checkIns: [],
+    baseline: null,
     updatedAt: now.toISOString(),
   };
 }
