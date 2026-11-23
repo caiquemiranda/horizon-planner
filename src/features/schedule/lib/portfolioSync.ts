@@ -7,7 +7,7 @@ import { getDisplayFinish } from './engine';
 /**
  * Keeps the portfolio coherent with the detailed plan: once a project has tasks, it acts
  * as the root summary of its schedule. Its dates span the tasks and its progress is the
- * schedule's duration-weighted progress.
+ * schedule's task-based progress (see `progress.ts`).
  *
  * Portfolio milestones stay valid: the range is widened to include them, never cut.
  * Returns `null` when nothing changes or the schedule is empty (then the dates the user
