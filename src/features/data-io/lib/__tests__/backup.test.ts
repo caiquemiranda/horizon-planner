@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
 import { createIndustrialSchedule } from '@/features/schedule/lib/fixtures';
 import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
@@ -37,7 +38,7 @@ describe('export', () => {
 
     expect(text.endsWith('\n')).toBe(true);
     expect(parseBackup(text)).toEqual({
-      schemaVersion: 2,
+      schemaVersion: SNAPSHOT_SCHEMA_VERSION,
       exportedAt: '2026-11-22T15:30:00.000Z',
       projects,
       schedules: [],

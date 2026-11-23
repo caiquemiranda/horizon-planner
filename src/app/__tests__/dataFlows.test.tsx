@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createBackup, serializeBackup } from '@/features/data-io/lib/backup';
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
+import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
@@ -118,7 +119,7 @@ describe('data flows', () => {
       reader.readAsText(exported);
     });
     expect(JSON.parse(text)).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: SNAPSHOT_SCHEMA_VERSION,
       projects: [{ title: 'Piano' }],
     });
     expect(screen.getByText('Backup exportado com 1 projeto.')).toBeInTheDocument();

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
+
 import { PersistenceError } from '../errors';
 import { DEFAULT_STORAGE_KEY, LocalStorageRepository } from '../LocalStorageRepository';
 import { createDependencies, makeDraft, MemoryStorage } from './helpers';
@@ -33,7 +35,10 @@ describe('LocalStorageRepository', () => {
   it('writes a versioned snapshot after each mutation', async () => {
     const project = await createRepository().create(makeDraft());
 
-    expect(storedSnapshot()).toMatchObject({ schemaVersion: 2, projects: [project] });
+    expect(storedSnapshot()).toMatchObject({
+      schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+      projects: [project],
+    });
   });
 
   it('persists data across instances', async () => {
@@ -84,7 +89,7 @@ describe('LocalStorageRepository', () => {
       expect(storage.getItem(DEFAULT_STORAGE_KEY)).toBe('{not json');
 
       await repository.create(makeDraft());
-      expect(storedSnapshot()).toMatchObject({ schemaVersion: 2 });
+      expect(storedSnapshot()).toMatchObject({ schemaVersion: SNAPSHOT_SCHEMA_VERSION });
     });
   });
 

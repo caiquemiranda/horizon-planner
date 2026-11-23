@@ -17,7 +17,16 @@ export interface ScheduleAccess {
 
 export const FULL_ACCESS: ScheduleAccess = { canEdit: true, reason: null };
 
-export function getScheduleAccess(project: Pick<Project, 'status'>): ScheduleAccess {
+export function getScheduleAccess(
+  project: Pick<Project, 'status'> & Partial<Pick<Project, 'deletedAt'>>,
+): ScheduleAccess {
+  if (project.deletedAt) {
+    return {
+      canEdit: false,
+      reason:
+        'Projeto na lixeira: o cronograma está somente para leitura. Restaure o projeto na lixeira para editá-lo.',
+    };
+  }
   if (STATUS_META[project.status].isClosed) {
     return {
       canEdit: false,

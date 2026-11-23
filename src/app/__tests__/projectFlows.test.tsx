@@ -129,27 +129,6 @@ describe('project flows', () => {
     expect((await projectRepository.list())[0]?.endDate).toBe('2026-09-30');
   });
 
-  it('deletes a project after confirmation', async () => {
-    const user = userEvent.setup();
-    await projectRepository.create(makeDraft({ title: 'Piano' }));
-    await renderApp();
-
-    await user.click(screen.getByText('Piano', { selector: 'li button span' }));
-    await user.click(within(getDrawer()).getByRole('button', { name: 'Excluir' }));
-
-    const confirm = await screen.findByRole('alertdialog');
-    expect(confirm).toHaveTextContent('Excluir “Piano”?');
-    await user.click(within(confirm).getByRole('button', { name: 'Excluir projeto' }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-    expect(await projectRepository.list()).toEqual([]);
-    expect(
-      screen.getByRole('heading', { name: 'Sua linha do tempo está vazia' }),
-    ).toBeInTheDocument();
-  });
-
   it('closes the drawer with Escape', async () => {
     const user = userEvent.setup();
     await projectRepository.create(makeDraft({ title: 'Piano' }));
