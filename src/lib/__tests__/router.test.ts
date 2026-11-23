@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { HIDDEN_HREF, parseRoute, projectHref, TRASH_HREF } from '../router';
+import { HIDDEN_HREF, parseRoute, projectHref, SECTION_HREFS, TRASH_HREF } from '../router';
 
 describe('router', () => {
   it('parses the portfolio and unknown hashes as the portfolio', () => {
-    expect(parseRoute('')).toEqual({ name: 'portfolio' });
-    expect(parseRoute('#/')).toEqual({ name: 'portfolio' });
-    expect(parseRoute('#timeline')).toEqual({ name: 'portfolio' });
-    expect(parseRoute('#/projetos/')).toEqual({ name: 'portfolio' });
+    expect(parseRoute('')).toEqual({ name: 'portfolio', section: 'all' });
+    expect(parseRoute('#/')).toEqual({ name: 'portfolio', section: 'all' });
+    expect(parseRoute('#timeline')).toEqual({ name: 'portfolio', section: 'all' });
+    expect(parseRoute('#/projetos/')).toEqual({ name: 'portfolio', section: 'all' });
   });
 
   it('round-trips project ids, including characters that need escaping', () => {
@@ -16,12 +16,24 @@ describe('router', () => {
     }
   });
 
+  it('parses the timeline sections', () => {
+    expect(parseRoute(SECTION_HREFS.active)).toEqual({ name: 'portfolio', section: 'active' });
+    expect(parseRoute('#/nao-concluidos/')).toEqual({
+      name: 'portfolio',
+      section: 'not_completed',
+    });
+    expect(parseRoute(SECTION_HREFS.completed)).toEqual({
+      name: 'portfolio',
+      section: 'completed',
+    });
+  });
+
   it('parses the hidden projects and the trash', () => {
     expect(parseRoute(HIDDEN_HREF)).toEqual({ name: 'hidden' });
     expect(parseRoute(`${TRASH_HREF}/`)).toEqual({ name: 'trash' });
   });
 
   it('ignores malformed escapes', () => {
-    expect(parseRoute('#/projetos/%E0%A4%A')).toEqual({ name: 'portfolio' });
+    expect(parseRoute('#/projetos/%E0%A4%A')).toEqual({ name: 'portfolio', section: 'all' });
   });
 });

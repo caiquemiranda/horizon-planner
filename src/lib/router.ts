@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
+import type { ProjectSection, TimelineSection } from '@/features/projects/lib/sections';
 import type { UUID } from '@/types/project';
 
 /**
@@ -7,13 +8,14 @@ import type { UUID } from '@/types/project';
  * GitHub Pages without server rewrites, and keep the browser's back button working.
  *
  * Routes:
- * - `#/` (or anything unknown): the portfolio timeline;
+ * - `#/` (or anything unknown): the portfolio timeline with every visible project;
+ * - `#/ativos`, `#/adiados`, `#/nao-concluidos`, `#/concluidos`: one section of it;
  * - `#/projetos/<projectId>`: the planning workspace of one project;
  * - `#/ocultos` and `#/lixeira`: hidden projects and the trash.
  */
 
 export type Route =
-  | { name: 'portfolio' }
+  | { name: 'portfolio'; section: TimelineSection }
   | { name: 'project'; projectId: UUID }
   | { name: 'hidden' }
   | { name: 'trash' };
@@ -24,6 +26,24 @@ export const PORTFOLIO_HREF = '#/';
 export const HIDDEN_HREF = '#/ocultos';
 export const TRASH_HREF = '#/lixeira';
 
+/** Address of every navigation section. */
+export const SECTION_HREFS = {
+  all: PORTFOLIO_HREF,
+  active: '#/ativos',
+  postponed: '#/adiados',
+  not_completed: '#/nao-concluidos',
+  completed: '#/concluidos',
+  hidden: HIDDEN_HREF,
+  trash: TRASH_HREF,
+} as const satisfies Record<ProjectSection, string>;
+
+const TIMELINE_SECTIONS_BY_HREF = new Map<string, TimelineSection>([
+  [SECTION_HREFS.active, 'active'],
+  [SECTION_HREFS.postponed, 'postponed'],
+  [SECTION_HREFS.not_completed, 'not_completed'],
+  [SECTION_HREFS.completed, 'completed'],
+]);
+
 export function projectHref(projectId: UUID): string {
   return `#/projetos/${encodeURIComponent(projectId)}`;
 }
@@ -32,6 +52,8 @@ export function parseRoute(hash: string): Route {
   const path = hash.replace(/\/$/, '');
   if (path === HIDDEN_HREF) return { name: 'hidden' };
   if (path === TRASH_HREF) return { name: 'trash' };
+  const section = TIMELINE_SECTIONS_BY_HREF.get(path);
+  if (section) return { name: 'portfolio', section };
   const match = PROJECT_PATTERN.exec(hash);
   if (match?.[1]) {
     try {
@@ -40,7 +62,7 @@ export function parseRoute(hash: string): Route {
       // Malformed escape sequence: fall back to the portfolio.
     }
   }
-  return { name: 'portfolio' };
+  return { name: 'portfolio', section: 'all' };
 }
 
 function subscribe(onChange: () => void) {
