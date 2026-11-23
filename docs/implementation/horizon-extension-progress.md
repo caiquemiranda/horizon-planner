@@ -5,18 +5,18 @@ Real delivery state of the extension planned in
 request. An item is **Delivered** only when it is integrated, persists after a reload and
 its acceptance tests pass in CI.
 
-| Order | Branch                          | Requirement         | State     | Pull request | Tests                                                                                   |
-| ----- | ------------------------------- | ------------------- | --------- | ------------ | --------------------------------------------------------------------------------------- |
-| 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                         |
-| 1     | `feat/project-lifecycle`        | REQ-01              | In review | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome |
-| 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Pending   | —            | —                                                                                       |
-| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Pending   | —            | —                                                                                       |
-| 4     | `feat/expanded-project-dialog`  | REQ-04              | Pending   | —            | —                                                                                       |
-| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Pending   | —            | —                                                                                       |
-| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Pending   | —            | —                                                                                       |
-| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Pending   | —            | —                                                                                       |
-| 8     | `feat/portfolio-statistics`     | REQ-05              | Pending   | —            | —                                                                                       |
-| 9     | `test/project-experience-e2e`   | Scenarios A–C       | Pending   | —            | —                                                                                       |
+| Order | Branch                          | Requirement         | State     | Pull request | Tests                                                                                                              |
+| ----- | ------------------------------- | ------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                                                    |
+| 1     | `feat/project-lifecycle`        | REQ-01              | Delivered | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome                            |
+| 2     | `feat/project-visibility-trash` | REQ-07 (data)       | In review | —            | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
+| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Pending   | —            | —                                                                                                                  |
+| 4     | `feat/expanded-project-dialog`  | REQ-04              | Pending   | —            | —                                                                                                                  |
+| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Pending   | —            | —                                                                                                                  |
+| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Pending   | —            | —                                                                                                                  |
+| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Pending   | —            | —                                                                                                                  |
+| 8     | `feat/portfolio-statistics`     | REQ-05              | Pending   | —            | —                                                                                                                  |
+| 9     | `test/project-experience-e2e`   | Scenarios A–C       | Pending   | —            | —                                                                                                                  |
 
 ## Log
 
@@ -50,6 +50,28 @@ its acceptance tests pass in CI.
   dialog and the history after reload, no console errors.
 - Not in this PR: resuming keeps the plan as is; reprojecting the dates of a resumed
   project comes with the forecast (order 7).
+
+### 2 · `feat/project-visibility-trash`
+
+- `hiddenAt` and `deletedAt` on every project (snapshot v3, migration sets both to
+  `null`). Placement rule in `src/features/projects/lib/visibility.ts`: trash, then
+  hidden, then listed. Status, dates, progress and schedule are never touched.
+- Store actions `hide`, `unhide`, `moveToTrash`, `restore` and `deletePermanently` (only
+  for trashed projects; deletes the schedule too). `update` ignores visibility fields;
+  repeated actions are no-ops.
+- "Excluir" in the project panel now moves the project to the trash; "Ocultar" sits next
+  to it with a different icon. Both offer "Desfazer" in the notice.
+- Pages `#/ocultos` (show again, open, move to trash) and `#/lixeira` (restore, delete
+  permanently after confirmation), reached from a header menu with counts. The sidebar
+  (order 3) will take over this navigation.
+- The portfolio, its filters and facet counts use visible projects only. Backups still
+  export every project, hidden and trashed included.
+- A hidden project still opens by URL; a trashed one opens read-only.
+- Acceptance (REQ-07): hide and show again without losing data ✅; restoring keeps tasks,
+  dates and the hidden flag ✅; a hidden completed project appears in "Ocultos", not in
+  the timeline ✅ (statistics come with order 8); reloads never lose a project ✅.
+- Tests: 689 Vitest tests passing (16 new); Chrome check of hide, trash, counts, restore
+  after reload and show again, no console errors.
 
 ## Impediments
 
