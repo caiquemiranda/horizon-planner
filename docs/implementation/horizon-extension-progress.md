@@ -10,8 +10,8 @@ its acceptance tests pass in CI.
 | 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                                                    |
 | 1     | `feat/project-lifecycle`        | REQ-01              | Delivered | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome                            |
 | 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Delivered | #28          | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
-| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | In review | —            | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
-| 4     | `feat/expanded-project-dialog`  | REQ-04              | Pending   | —            | —                                                                                                                  |
+| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Delivered | #29          | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
+| 4     | `feat/expanded-project-dialog`  | REQ-04              | In review | —            | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
 | 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Pending   | —            | —                                                                                                                  |
 | 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Pending   | —            | —                                                                                                                  |
 | 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Pending   | —            | —                                                                                                                  |
@@ -96,6 +96,28 @@ its acceptance tests pass in CI.
 - Tests: 701 Vitest tests passing (12 new) and 8 Playwright tests; Chrome check at
   1440 px expanded and collapsed, after reload, and at 390 px (no horizontal overflow),
   no console errors.
+
+### 4 · `feat/expanded-project-dialog`
+
+- "Expandir cronograma" (icon button in the project panel header, next to "Abrir
+  cronograma") opens `ExpandedProjectDialog`: the same `ProjectWorkspace` as the full page
+  in `presentation="dialog"`, so there is no second table, chart or progress formula.
+- The route does not change; closing returns to the page as it was (the project panel
+  stays open); "Abrir página completa" navigates to `#/projetos/<id>`.
+- 96% of the viewport on desktop (measured 1 382 × 864 px at 1 440 × 900), full screen
+  on phones; overlay with an 8 px backdrop blur where supported and a plain dim layer
+  otherwise.
+- Escape closes it unless a cell edit, a bar or row drag (`src/lib/escapeGuard.ts`) or a
+  nested menu/dialog owns the key; clicking outside never closes it; a pending, failed or
+  conflicting save asks before closing. Focus is trapped and returns to the opener; the
+  page behind is inert and does not scroll; its shortcuts (`N`, zoom, pan) pause.
+- The dialog is named "Cronograma de <projeto>" so it is distinct from the project
+  panel, and it does not add a second `main` landmark.
+- Acceptance (REQ-04): route unchanged ✅; large view with a light blur ✅; keyboard
+  accessible, focus restored ✅ (axe clean); same data as the full page after an edit ✅;
+  rows and bars aligned inside it (0 px) ✅; opening the full page navigates correctly ✅.
+- Tests: 709 Vitest tests passing (8 new) and 8 Playwright tests; Chrome check at
+  1 440 px and 390 px, no console errors.
 
 ## Impediments
 
