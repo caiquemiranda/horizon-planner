@@ -7,8 +7,8 @@ its acceptance tests pass in CI.
 
 | Order | Branch                          | Requirement         | State     | Pull request | Tests                                                                                   |
 | ----- | ------------------------------- | ------------------- | --------- | ------------ | --------------------------------------------------------------------------------------- |
-| 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | In review | —            | Docs only; dev server watch ignores checked by hand (see below)                         |
-| 1     | `feat/project-lifecycle`        | REQ-01              | In review | —            | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome |
+| 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                         |
+| 1     | `feat/project-lifecycle`        | REQ-01              | In review | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome |
 | 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Pending   | —            | —                                                                                       |
 | 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Pending   | —            | —                                                                                       |
 | 4     | `feat/expanded-project-dialog`  | REQ-04              | Pending   | —            | —                                                                                       |
