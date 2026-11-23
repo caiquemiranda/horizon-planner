@@ -8,11 +8,14 @@ interface AppHeaderProps {
   children?: ReactNode;
   /** Right-aligned actions, e.g. data menu and theme toggle. */
   actions?: ReactNode;
+  /** Before the logo, e.g. the menu button on phones. */
+  leading?: ReactNode;
 }
 
-export function AppHeader({ children, actions }: AppHeaderProps) {
+export function AppHeader({ children, actions, leading }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-3 border-b glass px-3 sm:px-4">
+      {leading}
       <div className="flex items-center gap-2">
         <Logo className="size-6" />
         <h1 className="sr-only text-[15px] font-semibold sm:not-sr-only">Horizon</h1>

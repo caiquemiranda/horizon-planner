@@ -7,7 +7,7 @@ import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { createIndustrialSchedule } from '@/features/schedule/lib/fixtures';
 import { useScheduleStore } from '@/features/schedule/store';
-import { HIDDEN_HREF, PORTFOLIO_HREF, projectHref, TRASH_HREF } from '@/lib/router';
+import { PORTFOLIO_HREF, projectHref, TRASH_HREF } from '@/lib/router';
 import { projectRepository, scheduleRepository } from '@/services/persistence';
 import { makeProject } from '@/test/factories';
 import type { ISODate, Project } from '@/types/project';
@@ -84,10 +84,12 @@ describe('visibility and trash flows', () => {
     expect((await stored(piano.id)).hiddenAt).not.toBeNull();
     expect(await stored(piano.id)).toMatchObject({ status: 'planned', deletedAt: null });
 
-    await user.click(screen.getByRole('button', { name: 'Ocultos e lixeira' }));
-    expect(await screen.findByRole('menuitem', { name: /Ocultos\s*1/ })).toBeInTheDocument();
+    const nav = within(screen.getByRole('navigation', { name: 'Seções' }));
+    const link = nav.getByRole('link', { name: /^Ocultos/ });
+    expect(link).toHaveTextContent('1');
+    await user.click(link);
     act(() => {
-      window.location.hash = HIDDEN_HREF;
+      // jsdom follows the link without firing hashchange.
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
 
