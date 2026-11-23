@@ -4,6 +4,7 @@ import {
   CalendarDays,
   ChevronsDownUp,
   ChevronsUpDown,
+  ClipboardCheck,
   CornerDownRight,
   IndentDecrease,
   IndentIncrease,
@@ -42,6 +43,9 @@ interface WorkspaceToolbarProps {
   onDelete: () => void;
   onEditLinks: () => void;
   onEditCalendar: () => void;
+  onOpenDaily: () => void;
+  /** Activities of today still waiting for a confirmation (and late ones). */
+  dailyPending: number;
   /** Editing commands are disabled; viewing stays available. */
   readOnly?: boolean;
 }
@@ -93,6 +97,8 @@ export function WorkspaceToolbar({
   onDelete,
   onEditLinks,
   onEditCalendar,
+  onOpenDaily,
+  dailyPending,
   readOnly = false,
 }: WorkspaceToolbarProps) {
   const expandAll = useWorkspaceUiStore((state) => state.expandAll);
@@ -192,6 +198,25 @@ export function WorkspaceToolbar({
         <Trash2 />
       </ToolButton>
 
+      <Button
+        variant="outline"
+        size="sm"
+        className="ml-1"
+        aria-label={
+          dailyPending > 0
+            ? `Atividades do dia, ${String(dailyPending)} a confirmar`
+            : 'Atividades do dia'
+        }
+        onClick={onOpenDaily}
+      >
+        <ClipboardCheck />
+        <span className="hidden lg:inline">Atividades do dia</span>
+        {dailyPending > 0 ? (
+          <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] text-primary-foreground tabular-nums">
+            {dailyPending}
+          </span>
+        ) : null}
+      </Button>
       <ToolButton label="Calendário do projeto" onClick={onEditCalendar}>
         <CalendarDays />
       </ToolButton>
