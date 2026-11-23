@@ -340,6 +340,9 @@ export function copyTaskTree(
       ...source,
       id: copyId,
       name: sourceId === id ? `${source.name} (cópia)` : source.name,
+      // A copy is new work: it keeps the plan and the percentage, not the actual dates.
+      actualStart: null,
+      actualFinish: null,
       parentId: sourceId === id ? source.parentId : (idMap.get(source.parentId ?? '') ?? null),
     });
   }

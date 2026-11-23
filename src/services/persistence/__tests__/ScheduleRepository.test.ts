@@ -8,6 +8,7 @@ import { PersistenceError, ProjectValidationError } from '../errors';
 import {
   LocalStorageScheduleRepository,
   SCHEDULE_KEY_PREFIX,
+  SCHEDULE_STORAGE_VERSION,
 } from '../LocalStorageScheduleRepository';
 import {
   InMemoryScheduleRepository,
@@ -115,8 +116,32 @@ describe('LocalStorageScheduleRepository', () => {
     const raw = JSON.parse(storage.getItem(`${SCHEDULE_KEY_PREFIX}project-1`) ?? '{}') as {
       schemaVersion: number;
     };
-    expect(raw.schemaVersion).toBe(1);
+    expect(raw.schemaVersion).toBe(SCHEDULE_STORAGE_VERSION);
     expect(storage.keys()).toEqual([`${SCHEDULE_KEY_PREFIX}project-1`]);
+  });
+
+  it('reads schedules stored before daily check-ins, filling the work done', async () => {
+    const storage = new MemoryStorage();
+    const current = demo();
+    const v1 = {
+      ...current,
+      checkIns: undefined,
+      tasks: current.tasks.map(
+        ({ completedWork: _w, actualStart: _s, actualFinish: _f, ...task }) =>
+          task.duration === 4 ? { ...task, progress: 50 } : task,
+      ),
+    };
+    storage.setItem(
+      `${SCHEDULE_KEY_PREFIX}project-1`,
+      JSON.stringify({ schemaVersion: 1, schedule: v1 }),
+    );
+    const repository = new LocalStorageScheduleRepository({ storage, now: createClock() });
+
+    const loaded = await repository.get('project-1');
+    expect(loaded?.checkIns).toEqual([]);
+    const halfDone = loaded?.tasks.find((task) => task.duration === 4);
+    expect(halfDone).toMatchObject({ progress: 50, completedWork: 2, actualStart: null });
+    expect(loaded?.tasks.every((task) => task.actualFinish === null)).toBe(true);
   });
 
   it('sees revisions written by another tab before saving', async () => {

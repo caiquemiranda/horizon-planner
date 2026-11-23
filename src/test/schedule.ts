@@ -1,3 +1,4 @@
+import { workFromProgress } from '@/features/schedule/lib/checkIns';
 import type { ISODate, UUID } from '@/types/project';
 import type { DependencyType, ScheduleTask, TaskDependency } from '@/types/schedule';
 
@@ -15,6 +16,10 @@ export function makeTask(overrides: Partial<ScheduleTask> & { id: UUID }): Sched
     start: '2026-11-23' as ISODate,
     duration: 1,
     progress: 0,
+    // Consistent with the percentage the test asks for, unless given.
+    completedWork: workFromProgress(overrides.progress ?? 0, overrides.duration ?? 1),
+    actualStart: null,
+    actualFinish: null,
     ...overrides,
   };
 }

@@ -11,11 +11,17 @@ import {
 /** One key per project: `horizon-planner:schedule:<projectId>`. */
 export const SCHEDULE_KEY_PREFIX = 'horizon-planner:schedule:';
 
-/** Version of the stored envelope; bump it with a migration when the format changes. */
-export const SCHEDULE_STORAGE_VERSION = 1;
+/**
+ * Version of the stored envelope; bump it with a migration when the format changes.
+ * - 1: tasks, links and calendar;
+ * - 2: work done per task, actual dates and daily check-ins. Version 1 is read as is: the
+ *   schedule schema fills the new fields (`schedule/schemas.ts`, `upgradeTask`).
+ */
+export const SCHEDULE_STORAGE_VERSION = 2;
+const READABLE_VERSIONS: readonly number[] = [1, 2];
 
 interface StoredSchedule {
-  schemaVersion: typeof SCHEDULE_STORAGE_VERSION;
+  schemaVersion: number;
   schedule: ProjectSchedule;
 }
 
@@ -174,7 +180,7 @@ export class LocalStorageScheduleRepository implements ScheduleRepository {
 
     try {
       const stored = JSON.parse(raw) as Partial<StoredSchedule>;
-      if (stored.schemaVersion !== SCHEDULE_STORAGE_VERSION) {
+      if (!READABLE_VERSIONS.includes(stored.schemaVersion ?? -1)) {
         throw new PersistenceError(
           typeof stored.schemaVersion === 'number' &&
             stored.schemaVersion > SCHEDULE_STORAGE_VERSION

@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
 import { isoDateSchema, isoDateTimeSchema } from '@/features/projects/schemas';
-import { DEPENDENCY_TYPES, SCHEDULING_MODES, type Weekday } from '@/types/schedule';
+import {
+  CHECK_IN_STATES,
+  DEPENDENCY_TYPES,
+  SCHEDULING_MODES,
+  type Weekday,
+} from '@/types/schedule';
 
 import { TASK_LIMITS } from './lib/commands';
 import { LAG_LIMIT } from './lib/dependencies';
@@ -30,7 +35,26 @@ export const calendarSchema = z.object({
   holidays: z.array(z.object({ date: isoDateSchema, name: z.string().max(120) })).max(1000),
 });
 
-export const scheduleTaskSchema = z.object({
+/**
+ * Schedules stored before daily check-ins have no `completedWork` nor actual dates: the
+ * work done is taken from the percentage (`progress × duration`), and the actual dates
+ * stay unknown. Applies to storage and backups alike.
+ */
+function upgradeTask(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null) return raw;
+  const task = raw as Record<string, unknown>;
+  if (task.completedWork !== undefined) return raw;
+  const progress = typeof task.progress === 'number' ? task.progress : 0;
+  const duration = typeof task.duration === 'number' ? task.duration : 0;
+  return {
+    ...task,
+    completedWork: Math.round(((progress * duration) / 100) * 1000) / 1000,
+    actualStart: task.actualStart ?? null,
+    actualFinish: task.actualFinish ?? null,
+  };
+}
+
+const scheduleTaskFieldsSchema = z.object({
   id: idSchema,
   parentId: idSchema.nullable(),
   order: z.number().int().nonnegative(),
@@ -41,6 +65,20 @@ export const scheduleTaskSchema = z.object({
   start: isoDateSchema,
   duration: z.number().int().min(0).max(TASK_LIMITS.durationMax),
   progress: z.number().int().min(0).max(100),
+  completedWork: z.number().min(0).max(TASK_LIMITS.durationMax),
+  actualStart: isoDateSchema.nullable(),
+  actualFinish: isoDateSchema.nullable(),
+});
+
+export const scheduleTaskSchema = z.preprocess(upgradeTask, scheduleTaskFieldsSchema);
+
+export const checkInSchema = z.object({
+  id: idSchema,
+  taskId: idSchema,
+  workDate: isoDateSchema,
+  state: z.enum(CHECK_IN_STATES),
+  units: z.number().min(0).max(TASK_LIMITS.durationMax),
+  recordedAt: isoDateTimeSchema,
 });
 
 export const dependencySchema = z.object({
@@ -58,6 +96,8 @@ export const projectScheduleSchema = z
     calendar: calendarSchema,
     tasks: z.array(scheduleTaskSchema).max(TASK_LIMITS.tasksMax),
     dependencies: z.array(dependencySchema),
+    // Absent in schedules stored before daily check-ins.
+    checkIns: z.array(checkInSchema).max(100_000).default([]),
     updatedAt: isoDateTimeSchema,
   })
   .superRefine((schedule, ctx) => {
@@ -90,6 +130,26 @@ export const projectScheduleSchema = z
           message: 'Uma tarefa não pode depender dela mesma.',
         });
       }
+    });
+
+    const days = new Set<string>();
+    schedule.checkIns.forEach((checkIn, index) => {
+      if (!taskIds.has(checkIn.taskId)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['checkIns', index],
+          message: 'Confirmação de uma tarefa inexistente.',
+        });
+      }
+      const key = `${checkIn.taskId}|${checkIn.workDate}`;
+      if (days.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['checkIns', index],
+          message: 'Mais de uma confirmação da mesma tarefa no mesmo dia.',
+        });
+      }
+      days.add(key);
     });
   });
 
