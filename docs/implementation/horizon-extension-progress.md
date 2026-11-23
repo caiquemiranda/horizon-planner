@@ -9,8 +9,8 @@ its acceptance tests pass in CI.
 | ----- | ------------------------------- | ------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
 | 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                                                    |
 | 1     | `feat/project-lifecycle`        | REQ-01              | Delivered | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome                            |
-| 2     | `feat/project-visibility-trash` | REQ-07 (data)       | In review | —            | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
-| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Pending   | —            | —                                                                                                                  |
+| 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Delivered | #28          | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
+| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | In review | —            | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
 | 4     | `feat/expanded-project-dialog`  | REQ-04              | Pending   | —            | —                                                                                                                  |
 | 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Pending   | —            | —                                                                                                                  |
 | 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Pending   | —            | —                                                                                                                  |
@@ -72,6 +72,30 @@ its acceptance tests pass in CI.
   the timeline ✅ (statistics come with order 8); reloads never lose a project ✅.
 - Tests: 689 Vitest tests passing (16 new); Chrome check of hide, trash, counts, restore
   after reload and show again, no console errors.
+
+### 3 · `feat/navigation-sidebar`
+
+- Section rules in `src/features/projects/lib/sections.ts`, shared by lists and counts:
+  Todos (visible), Ativos (planned or in progress), Adiados, Não concluídos, Concluídos,
+  Ocultos, Lixeira. The four status sections never overlap and add up to Todos.
+- Addresses `#/ativos`, `#/adiados`, `#/nao-concluidos`, `#/concluidos` (plus
+  `#/ocultos`, `#/lixeira`); reloads and the back button keep the section.
+- Sidebar (`NavigationSidebar.tsx`): labels and counts when expanded; icons with
+  tooltips when collapsed, which narrows it from 224 to 56 px (the timeline measured
+  1 216 → 1 384 px wide); `aria-expanded` on the toggle, `aria-current` plus a bar and bold
+  text on the active section; remembered in this browser. Below `md` a menu button opens
+  the same list in a drawer that closes after a choice.
+- The project open in the side panel stays drawn while a status change moves it out of
+  the current section. Empty sections explain themselves and link to every project.
+- Not changed: the project workspace keeps its own full-width layout with the way back.
+- Acceptance (REQ-02): collapse, navigate, reload and come back consistently ✅; every
+  section reachable collapsed, by keyboard and by screen reader ✅; the project panel is
+  never covered (the phone drawer is modal and closes on choice) ✅. REQ-07 navigation:
+  required sections Ativos, Concluídos, Ocultos, Lixeira plus Adiados and Não concluídos ✅;
+  counts equal the lists ✅.
+- Tests: 701 Vitest tests passing (12 new) and 8 Playwright tests; Chrome check at
+  1440 px expanded and collapsed, after reload, and at 390 px (no horizontal overflow),
+  no console errors.
 
 ## Impediments
 

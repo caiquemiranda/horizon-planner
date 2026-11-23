@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Collapsible navigation sidebar with sections (all, active, postponed, not completed, completed, hidden, trash) and their counts, each at its own address; a drawer on phones.
 - Hidden projects and a trash: hide a project from the default lists or delete it into a restorable trash (both with undo), each on its own page; permanent deletion only from the trash. Data moves to format version 3.
 - Project lifecycle: start, postpone (reason plus an expected resume date or a revised finish), resume, complete (justified when tasks are pending), close without completing and reopen, each from a guided dialog, with an actual start date, a status history and a derived "Atrasado" badge. Data moves to format version 2 with an automatic migration.
 - Row virtualization in the project workspace (1 000 tasks: DOM 45 000 → 1 900 elements, edits reflected in about 0.15 s), browser end-to-end tests in CI, performance measurements (`npm run perf`, `docs/performance.md`) and workspace screenshots.
