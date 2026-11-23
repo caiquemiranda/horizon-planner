@@ -102,6 +102,14 @@ working day, Monday 30/11. This is covered by tests.
 - The daily agenda shows the leaf tasks planned for a date and the late unfinished ones;
   days off of the project calendar ask nothing. Rules: `schedule/lib/checkIns.ts`.
 
+### Finish forecast and baseline
+
+- The forecast replays the plan from what happened: done tasks stay on their actual
+  dates, remaining work starts no earlier than today, successors follow through the same
+  links and calendar. It is recomputed on read, never stored, and never changes the plan.
+- The baseline is a copy of the plan's dates saved on request ("Salvar linha de base").
+- Rules: `schedule/lib/forecast.ts`.
+
 ### Persistence
 
 - Each project's schedule is stored under its own key
