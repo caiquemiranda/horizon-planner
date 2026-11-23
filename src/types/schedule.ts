@@ -103,7 +103,7 @@ export interface ScheduledTask {
   finish: DayNumber;
   /** Working days between `start` and `finish`. */
   duration: number;
-  /** 0–100; rolled up for summaries (see `rollUpProgress`). */
+  /** 0–100; rolled up for summaries from their leaf tasks (see `progress.ts`). */
   progress: number;
   /** The dependency that pushed an `auto` task past its requested start, if any. */
   drivingDependencyId: UUID | null;
@@ -114,6 +114,8 @@ export interface ScheduleResult {
   tasks: Map<UUID, ScheduledTask>;
   /** Whole schedule range, or `null` without tasks. */
   range: { start: DayNumber; finish: DayNumber } | null;
-  /** Duration-weighted progress of the whole schedule. */
+  /** Progress of the whole schedule: every leaf task weighs the same (see `progress.ts`). */
   progress: number;
+  /** Eligible leaf tasks and how many are done (100%), behind `progress`. */
+  completion: { total: number; done: number };
 }
