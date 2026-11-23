@@ -1,0 +1,74 @@
+import { describe, expect, it } from 'vitest';
+
+import { makeProject } from '@/test/factories';
+import { PROJECT_STATUSES, type ProjectStatus } from '@/types/project';
+
+import { countSections, isInSection, PROJECT_SECTIONS, selectSection } from '../sections';
+
+const AT = '2026-05-01T10:00:00.000Z';
+const of = (status: ProjectStatus, extra: { hiddenAt?: string; deletedAt?: string } = {}) =>
+  makeProject({ status, title: status, ...extra });
+
+describe('sections', () => {
+  const visible = PROJECT_STATUSES.map((status) => of(status));
+  const hiddenCompleted = of('completed', { hiddenAt: AT });
+  const trashedHidden = of('paused', { hiddenAt: AT, deletedAt: AT });
+  const trashed = of('in_progress', { deletedAt: AT });
+  const all = [...visible, hiddenCompleted, trashedHidden, trashed];
+
+  it('splits visible projects by status without overlap', () => {
+    expect(selectSection(all, 'active').map((project) => project.status)).toEqual([
+      'planned',
+      'in_progress',
+    ]);
+    expect(selectSection(all, 'postponed').map((project) => project.status)).toEqual(['paused']);
+    expect(selectSection(all, 'not_completed').map((project) => project.status)).toEqual([
+      'cancelled',
+    ]);
+    expect(selectSection(all, 'completed')).toEqual([visible[3]]);
+
+    for (const project of visible) {
+      const statusSections = PROJECT_SECTIONS.filter(
+        (section) => section !== 'all' && isInSection(project, section),
+      );
+      expect(statusSections).toHaveLength(1);
+    }
+  });
+
+  it('keeps a hidden completed project in "Ocultos", not in "Concluídos"', () => {
+    expect(isInSection(hiddenCompleted, 'hidden')).toBe(true);
+    expect(isInSection(hiddenCompleted, 'completed')).toBe(false);
+    expect(isInSection(hiddenCompleted, 'all')).toBe(false);
+  });
+
+  it('puts every trashed project in the trash only', () => {
+    for (const project of [trashedHidden, trashed]) {
+      expect(PROJECT_SECTIONS.filter((section) => isInSection(project, section))).toEqual([
+        'trash',
+      ]);
+    }
+  });
+
+  it('counts with the same rules as the lists', () => {
+    const counts = countSections(all);
+    expect(counts).toEqual({
+      all: 5,
+      active: 2,
+      postponed: 1,
+      not_completed: 1,
+      completed: 1,
+      hidden: 1,
+      trash: 2,
+    });
+    for (const section of PROJECT_SECTIONS) {
+      expect(counts[section]).toBe(selectSection(all, section).length);
+    }
+    expect(counts.active + counts.postponed + counts.not_completed + counts.completed).toBe(
+      counts.all,
+    );
+  });
+
+  it('counts nothing for an empty portfolio', () => {
+    expect(Object.values(countSections([])).every((count) => count === 0)).toBe(true);
+  });
+});
