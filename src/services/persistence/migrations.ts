@@ -17,10 +17,49 @@ export type SnapshotMigration = (snapshot: UnknownRecord) => UnknownRecord;
  * 2. add an entry here, e.g. `1: (data) => ({ ...data, schemaVersion: 2, ... })`;
  * 3. add a test with a fixture of the previous version.
  */
-export const SNAPSHOT_MIGRATIONS: Readonly<Partial<Record<number, SnapshotMigration>>> = {};
+export const SNAPSHOT_MIGRATIONS: Readonly<Partial<Record<number, SnapshotMigration>>> = {
+  1: addLifecycle,
+};
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * v1 → v2: adds `lifecycle` to every project. Version 1 kept no lifecycle facts, so the
+ * backfill only uses what the data shows and leaves the rest empty:
+ * - `startedAt`: the planned start of every project past `planned`;
+ * - `completedAt` / `closedAt`: the day of the last change (`updatedAt`), the latest day
+ *   the status can have been set;
+ * - postponed projects get an empty reason and no dates ("sem previsão informada");
+ * - `history` stays empty: no event is invented.
+ */
+function addLifecycle(snapshot: UnknownRecord): UnknownRecord {
+  const projects = Array.isArray(snapshot.projects) ? snapshot.projects : [];
+  return {
+    ...snapshot,
+    schemaVersion: 2,
+    projects: projects.map((project: unknown) => {
+      if (!isRecord(project)) return project;
+      const status = project.status;
+      const lastChange =
+        typeof project.updatedAt === 'string' ? project.updatedAt.slice(0, 10) : null;
+      return {
+        ...project,
+        lifecycle: {
+          startedAt: status !== 'planned' ? (project.startDate ?? null) : null,
+          completedAt: status === 'completed' ? lastChange : null,
+          closedAt: status === 'cancelled' ? lastChange : null,
+          closeReason: null,
+          postponement:
+            status === 'paused'
+              ? { reason: '', expectedResumeAt: null, revisedFinish: null }
+              : null,
+          history: [],
+        },
+      };
+    }),
+  };
 }
 
 /**

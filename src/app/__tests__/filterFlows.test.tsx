@@ -104,7 +104,7 @@ describe('filter flows', () => {
     const user = userEvent.setup();
     await renderApp();
     await toggleOption(user, /^Saúde/);
-    await toggleOption(user, /^Pausado/);
+    await toggleOption(user, /^Adiado/);
 
     expect(
       screen.getByRole('heading', { name: 'Nenhum projeto com esses filtros' }),
@@ -113,7 +113,7 @@ describe('filter flows', () => {
     await user.click(screen.getByRole('button', { name: 'Remover filtro de status' }));
     expect(sidebarTitles()).toEqual(['Corrida']);
 
-    await toggleOption(user, /^Pausado/);
+    await toggleOption(user, /^Adiado/);
     const bar = screen.getByRole('region', { name: 'Filtros ativos' });
     await user.click(within(bar).getByRole('button', { name: 'Limpar filtros' }));
     expect(screen.queryByRole('region', { name: 'Filtros ativos' })).not.toBeInTheDocument();

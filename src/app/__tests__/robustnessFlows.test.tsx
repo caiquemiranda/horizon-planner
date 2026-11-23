@@ -114,7 +114,9 @@ describe('workspace robustness', () => {
       expect(result.ok).toBe(false);
 
       await act(async () => {
-        await useProjectsStore.getState().update(closedProject.id, { status: 'in_progress' });
+        await useProjectsStore
+          .getState()
+          .transition(closedProject.id, { action: 'reopen', reason: null });
       });
       await waitFor(() => {
         expect(screen.getByRole('button', { name: 'Nova tarefa' })).toBeEnabled();

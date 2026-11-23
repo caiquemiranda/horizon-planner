@@ -1,5 +1,6 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 
+import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import {
   PersistenceError,
   type ProjectRepository,
@@ -7,7 +8,9 @@ import {
   ProjectValidationError,
   scheduleRepository,
 } from '@/services/persistence';
-import type { Project, ProjectDraft, ProjectPatch, UUID } from '@/types/project';
+import type { Project, ProjectDraft, ProjectFieldsPatch, UUID } from '@/types/project';
+
+import { applyTransition, LifecycleError, type TransitionRequest } from '../lib/lifecycle';
 
 export type ProjectsStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -24,7 +27,13 @@ export interface ProjectsState {
    * Optimistic: the change is visible at once (live timeline sync) and persisted in the
    * background. On failure the list is reloaded from the repository, the source of truth.
    */
-  update: (id: UUID, patch: ProjectPatch) => Promise<void>;
+  update: (id: UUID, patch: ProjectFieldsPatch) => Promise<void>;
+  /**
+   * Changes the status through the lifecycle rules. Rule violations throw a
+   * `LifecycleError` before anything changes (shown in the dialog that asked); storage
+   * failures are handled like `update`.
+   */
+  transition: (id: UUID, request: TransitionRequest, pendingTasks?: number) => Promise<void>;
   /** Optimistic, with the same recovery as `update`. */
   remove: (id: UUID) => Promise<void>;
   /**
@@ -97,7 +106,9 @@ export function createProjectsStore(
         }
       },
 
-      update: async (id, patch) => {
+      update: async (id, fields) => {
+        // Status and lifecycle only change through `transition`, even from untyped callers.
+        const { status: _status, lifecycle: _lifecycle, ...patch } = fields as Project;
         const timestamp = now().toISOString();
         set((state) => ({
           projects: state.projects.map((project) =>
@@ -111,6 +122,32 @@ export function createProjectsStore(
           set((state) => ({
             projects: state.projects.map((project) =>
               project.id === id ? { ...project, updatedAt: saved.updatedAt } : project,
+            ),
+          }));
+        } catch (error) {
+          await resync(error);
+        }
+      },
+
+      transition: async (id, request, pendingTasks = 0) => {
+        const project = get().projects.find((item) => item.id === id);
+        if (!project) throw new LifecycleError('Projeto não encontrado.', 'status');
+        const clock = now();
+        const patch = applyTransition(project, request, {
+          today: getTodayIsoDate(clock),
+          now: clock.toISOString(),
+          pendingTasks,
+        });
+        set((state) => ({
+          projects: state.projects.map((item) =>
+            item.id === id ? { ...item, ...patch, updatedAt: clock.toISOString() } : item,
+          ),
+        }));
+        try {
+          const saved = await repository.update(id, patch);
+          set((state) => ({
+            projects: state.projects.map((item) =>
+              item.id === id ? { ...item, updatedAt: saved.updatedAt } : item,
             ),
           }));
         } catch (error) {

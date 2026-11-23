@@ -48,6 +48,46 @@ export interface Milestone {
   completed: boolean;
 }
 
+/** One status change, kept forever (reopening or resuming never erases it). */
+export interface StatusChange {
+  /** `null` for the project's creation. */
+  from: ProjectStatus | null;
+  to: ProjectStatus;
+  /** When the change was recorded. */
+  at: ISODateTime;
+  /** The business date the user gave (e.g. the day the project was completed). */
+  effectiveDate: ISODate;
+  reason: string | null;
+}
+
+/** Why and until when a project is postponed (`status: 'paused'`). */
+export interface Postponement {
+  reason: string;
+  /** Expected date to resume work. */
+  expectedResumeAt: ISODate | null;
+  /** Revised finish date given by the user. Never replaces the planned `endDate`. */
+  revisedFinish: ISODate | null;
+}
+
+/**
+ * Lifecycle facts, separate from the plan (`startDate`/`endDate`) and from progress.
+ * Changed only through the transitions in `features/projects/lib/lifecycle.ts`.
+ */
+export interface ProjectLifecycle {
+  /** First day of actual work. */
+  startedAt: ISODate | null;
+  /** Set while `completed`. */
+  completedAt: ISODate | null;
+  /** Set while `cancelled` (closed without success). */
+  closedAt: ISODate | null;
+  /** Set while `cancelled`. */
+  closeReason: string | null;
+  /** Set while `paused`. */
+  postponement: Postponement | null;
+  /** Oldest first. */
+  history: StatusChange[];
+}
+
 export interface Project {
   id: UUID;
   title: string;
@@ -64,6 +104,7 @@ export interface Project {
   /** Integer from 0 to 100. */
   progress: number;
   milestones: Milestone[];
+  lifecycle: ProjectLifecycle;
   /** Manual ordering inside the horizon lane. */
   sortOrder: number;
   createdAt: ISODateTime;
@@ -71,14 +112,20 @@ export interface Project {
 }
 
 /** Fields the user provides when creating a project. */
-export type ProjectDraft = Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'sortOrder'>;
+export type ProjectDraft = Omit<
+  Project,
+  'id' | 'createdAt' | 'updatedAt' | 'sortOrder' | 'lifecycle'
+>;
 
-/** Partial update applied to an existing project. */
-export type ProjectPatch = Partial<ProjectDraft>;
+/** Partial update applied to an existing project by the repository. */
+export type ProjectPatch = Partial<ProjectDraft> & { lifecycle?: ProjectLifecycle };
+
+/** What the editor may change directly: status goes through a lifecycle transition. */
+export type ProjectFieldsPatch = Omit<ProjectPatch, 'status' | 'lifecycle'>;
 
 /** Shape used for JSON export / import and for `localStorage`. */
 export interface HorizonSnapshot {
-  schemaVersion: 1;
+  schemaVersion: 2;
   exportedAt: ISODateTime;
   projects: Project[];
 }

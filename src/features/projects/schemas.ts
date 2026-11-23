@@ -44,6 +44,37 @@ export const milestoneSchema = z.object({
   completed: z.boolean(),
 });
 
+const reasonSchema = z
+  .string()
+  .trim()
+  .max(FIELD_LIMITS.lifecycleReasonMax, {
+    error: `O motivo deve ter no máximo ${FIELD_LIMITS.lifecycleReasonMax} caracteres.`,
+  });
+
+export const statusChangeSchema = z.object({
+  from: projectStatusSchema.nullable(),
+  to: projectStatusSchema,
+  at: isoDateTimeSchema,
+  effectiveDate: isoDateSchema,
+  reason: reasonSchema.nullable(),
+});
+
+export const postponementSchema = z.object({
+  reason: reasonSchema,
+  expectedResumeAt: isoDateSchema.nullable(),
+  revisedFinish: isoDateSchema.nullable(),
+});
+
+/** Shape only; the rules between status and lifecycle live in `lib/lifecycle.ts`. */
+export const lifecycleSchema = z.object({
+  startedAt: isoDateSchema.nullable(),
+  completedAt: isoDateSchema.nullable(),
+  closedAt: isoDateSchema.nullable(),
+  closeReason: reasonSchema.nullable(),
+  postponement: postponementSchema.nullable(),
+  history: z.array(statusChangeSchema).max(1000),
+});
+
 /** Fields without cross-field rules, so they can be picked / omitted freely. */
 const projectFieldsSchema = z.object({
   id: uuidSchema,
@@ -72,6 +103,7 @@ const projectFieldsSchema = z.object({
   milestones: z.array(milestoneSchema).max(FIELD_LIMITS.milestonesMax, {
     error: `Um projeto pode ter no máximo ${FIELD_LIMITS.milestonesMax} marcos.`,
   }),
+  lifecycle: lifecycleSchema,
   sortOrder: z.number().int().nonnegative(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
@@ -127,7 +159,7 @@ export const projectSchema = projectFieldsSchema.superRefine(checkDateInvariants
 
 /** Input for creating a project (identity, ordering and audit fields are generated). */
 export const projectDraftSchema = projectFieldsSchema
-  .omit({ id: true, sortOrder: true, createdAt: true, updatedAt: true })
+  .omit({ id: true, sortOrder: true, createdAt: true, updatedAt: true, lifecycle: true })
   .superRefine(checkDateInvariants);
 
 export const snapshotSchema = z

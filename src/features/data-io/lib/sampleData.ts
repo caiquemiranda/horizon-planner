@@ -1,9 +1,18 @@
+import { createInitialLifecycle } from '@/features/projects/lib/lifecycle';
 import { computeSchedule } from '@/features/schedule/lib/engine';
 import { createIndustrialSchedule } from '@/features/schedule/lib/fixtures';
 import { getProjectSyncPatch } from '@/features/schedule/lib/portfolioSync';
 import { dayToIsoDate, isoDateToDay } from '@/features/timeline/lib/time';
 import { createId } from '@/lib/id';
-import type { Horizon, ISODate, Project, ProjectColor, ProjectStatus, UUID } from '@/types/project';
+import type {
+  Horizon,
+  ISODate,
+  Project,
+  ProjectColor,
+  ProjectLifecycle,
+  ProjectStatus,
+  UUID,
+} from '@/types/project';
 import type { ProjectSchedule } from '@/types/schedule';
 
 interface SampleMilestone {
@@ -187,12 +196,41 @@ export function createSampleData(today: ISODate, options: SampleDataOptions = {}
     endDate: today,
     progress: 0,
     milestones: [],
+    lifecycle: sampleLifecycle('in_progress', today, today, today, timestamp),
     sortOrder: projects.filter((project) => project.horizon === 'short').length,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
   const industrial = { ...base, ...getProjectSyncPatch(base, computeSchedule(schedule)) };
   return { projects: [...projects, industrial], schedules: [schedule] };
+}
+
+/**
+ * Lifecycle consistent with a sample's status and dates: started on its planned start,
+ * completed on its end date (or today when that is still ahead), postponed with a
+ * reason and an expected resume date.
+ */
+function sampleLifecycle(
+  status: ProjectStatus,
+  startDate: ISODate,
+  endDate: ISODate,
+  today: ISODate,
+  timestamp: string,
+): ProjectLifecycle {
+  const lifecycle = createInitialLifecycle(status, today, timestamp);
+  return {
+    ...lifecycle,
+    startedAt: status === 'planned' ? null : startDate,
+    completedAt: status === 'completed' ? (endDate < today ? endDate : today) : null,
+    postponement:
+      status === 'paused'
+        ? {
+            reason: 'Outras prioridades neste trimestre.',
+            expectedResumeAt: dayToIsoDate(isoDateToDay(today) + 30),
+            revisedFinish: null,
+          }
+        : null,
+  };
 }
 
 /** The sample projects alone (see `createSampleData`). */
@@ -212,6 +250,8 @@ function createPortfolio(
     const startDay = todayDay + sample.start;
     const sortOrder = sortOrders[sample.horizon] ?? 0;
     sortOrders[sample.horizon] = sortOrder + 1;
+    const startDate = dayToIsoDate(startDay);
+    const endDate = dayToIsoDate(startDay + sample.duration - 1);
 
     return {
       id: generateId(),
@@ -221,8 +261,8 @@ function createPortfolio(
       category: sample.category,
       status: sample.status,
       color: sample.color,
-      startDate: dayToIsoDate(startDay),
-      endDate: dayToIsoDate(startDay + sample.duration - 1),
+      startDate,
+      endDate,
       progress: sample.progress,
       milestones: (sample.milestones ?? []).map((milestone) => ({
         id: generateId(),
@@ -230,6 +270,7 @@ function createPortfolio(
         date: dayToIsoDate(startDay + milestone.offset),
         completed: milestone.completed,
       })),
+      lifecycle: sampleLifecycle(sample.status, startDate, endDate, today, timestamp),
       sortOrder,
       createdAt: timestamp,
       updatedAt: timestamp,
