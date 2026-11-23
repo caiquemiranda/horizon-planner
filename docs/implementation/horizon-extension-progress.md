@@ -12,8 +12,8 @@ its acceptance tests pass in CI.
 | 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Delivered | #28          | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
 | 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Delivered | #29          | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
 | 4     | `feat/expanded-project-dialog`  | REQ-04              | Delivered | #30          | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
-| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | In review | —            | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
-| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Pending   | —            | —                                                                                                                  |
+| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Delivered | #31          | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
+| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | In review | —            | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
 | 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Pending   | —            | —                                                                                                                  |
 | 8     | `feat/portfolio-statistics`     | REQ-05              | Pending   | —            | —                                                                                                                  |
 | 9     | `test/project-experience-e2e`   | Scenarios A–C       | Pending   | —            | —                                                                                                                  |
@@ -139,6 +139,37 @@ its acceptance tests pass in CI.
   tasks ✅; reopening lowers it ✅; reordering does not change it ✅; postponed or closed
   projects keep their progress ✅ (no transition touches it); bars unchanged ✅.
 - Tests: 730 Vitest tests passing (21 new) and 8 Playwright tests.
+
+### 6 · `feat/daily-checkins`
+
+- Tasks keep `completedWork` (working days done) with `progress` derived from it, plus
+  `actualStart` and `actualFinish`. Editing the percentage or the duration keeps the work
+  consistent; copies keep the work but not the actual dates.
+- `DailyCheckIn` (task, work date, `done` or `not_done`, units in working days, recorded
+  at) stored in the schedule. Rules in `src/features/schedule/lib/checkIns.ts`: one per
+  task and date (recording again replaces it), dates up to today, leaf tasks only, units
+  in half-day steps except for finishing exactly what remains; a task is complete only
+  when its work reaches its duration; undo takes the work back; deleting a task drops its
+  check-ins. A day without a check-in is "pending confirmation", never assumed.
+- Daily agenda: leaf tasks planned for the date (from the computed schedule) and
+  unfinished ones whose planned end has passed; days off ask nothing.
+- Schedules: storage version 2. Version 1 schedules and old backups are upgraded by the
+  schema (`upgradeTask`): work taken from the percentage, actual dates unknown, no
+  check-ins.
+- UI: "Atividades do dia" toolbar button with the count waiting for confirmation; the
+  dialog confirms today or an earlier day ("Feito", "Concluir tarefa", "Não realizado",
+  "Desfazer"); everything goes through the schedule store, so table, bars and project
+  percentage update at once and are saved; closed projects only show the list.
+- Bugs found in Chrome and fixed before review: finishing a task whose remaining work came
+  from a typed percentage (e.g. 1,2 days) was refused.
+- Acceptance (spec 10.8): 8 (repeating a check-in has no extra effect) ✅, 9 (earlier
+  dates keep the history) ✅, 11 (one day does not close a 5-day task) ✅, 12 (last task →
+  100%) ✅, 13 (reopening lowers progress) ✅, 3 (days off ask nothing) ✅. Scenarios about
+  the finish forecast (1, 2, 4–7, 10, 14) belong to order 7.
+- Not done: who confirmed (the app has a single local user); saving failures keep the
+  existing behavior (save status with retry, nothing lost in memory).
+- Tests: 756 Vitest tests passing (26 new) and 8 Playwright tests; Chrome check of the
+  dialog, the toolbar count and the saved result after reload, no console errors.
 
 ## Impediments
 

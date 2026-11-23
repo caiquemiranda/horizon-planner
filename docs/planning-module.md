@@ -92,6 +92,16 @@ working day, Monday 30/11. This is covered by tests.
 - **Duplicate** copies the task and its subtree right below it, **without links**, so a
   copy never gets unexpected links to old tasks.
 
+### Work done and daily check-ins
+
+- Each leaf task keeps `completedWork`, the working days already done (0 to its
+  duration); its percentage is derived from it. Typing a percentage sets the work.
+- A daily check-in confirms, for one task and one date up to today, that its work was
+  done (`units` working days, in half-day steps) or not done. One per task and date;
+  recording again replaces it. A task is complete only when its work reaches its duration.
+- The daily agenda shows the leaf tasks planned for a date and the late unfinished ones;
+  days off of the project calendar ask nothing. Rules: `schedule/lib/checkIns.ts`.
+
 ### Persistence
 
 - Each project's schedule is stored under its own key
