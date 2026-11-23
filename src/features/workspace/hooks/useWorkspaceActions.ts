@@ -2,6 +2,12 @@ import { useMemo } from 'react';
 
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import {
+  type CheckInRequest,
+  completeTaskOn,
+  recordCheckIn,
+  removeCheckIn,
+} from '@/features/schedule/lib/checkIns';
+import {
   addDependency,
   createTask,
   deleteTask,
@@ -21,6 +27,7 @@ import { type DependencyCandidate, parsePredecessors } from '@/features/schedule
 import { ScheduleRuleError } from '@/features/schedule/lib/errors';
 import { getChildren } from '@/features/schedule/lib/tree';
 import { generateScheduleId, useScheduleStore } from '@/features/schedule/store';
+import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import type { ISODate, UUID } from '@/types/project';
 import type { ProjectCalendar, ProjectSchedule } from '@/types/schedule';
 
@@ -58,6 +65,10 @@ export interface WorkspaceActions {
   removeLink: (id: UUID) => string | null;
   /** Replaces the project calendar (reschedules everything). */
   setCalendar: (calendar: ProjectCalendar) => string | null;
+  /** Daily check-ins; each returns an error message, or `null` when recorded. */
+  checkIn: (request: CheckInRequest) => string | null;
+  completeOn: (taskId: UUID, workDate: ISODate) => string | null;
+  undoCheckIn: (taskId: UUID, workDate: ISODate) => string | null;
 }
 
 export function useWorkspaceActions(
@@ -173,6 +184,31 @@ export function useWorkspaceActions(
       updateLink: (id, patch) => runForMessage((schedule) => updateDependency(schedule, id, patch)),
       removeLink: (id) => runForMessage((schedule) => removeDependency(schedule, id)),
       setCalendar: (calendar) => runForMessage((schedule) => setCalendar(schedule, calendar)),
+
+      checkIn: (request) => {
+        const now = new Date();
+        return runForMessage((schedule) =>
+          recordCheckIn(schedule, request, {
+            today: getTodayIsoDate(now),
+            now: now.toISOString(),
+            generateId: generateScheduleId,
+          }),
+        );
+      },
+
+      completeOn: (taskId, workDate) => {
+        const now = new Date();
+        return runForMessage((schedule) =>
+          completeTaskOn(schedule, taskId, workDate, {
+            today: getTodayIsoDate(now),
+            now: now.toISOString(),
+            generateId: generateScheduleId,
+          }),
+        );
+      },
+
+      undoCheckIn: (taskId, workDate) =>
+        runForMessage((schedule) => removeCheckIn(schedule, taskId, workDate)),
     };
   }, [apply, show, select, setCollapsed, model, projectStart]);
 }

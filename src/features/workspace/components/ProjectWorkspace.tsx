@@ -12,11 +12,13 @@ import type { BarChange } from '@/features/gantt/lib/barDrag';
 import { COLOR_META } from '@/features/projects/constants';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { getScheduleAccess } from '@/features/schedule/lib/access';
+import { createWorkCalendar } from '@/features/schedule/lib/calendar';
+import { type AgendaItem, getDailyAgenda } from '@/features/schedule/lib/checkIns';
 import type { DependencyCandidate } from '@/features/schedule/lib/dependencies';
 import { useScheduleStore } from '@/features/schedule/store';
 import { useTimelineShortcuts } from '@/features/timeline/hooks/useTimelineShortcuts';
 import { formatDateRange } from '@/features/timeline/lib/format';
-import { getTodayDay } from '@/features/timeline/lib/time';
+import { getTodayDay, getTodayIsoDate } from '@/features/timeline/lib/time';
 import { ViewportStoreContext } from '@/features/timeline/store/viewportContext';
 import { createViewportStore } from '@/features/timeline/store/viewportStore';
 import { PORTFOLIO_HREF } from '@/lib/router';
@@ -28,6 +30,7 @@ import { useWorkspaceModel } from '../hooks/useWorkspaceModel';
 import { formatCellDate } from '../lib/cells';
 import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { CalendarDialog } from './CalendarDialog';
+import { DailyCheckInDialog } from './DailyCheckInDialog';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { LinksDialog } from './LinksDialog';
 import { SaveStatus } from './SaveStatus';
@@ -233,6 +236,19 @@ function WorkspaceBody({ project }: { project: Project }) {
   const showNotice = useNoticeStore((state) => state.show);
   const [editRequest, setEditRequest] = useState<UUID | null>(null);
   const [isCalendarOpen, setCalendarOpen] = useState(false);
+  const [isDailyOpen, setDailyOpen] = useState(false);
+  // Today's confirmations still missing, for the toolbar badge.
+  const dailyPending = useMemo(() => {
+    if (!model) return 0;
+    const agenda = getDailyAgenda(
+      model.schedule,
+      model.result,
+      createWorkCalendar(model.schedule.calendar),
+      getTodayIsoDate(),
+    );
+    const waiting = (item: AgendaItem) => item.state === 'pending' && !item.complete;
+    return agenda.planned.filter(waiting).length + agenda.overdue.filter(waiting).length;
+  }, [model]);
   const today = useMemo(() => getTodayDay(), []);
   const access = useScheduleStore((state) => state.access);
   const setAccess = useScheduleStore((state) => state.setAccess);
@@ -306,6 +322,10 @@ function WorkspaceBody({ project }: { project: Project }) {
         onEditCalendar={() => {
           setCalendarOpen(true);
         }}
+        onOpenDaily={() => {
+          setDailyOpen(true);
+        }}
+        dailyPending={readOnly ? 0 : dailyPending}
         readOnly={readOnly}
       />
       {readOnly ? (
@@ -425,6 +445,15 @@ function WorkspaceBody({ project }: { project: Project }) {
           setLinksTarget(null);
         }}
         readOnly={readOnly}
+      />
+      <DailyCheckInDialog
+        open={isDailyOpen}
+        model={model}
+        actions={actions}
+        readOnly={readOnly}
+        onClose={() => {
+          setDailyOpen(false);
+        }}
       />
       <CalendarDialog
         open={isCalendarOpen}
