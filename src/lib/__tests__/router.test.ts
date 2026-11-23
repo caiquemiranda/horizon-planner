@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseRoute, projectHref } from '../router';
+import { HIDDEN_HREF, parseRoute, projectHref, TRASH_HREF } from '../router';
 
 describe('router', () => {
   it('parses the portfolio and unknown hashes as the portfolio', () => {
@@ -14,6 +14,11 @@ describe('router', () => {
     for (const id of ['00000000-0000-4000-8000-000000000001', 'a b/ç']) {
       expect(parseRoute(projectHref(id))).toEqual({ name: 'project', projectId: id });
     }
+  });
+
+  it('parses the hidden projects and the trash', () => {
+    expect(parseRoute(HIDDEN_HREF)).toEqual({ name: 'hidden' });
+    expect(parseRoute(`${TRASH_HREF}/`)).toEqual({ name: 'trash' });
   });
 
   it('ignores malformed escapes', () => {

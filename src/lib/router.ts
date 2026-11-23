@@ -8,20 +8,30 @@ import type { UUID } from '@/types/project';
  *
  * Routes:
  * - `#/` (or anything unknown): the portfolio timeline;
- * - `#/projetos/<projectId>`: the planning workspace of one project.
+ * - `#/projetos/<projectId>`: the planning workspace of one project;
+ * - `#/ocultos` and `#/lixeira`: hidden projects and the trash.
  */
 
-export type Route = { name: 'portfolio' } | { name: 'project'; projectId: UUID };
+export type Route =
+  | { name: 'portfolio' }
+  | { name: 'project'; projectId: UUID }
+  | { name: 'hidden' }
+  | { name: 'trash' };
 
 const PROJECT_PATTERN = /^#\/projetos\/([^/?#]+)\/?$/;
 
 export const PORTFOLIO_HREF = '#/';
+export const HIDDEN_HREF = '#/ocultos';
+export const TRASH_HREF = '#/lixeira';
 
 export function projectHref(projectId: UUID): string {
   return `#/projetos/${encodeURIComponent(projectId)}`;
 }
 
 export function parseRoute(hash: string): Route {
+  const path = hash.replace(/\/$/, '');
+  if (path === HIDDEN_HREF) return { name: 'hidden' };
+  if (path === TRASH_HREF) return { name: 'trash' };
   const match = PROJECT_PATTERN.exec(hash);
   if (match?.[1]) {
     try {

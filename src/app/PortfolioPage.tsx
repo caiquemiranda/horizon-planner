@@ -1,9 +1,10 @@
-import { FlaskConical, Plus, SearchX } from 'lucide-react';
-import { useCallback } from 'react';
+import { EyeOff, FlaskConical, Plus, SearchX } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { DataMenu } from '@/features/data-io/components/DataMenu';
 import { useDataActions } from '@/features/data-io/hooks/useDataActions';
 import { ActiveFiltersBar } from '@/features/filters/components/ActiveFiltersBar';
@@ -12,6 +13,8 @@ import { useFilteredProjects } from '@/features/filters/hooks/useFilteredProject
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
 import { NewProjectButton } from '@/features/projects/components/NewProjectButton';
 import { ProjectPanel } from '@/features/projects/components/ProjectPanel';
+import { ProjectViewsMenu } from '@/features/projects/components/ProjectViewsMenu';
+import { selectByPlacement } from '@/features/projects/lib/visibility';
 import { selectEditingProjectId, useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { Timeline } from '@/features/timeline/components/Timeline';
@@ -20,11 +23,14 @@ import { TimelineToolbar } from '@/features/timeline/components/TimelineToolbar'
 import { isRangeVisible } from '@/features/timeline/lib/layout';
 import { isoRangeToDays } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
+import { HIDDEN_HREF, TRASH_HREF } from '@/lib/router';
 import type { Project } from '@/types/project';
 
 /** The portfolio: every project on the strategic timeline. */
 export function PortfolioPage() {
-  const projects = useProjectsStore((state) => state.projects);
+  const allProjects = useProjectsStore((state) => state.projects);
+  // Hidden and trashed projects have their own pages (see ProjectViewsMenu).
+  const projects = useMemo(() => selectByPlacement(allProjects, 'listed'), [allProjects]);
   const selectedProjectId = useDrawerStore(selectEditingProjectId);
   const openProject = useDrawerStore((state) => state.openProject);
   const openCreate = useDrawerStore((state) => state.openCreate);
@@ -40,7 +46,7 @@ export function PortfolioPage() {
   }, []);
 
   const emptyState =
-    projects.length === 0 ? (
+    allProjects.length === 0 ? (
       <TimelineEmptyState
         action={
           <div className="flex flex-wrap justify-center gap-2">
@@ -58,6 +64,27 @@ export function PortfolioPage() {
               <FlaskConical />
               Carregar dados de exemplo
             </Button>
+          </div>
+        }
+      />
+    ) : projects.length === 0 ? (
+      // Everything is hidden or in the trash: never offer to replace that data here.
+      <TimelineEmptyState
+        icon={EyeOff}
+        title="Nenhum projeto visível"
+        description="Os projetos existentes estão ocultos ou na lixeira."
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button size="sm" onClick={openCreate}>
+              <Plus />
+              Criar projeto
+            </Button>
+            <a href={HIDDEN_HREF} className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+              Ver ocultos
+            </a>
+            <a href={TRASH_HREF} className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+              Ver lixeira
+            </a>
           </div>
         }
       />
@@ -92,6 +119,7 @@ export function PortfolioPage() {
         actions={
           <>
             <NewProjectButton />
+            <ProjectViewsMenu />
             <DataMenu />
             <ThemeToggle />
           </>
