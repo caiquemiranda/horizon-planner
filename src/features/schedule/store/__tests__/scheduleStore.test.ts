@@ -312,6 +312,13 @@ describe('getProjectSyncPatch', () => {
       progress: result.progress,
     });
     expect(getProjectSyncPatch(project, result)).toBeNull();
-    expect(getProjectSyncPatch(project, { tasks: new Map(), range: null, progress: 0 })).toBeNull();
+    expect(
+      getProjectSyncPatch(project, {
+        tasks: new Map(),
+        range: null,
+        progress: 0,
+        completion: { total: 0, done: 0 },
+      }),
+    ).toBeNull();
   });
 });

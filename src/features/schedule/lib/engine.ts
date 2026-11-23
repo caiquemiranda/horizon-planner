@@ -12,6 +12,7 @@ import type { DayNumber } from '@/types/timeline';
 
 import { createWorkCalendar, type WorkCalendar } from './calendar';
 import { sortTopologically } from './dependencies';
+import { type LeafProgress, summarizeProgress } from './progress';
 import { buildTreeIndex, getChildren, getTasksInWbsOrder, type TreeIndex } from './tree';
 
 /**
@@ -30,8 +31,8 @@ import { buildTreeIndex, getChildren, getTasksInWbsOrder, type TreeIndex } from 
  *     SS: successor start  ≥ predecessor start  + lag
  *     FF: successor finish ≥ predecessor finish + lag
  *     SF: successor finish ≥ predecessor start  + lag
- * - summary tasks span their descendants (min start, max finish); their progress is the
- *   average of leaf progress weighted by working-day duration.
+ * - summary tasks span their descendants (min start, max finish); their progress comes
+ *   from their leaf tasks, each weighing the same (see `progress.ts`).
  */
 
 export interface ScheduleInput {
@@ -162,39 +163,18 @@ export function computeSchedule(input: ScheduleInput, index?: TreeIndex): Schedu
     });
   }
 
-  // Roll up summaries bottom-up (children before parents).
-  const leafWeights = (id: UUID): { weight: number; done: number; count: number; sum: number } => {
+  // Roll up summaries bottom-up (children before parents). Progress follows the rule in
+  // `progress.ts`: every leaf task weighs the same; milestones only when alone.
+  const leavesBelow = (id: UUID): LeafProgress[] => {
     const children = getChildren(tree, id);
     if (children.length === 0) {
       const leaf = result.get(id);
-      if (!leaf) return { weight: 0, done: 0, count: 0, sum: 0 };
-      return {
-        weight: leaf.duration,
-        done: leaf.duration * leaf.progress,
-        count: 1,
-        sum: leaf.progress,
-      };
+      return leaf ? [{ id, progress: leaf.progress, isMilestone: leaf.kind === 'milestone' }] : [];
     }
-    return children.reduce(
-      (total, child) => {
-        const part = leafWeights(child.id);
-        return {
-          weight: total.weight + part.weight,
-          done: total.done + part.done,
-          count: total.count + part.count,
-          sum: total.sum + part.sum,
-        };
-      },
-      { weight: 0, done: 0, count: 0, sum: 0 },
-    );
+    return children.flatMap((child) => leavesBelow(child.id));
   };
 
-  const rollUpProgress = (id: UUID) => {
-    const { weight, done, count, sum } = leafWeights(id);
-    // Only milestones below: plain average of their progress (0 or 100 in practice).
-    if (weight === 0) return count === 0 ? 0 : Math.round(sum / count);
-    return Math.round(done / weight);
-  };
+  const rollUpProgress = (id: UUID) => summarizeProgress(leavesBelow(id)).progress;
 
   const rollUp = (task: ScheduleTask): ScheduledTask | undefined => {
     const children = getChildren(tree, task.id);
@@ -230,24 +210,14 @@ export function computeSchedule(input: ScheduleInput, index?: TreeIndex): Schedu
           finish: Math.max(...all.map((task) => task.finish)),
         };
 
-  const totals = getChildren(tree, null).reduce(
-    (total, root) => {
-      const part = leafWeights(root.id);
-      return {
-        weight: total.weight + part.weight,
-        done: total.done + part.done,
-        count: total.count + part.count,
-        sum: total.sum + part.sum,
-      };
-    },
-    { weight: 0, done: 0, count: 0, sum: 0 },
+  const completion = summarizeProgress(
+    getChildren(tree, null).flatMap((root) => leavesBelow(root.id)),
   );
-  const progress =
-    totals.weight === 0
-      ? totals.count === 0
-        ? 0
-        : Math.round(totals.sum / totals.count)
-      : Math.round(totals.done / totals.weight);
 
-  return { tasks: result, range, progress };
+  return {
+    tasks: result,
+    range,
+    progress: completion.progress,
+    completion: { total: completion.total, done: completion.done },
+  };
 }

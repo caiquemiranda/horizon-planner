@@ -180,11 +180,75 @@ describe('computeSchedule', () => {
       expect(result.tasks.get(taskId('Phase'))?.duration).toBe(10);
     });
 
-    it('weights progress by working-day duration', () => {
+    it('rolls progress up from leaf tasks, each weighing the same', () => {
       const result = run(outline());
-      // (2·100 + 4·50 + 5·0) / 11 = 36.4
-      expect(result.tasks.get(taskId('Phase'))?.progress).toBe(36);
-      expect(result.progress).toBe(36);
+      // (100 + 50 + 0) / 3 = 50; durations (2, 4 and 5 days) do not weigh in.
+      expect(result.tasks.get(taskId('Phase'))?.progress).toBe(50);
+      expect(result.tasks.get(taskId('Sub'))?.progress).toBe(0);
+      expect(result.progress).toBe(50);
+      expect(result.completion).toEqual({ total: 3, done: 1 });
+    });
+
+    it('counts leaves, not parents: 2 phases of 2 tasks are 4 tasks', () => {
+      const tasks = buildOutline([
+        {
+          key: 'P1',
+          children: [
+            { key: 'a', task: { start: MONDAY, duration: 1, progress: 100 } },
+            { key: 'b', task: { start: MONDAY, duration: 1, progress: 0 } },
+          ],
+        },
+        {
+          key: 'P2',
+          children: [
+            { key: 'c', task: { start: MONDAY, duration: 1, progress: 0 } },
+            { key: 'd', task: { start: MONDAY, duration: 1, progress: 0 } },
+          ],
+        },
+      ]);
+      const quarter = run(tasks);
+      expect(quarter.progress).toBe(25);
+      expect(quarter.completion).toEqual({ total: 4, done: 1 });
+
+      const withSecond = tasks.map((task) =>
+        task.id === taskId('c') ? { ...task, progress: 100 } : task,
+      );
+      expect(run(withSecond).progress).toBe(50);
+      // Reopening the task brings it back down.
+      expect(run(tasks).progress).toBe(25);
+      // Reordering changes nothing.
+      const reordered = tasks.map((task) =>
+        task.id === taskId('P1')
+          ? { ...task, order: 1 }
+          : task.id === taskId('P2')
+            ? { ...task, order: 0 }
+            : task,
+      );
+      expect(run(reordered).progress).toBe(25);
+    });
+
+    it('leaves a milestone out of a phase that has other work', () => {
+      const tasks = buildOutline([
+        {
+          key: 'Phase',
+          children: [
+            { key: 'work', task: { start: MONDAY, duration: 3, progress: 100 } },
+            { key: 'gate', task: { start: MONDAY, duration: 0, progress: 0 } },
+          ],
+        },
+        {
+          key: 'Gates',
+          children: [
+            { key: 'g1', task: { start: MONDAY, duration: 0, progress: 100 } },
+            { key: 'g2', task: { start: MONDAY, duration: 0, progress: 0 } },
+          ],
+        },
+      ]);
+      const result = run(tasks);
+      expect(result.tasks.get(taskId('Phase'))?.progress).toBe(100);
+      expect(result.tasks.get(taskId('Gates'))?.progress).toBe(50);
+      // Project: one work task (done); milestones are checkpoints.
+      expect(result.completion).toEqual({ total: 1, done: 1 });
     });
 
     it('updates transitively when a grandchild moves', () => {
@@ -212,7 +276,12 @@ describe('computeSchedule', () => {
   });
 
   it('returns an empty range without tasks', () => {
-    expect(run([])).toEqual({ tasks: new Map(), range: null, progress: 0 });
+    expect(run([])).toEqual({
+      tasks: new Map(),
+      range: null,
+      progress: 0,
+      completion: { total: 0, done: 0 },
+    });
   });
 
   it('schedules 1000 linked tasks quickly', () => {
