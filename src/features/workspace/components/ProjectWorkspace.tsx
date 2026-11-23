@@ -174,6 +174,10 @@ export function ProjectWorkspace({
 
 function ProjectTitle({ project, asDialogTitle }: { project: Project; asDialogTitle: boolean }) {
   const title = <h1 className="truncate text-[15px] font-semibold">{project.title}</h1>;
+  // The numbers behind the percentage: done leaf tasks over eligible ones.
+  const completion = useScheduleStore((state) =>
+    state.projectId === project.id ? state.result?.completion : undefined,
+  );
   return (
     <div className="flex min-w-0 items-center gap-2">
       <span
@@ -193,6 +197,13 @@ function ProjectTitle({ project, asDialogTitle }: { project: Project; asDialogTi
       )}
       <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums md:inline">
         {formatDateRange(project.startDate, project.endDate)} · {project.progress}%
+        {completion && completion.total > 0 ? (
+          <>
+            {' '}
+            · {completion.done} de {completion.total}{' '}
+            {completion.total === 1 ? 'tarefa concluída' : 'tarefas concluídas'}
+          </>
+        ) : null}
       </span>
     </div>
   );
