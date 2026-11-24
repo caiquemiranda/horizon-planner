@@ -1,4 +1,4 @@
-import { Database, Download, FlaskConical, Trash2, Upload } from 'lucide-react';
+import { Database, Download, FileSpreadsheet, FlaskConical, Trash2, Upload } from 'lucide-react';
 import { type ChangeEvent, useRef, useState } from 'react';
 
 import {
@@ -26,6 +26,8 @@ import { useProjectsStore } from '@/features/projects/store/projectsStore';
 
 import { pluralizeProjects, useDataActions } from '../hooks/useDataActions';
 import { BackupImportError, type HorizonBackup, readBackupFile } from '../lib/backup';
+import { downloadTemplate } from '../lib/spreadsheetDownloads';
+import { useNoticeStore } from '../store/noticeStore';
 
 type PendingAction =
   | { kind: 'import'; snapshot: HorizonBackup; fileName: string }
@@ -37,6 +39,7 @@ type PendingAction =
 export function DataMenu() {
   const projectCount = useProjectsStore((state) => state.projects.length);
   const { exportBackup, replaceProjects, loadSample, clearAll } = useDataActions();
+  const showNotice = useNoticeStore((state) => state.show);
   const inputRef = useRef<HTMLInputElement>(null);
   // Kept after closing so the dialog content does not change during its exit animation.
   const [pending, setPendingState] = useState<PendingAction | null>(null);
@@ -116,6 +119,16 @@ export function DataMenu() {
           >
             <Upload />
             Importar JSON…
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              downloadTemplate().catch(() => {
+                showNotice('Não foi possível gerar o modelo. Tente novamente.', 'error');
+              });
+            }}
+          >
+            <FileSpreadsheet />
+            Baixar modelo de EAP (Excel)
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {

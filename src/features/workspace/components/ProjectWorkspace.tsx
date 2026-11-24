@@ -36,6 +36,7 @@ import { useWorkspaceUiStore } from '../store/workspaceUiStore';
 import { CalendarDialog } from './CalendarDialog';
 import { DailyCheckInDialog } from './DailyCheckInDialog';
 import { DeleteTaskDialog } from './DeleteTaskDialog';
+import { ExportMenu } from './ExportMenu';
 import { ForecastPanel } from './ForecastPanel';
 import { LinksDialog } from './LinksDialog';
 import { SaveStatus } from './SaveStatus';
@@ -147,6 +148,7 @@ export function ProjectWorkspace({
         {project ? <ProjectTitle project={project} asDialogTitle={isDialog} /> : null}
         <div className="ml-auto flex items-center gap-2">
           <SaveStatus />
+          {project ? <ExportMenu project={project} /> : null}
           {isDialog ? dialogActions : <ThemeToggle />}
         </div>
       </header>
