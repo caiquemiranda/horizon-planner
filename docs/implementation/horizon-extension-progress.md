@@ -1,7 +1,8 @@
 # Project lifecycle, visibility, progress and forecast: progress
 
 Real delivery state of the extension planned in
-[`horizon-extension-audit.md`](./horizon-extension-audit.md). Updated with every pull
+[`horizon-extension-audit.md`](./horizon-extension-audit.md) (orders 0–9) and
+[`horizon-addendum-03-audit.md`](./horizon-addendum-03-audit.md) (orders 10–17). Updated with every pull
 request. An item is **Delivered** only when it is integrated, persists after a reload and
 its acceptance tests pass in CI.
 
@@ -16,7 +17,15 @@ its acceptance tests pass in CI.
 | 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Delivered | #32          | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
 | 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Delivered | #33          | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
 | 8     | `feat/portfolio-statistics`     | REQ-05              | Delivered | #34          | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
-| 9     | `test/project-experience-e2e`   | Scenarios A–C       | In review | —            | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
+| 9     | `test/project-experience-e2e`   | Scenarios A–C       | Delivered | #35          | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
+| 10    | `feat/project-explorer-sidebar` | REQ-NAV-01          | In review | —            | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
+| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07    | Pending   | —            | —                                                                                                                  |
+| 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05    | Pending   | —            | —                                                                                                                  |
+| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08    | Pending   | —            | —                                                                                                                  |
+| 14    | `feat/sample-projects`          | REQ-DEMO-01         | Pending   | —            | —                                                                                                                  |
+| 15    | `feat/project-report`           | REQ-RPT-01–04       | Pending   | —            | —                                                                                                                  |
+| 16    | `feat/project-report-print`     | REQ-PRINT-01–03     | Pending   | —            | —                                                                                                                  |
+| 17    | `test/project-features-e2e`     | §15                 | Pending   | —            | —                                                                                                                  |
 
 ## Log
 
@@ -267,6 +276,31 @@ its acceptance tests pass in CI.
   effort is not offered.
 - The portfolio timeline shows planned dates; the forecast is shown in the project
   workspace.
+
+### 10 · `feat/project-explorer-sidebar`
+
+- Consolidated audit of the third document: `horizon-addendum-03-audit.md` (matrix,
+  reuse, decisions, plan). Decision 1 (sample projects) is to be confirmed before order 14.
+- The existing sidebar becomes the project explorer (no second sidebar): each section
+  (except "Todos", which would repeat them all) expands to list its projects by title, up
+  to 50 with "Ver todos"; a search field finds any project by title, ignoring case and
+  accents, hidden and trashed ones included and labelled with their section, up to 30
+  results; Escape clears it.
+- In the project workspace the explorer sits beside the table and the chart, marks the
+  open project and opens its section; collapsed, it shows the current project and a
+  "Buscar projeto" button that expands the rail into the search field. It follows the
+  same remembered preference. The expanded dialog keeps the workspace without it.
+- Rules in `src/features/projects/lib/sections.ts` (`searchProjects`, `sortByTitle`,
+  `getHomeSection`).
+- Bug found by the tests and fixed: opening a project before the list had loaded left its
+  section closed.
+- Acceptance (§14, sidebar items): every project reachable, including "Ocultos" and
+  "Lixeira" ✅; expanded lets you read and find projects ✅; collapsed frees width (1 184 →
+  1 384 px) and stays navigable by keyboard, tooltips and search ✅; preference kept ✅;
+  choosing a project opens its own workspace ✅; lists and counts follow changes ✅; rows and
+  bars stay aligned (0 px) when toggling ✅. Print: the report (order 16) hides it.
+- Tests: 798 Vitest tests passing (8 new) and 11 Playwright tests; Chrome check with the
+  sample data and with 250 projects (search answered in about 60 ms), no console errors.
 
 ## Impediments
 

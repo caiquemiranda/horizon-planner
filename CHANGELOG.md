@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Project explorer: the sidebar lists the projects of each section, searches projects by title (hidden and trashed included) and also appears in the project workspace, marking the open project.
 - Browser end-to-end scenarios across the lifecycle, sidebar, hide and trash, expanded dialog, progress, check-ins and forecast.
 - "Meu painel": projects started, completed and not completed in a period, completion rate, projects in progress, postponed and planned, and their average progress; hidden projects count, the trash does not.
 - Finish forecast: the planned finish, a forecast computed from the remaining work, the daily confirmations, the links and the calendar (with its variance in working days and the tasks that caused it), and an optional baseline kept as the reference.
