@@ -4,6 +4,7 @@ import {
   CirclePlay,
   CircleX,
   EyeOff,
+  LayoutDashboard,
   LayoutList,
   type LucideIcon,
   Menu,
@@ -17,7 +18,7 @@ import { useId, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { SECTION_HREFS } from '@/lib/router';
+import { DASHBOARD_HREF, SECTION_HREFS } from '@/lib/router';
 import { cn } from '@/lib/utils';
 
 import { countSections, type ProjectSection } from '../lib/sections';
@@ -49,11 +50,14 @@ function pluralize(count: number) {
   return count === 1 ? '1 projeto' : `${String(count)} projetos`;
 }
 
+/** What the navigation marks as current: a section or "Meu painel". */
+export type NavigationTarget = ProjectSection | 'dashboard';
+
 interface SectionNavProps {
-  current: ProjectSection;
+  current: NavigationTarget;
   collapsed: boolean;
   /** Called after following a link, e.g. to close the phone drawer. */
-  onNavigate?: () => void;
+  onNavigate?: (() => void) | undefined;
 }
 
 /** The section links; the same list for the rail and the phone drawer. */
@@ -63,6 +67,7 @@ function SectionNav({ current, collapsed, onNavigate }: SectionNavProps) {
 
   return (
     <nav aria-label="Seções" className="flex flex-col gap-3 p-2">
+      <DashboardLink current={current} collapsed={collapsed} onNavigate={onNavigate} />
       {GROUPS.map((group, index) => (
         <ul key={index} className={cn('flex flex-col gap-0.5', index > 0 && 'border-t pt-3')}>
           {group.map((section) => {
@@ -113,11 +118,44 @@ function SectionNav({ current, collapsed, onNavigate }: SectionNavProps) {
   );
 }
 
+/** "Meu painel": the statistics page, above the sections. */
+function DashboardLink({ current, collapsed, onNavigate }: SectionNavProps) {
+  const active = current === 'dashboard';
+  const link = (
+    <a
+      href={DASHBOARD_HREF}
+      aria-current={active ? 'page' : undefined}
+      onClick={onNavigate}
+      className={cn(
+        'relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
+        active &&
+          'bg-accent font-semibold text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary',
+        collapsed && 'justify-center px-0',
+      )}
+    >
+      <LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />
+      <span className={cn('flex-1 truncate', collapsed && 'sr-only')}>Meu painel</span>
+    </a>
+  );
+  return (
+    <div className="border-b pb-3">
+      {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{link}</TooltipTrigger>
+          <TooltipContent side="right">Meu painel</TooltipContent>
+        </Tooltip>
+      ) : (
+        link
+      )}
+    </div>
+  );
+}
+
 /**
  * Collapsible navigation rail beside the page, from the `md` breakpoint up. Collapsing
  * really narrows it, so the content gets the width; the choice is remembered.
  */
-export function NavigationRail({ current }: { current: ProjectSection }) {
+export function NavigationRail({ current }: { current: NavigationTarget }) {
   const collapsed = useSidebarStore((state) => state.collapsed);
   const toggle = useSidebarStore((state) => state.toggleCollapsed);
   const regionId = useId();
@@ -152,7 +190,7 @@ export function NavigationRail({ current }: { current: ProjectSection }) {
 }
 
 /** Phone and small tablet: a menu button opening the sections in a drawer. */
-export function NavigationDrawerButton({ current }: { current: ProjectSection }) {
+export function NavigationDrawerButton({ current }: { current: NavigationTarget }) {
   const open = useSidebarStore((state) => state.mobileOpen);
   const setOpen = useSidebarStore((state) => state.setMobileOpen);
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { DataNotice } from '@/features/data-io/components/DataNotice';
+import { DashboardPage } from '@/features/projects/components/DashboardPage';
 import { ProjectListPage } from '@/features/projects/components/ProjectListPage';
 import { ProjectsErrorAlert } from '@/features/projects/components/ProjectsErrorAlert';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
@@ -22,6 +23,8 @@ export function App() {
     <>
       {route.name === 'project' ? (
         <ProjectWorkspace key={route.projectId} projectId={route.projectId} />
+      ) : route.name === 'dashboard' ? (
+        <DashboardPage />
       ) : route.name === 'hidden' || route.name === 'trash' ? (
         <ProjectListPage placement={route.name === 'hidden' ? 'hidden' : 'trash'} />
       ) : (
