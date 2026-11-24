@@ -1,4 +1,4 @@
-import type { Project, ProjectStatus } from '@/types/project';
+import { type Horizon, HORIZONS, type Project, type ProjectStatus } from '@/types/project';
 
 import { getPlacement } from './visibility';
 
@@ -109,4 +109,17 @@ export function getHomeSection(project: Project): Exclude<ProjectSection, 'all'>
     if (isInSection(project, section)) return section;
   }
   return 'active';
+}
+
+/**
+ * Projects split by horizon (short, medium, long term), each group sorted by title; empty
+ * horizons are left out. The same lanes as the portfolio timeline.
+ */
+export function groupByHorizon(
+  projects: readonly Project[],
+): { horizon: Horizon; projects: Project[] }[] {
+  return HORIZONS.map((horizon) => ({
+    horizon,
+    projects: sortByTitle(projects.filter((project) => project.horizon === horizon)),
+  })).filter((group) => group.projects.length > 0);
 }

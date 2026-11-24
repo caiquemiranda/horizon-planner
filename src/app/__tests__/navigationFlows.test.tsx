@@ -245,4 +245,43 @@ describe('navigation sidebar', () => {
       'page',
     );
   });
+
+  it('splits the projects of a section into horizons that can be folded', async () => {
+    const user = userEvent.setup();
+    window.location.hash = PORTFOLIO_HREF;
+    await projectRepository.replaceAll([
+      makeProject({ title: 'Mestrado', status: 'in_progress', horizon: 'long' }),
+      makeProject({ title: 'Corrida', status: 'in_progress', horizon: 'short' }),
+      makeProject({ title: 'Inglês', status: 'planned', horizon: 'medium' }),
+      makeProject({ title: 'Aula', status: 'planned', horizon: 'short' }),
+    ]);
+    useProjectsStore.setState({ projects: [], status: 'idle', error: null });
+    render(
+      <Providers>
+        <App />
+      </Providers>,
+    );
+    await waitFor(() => {
+      expect(useProjectsStore.getState().status).toBe('ready');
+    });
+
+    await user.click(nav().getByRole('button', { name: 'Mostrar projetos de Ativos' }));
+    const groups = within(nav().getByRole('list', { name: 'Projetos de Ativos' }));
+    expect(groups.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      'Curto prazo2',
+      'Médio prazo1',
+      'Longo prazo1',
+    ]);
+    expect(
+      within(groups.getByRole('list', { name: 'Curto prazo' }))
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Aula', 'Corrida']);
+
+    const short = groups.getByRole('button', { name: /Curto prazo/ });
+    await user.click(short);
+    expect(short).toHaveAttribute('aria-expanded', 'false');
+    expect(groups.queryByRole('list', { name: 'Curto prazo' })).not.toBeInTheDocument();
+    expect(groups.getByRole('list', { name: 'Longo prazo' })).toBeInTheDocument();
+  });
 });

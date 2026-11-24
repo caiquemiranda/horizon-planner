@@ -6,6 +6,7 @@ import { PROJECT_STATUSES, type ProjectStatus } from '@/types/project';
 import {
   countSections,
   getHomeSection,
+  groupByHorizon,
   isInSection,
   PROJECT_SECTIONS,
   searchProjects,
@@ -113,5 +114,25 @@ describe('project search', () => {
     expect(getHomeSection(of('paused'))).toBe('postponed');
     expect(getHomeSection(of('completed', { hiddenAt: AT }))).toBe('hidden');
     expect(getHomeSection(of('planned'))).toBe('active');
+  });
+});
+
+describe('groupByHorizon', () => {
+  it('splits by horizon in timeline order, sorted by title, without empty groups', () => {
+    const projects = [
+      makeProject({ title: 'Mestrado', horizon: 'long' }),
+      makeProject({ title: 'Corrida', horizon: 'short' }),
+      makeProject({ title: 'Aula', horizon: 'short' }),
+    ];
+    expect(
+      groupByHorizon(projects).map((group) => [
+        group.horizon,
+        group.projects.map((project) => project.title),
+      ]),
+    ).toEqual([
+      ['short', ['Aula', 'Corrida']],
+      ['long', ['Mestrado']],
+    ]);
+    expect(groupByHorizon([])).toEqual([]);
   });
 });

@@ -22,16 +22,16 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DASHBOARD_HREF, projectHref, SECTION_HREFS } from '@/lib/router';
 import { cn } from '@/lib/utils';
-import type { Project, UUID } from '@/types/project';
+import type { Horizon, Project, UUID } from '@/types/project';
 
-import { COLOR_META } from '../constants';
+import { COLOR_META, HORIZON_META } from '../constants';
 import {
   countSections,
   getHomeSection,
+  groupByHorizon,
   type ProjectSection,
   searchProjects,
   selectSection,
-  sortByTitle,
 } from '../lib/sections';
 import { useProjectsStore } from '../store/projectsStore';
 import { useSidebarStore } from '../store/sidebarStore';
@@ -285,6 +285,11 @@ function SectionNav({ current, collapsed, currentProjectId = null, onNavigate }:
   );
 }
 
+/**
+ * The projects of an opened section, split into the portfolio horizons (short, medium and
+ * long term) as subcategories that can be folded. At most `LIST_LIMIT` projects are shown;
+ * the section page lists the rest.
+ */
 function SectionProjects({
   id,
   section,
@@ -300,22 +305,69 @@ function SectionProjects({
   currentProjectId: UUID | null;
   onNavigate?: (() => void) | undefined;
 }) {
-  const listed = useMemo(() => sortByTitle(selectSection(projects, section)), [projects, section]);
+  const listed = useMemo(() => selectSection(projects, section), [projects, section]);
+  const groups = useMemo(() => groupByHorizon(listed), [listed]);
+  const [folded, setFolded] = useState<ReadonlySet<Horizon>>(new Set());
+  let budget = LIST_LIMIT;
+
   return (
     <ul
       id={id}
       aria-label={`Projetos de ${label}`}
-      className="mt-0.5 ml-4 flex flex-col gap-0.5 border-l pl-1.5"
+      className="mt-0.5 ml-4 flex flex-col gap-1 border-l pl-1.5"
     >
-      {listed.slice(0, LIST_LIMIT).map((project) => (
-        <li key={project.id}>
-          <ProjectLink
-            project={project}
-            current={project.id === currentProjectId}
-            onNavigate={onNavigate}
-          />
-        </li>
-      ))}
+      {groups.map(({ horizon, projects: group }) => {
+        const meta = HORIZON_META[horizon];
+        const open = !folded.has(horizon);
+        const shown = open ? group.slice(0, Math.max(0, budget)) : [];
+        budget -= shown.length;
+        const groupId = `${id}-${horizon}`;
+        return (
+          <li key={horizon}>
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={groupId}
+              onClick={() => {
+                setFolded((previous) => {
+                  const next = new Set(previous);
+                  if (next.has(horizon)) next.delete(horizon);
+                  else next.add(horizon);
+                  return next;
+                });
+              }}
+              className="flex h-7 w-full items-center gap-1.5 rounded-md px-1.5 text-xs font-medium text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <ChevronRight
+                aria-hidden="true"
+                className={cn('size-3 motion-safe:transition-transform', open && 'rotate-90')}
+              />
+              <span
+                aria-hidden="true"
+                className="size-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: `var(${meta.cssVar})` }}
+              />
+              <span className="flex-1 truncate text-left">{meta.label}</span>
+              <span className="font-mono text-[10px] text-subtle-foreground tabular-nums">
+                {group.length}
+              </span>
+            </button>
+            {open ? (
+              <ul id={groupId} aria-label={meta.label} className="flex flex-col gap-0.5">
+                {shown.map((project) => (
+                  <li key={project.id}>
+                    <ProjectLink
+                      project={project}
+                      current={project.id === currentProjectId}
+                      onNavigate={onNavigate}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        );
+      })}
       {listed.length > LIST_LIMIT ? (
         <li>
           <a
