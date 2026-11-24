@@ -72,13 +72,32 @@ single local user; the access rule stays the extension point), file storage of P
 
 ## Pull request plan
 
-| Order | Branch                          | Scope                                                                                         | Depends on |
-| ----- | ------------------------------- | --------------------------------------------------------------------------------------------- | ---------- |
-| 10    | `feat/project-explorer-sidebar` | This audit; projects listed under each section, search, current project, sidebar in workspace | —          |
-| 11    | `feat/wbs-spreadsheet-export`   | XLSX writer, WBS template, project export to XLSX and CSV, formula-injection protection       | —          |
-| 12    | `feat/wbs-import-preview`       | XLSX/CSV reader with limits, column mapping, validation by row, preview tree, no writing      | 11         |
-| 13    | `feat/wbs-import-commit`        | Create the project and schedule, idempotency, round trip export → import                      | 12         |
-| 14    | `feat/sample-projects`          | Decision 1: flagged demos, "Exemplos", clone as a new project, metrics exclusion              | 13         |
-| 15    | `feat/project-report`           | Report read model and page: summary, KPIs, SVG charts, full WBS, read-only Gantt              | —          |
-| 16    | `feat/project-report-print`     | Print stylesheet, footer "Imprimir / Salvar em PDF", segmented Gantt, A4 checks               | 15         |
-| 17    | `test/project-features-e2e`     | Cross-feature scenarios of §15, final report                                                  | 10–16      |
+| Order | Branch                          | Scope                                                                                                                  | Depends on |
+| ----- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 10    | `feat/project-explorer-sidebar` | This audit; projects listed under each section, search, current project, sidebar in workspace                          | —          |
+| 11    | `feat/wbs-spreadsheet-export`   | XLSX writer, WBS template, project export to XLSX and CSV, formula-injection protection                                | —          |
+| 11a   | `feat/timeline-compact-lanes`   | Owner request: collapse the timeline's horizon column to a narrow strip, since projects are reachable from the sidebar | 11         |
+| 12    | `feat/wbs-import-preview`       | XLSX/CSV reader with limits, column mapping, validation by row, preview tree, no writing                               | 11         |
+| 13    | `feat/wbs-import-commit`        | Create the project and schedule, idempotency, round trip export → import                                               | 12         |
+| 14    | `feat/sample-projects`          | Decision 1: flagged demos, "Exemplos", clone as a new project, metrics exclusion                                       | 13         |
+| 15    | `feat/project-report`           | Report read model and page: summary, KPIs, SVG charts, full WBS, read-only Gantt                                       | —          |
+| 16    | `feat/project-report-print`     | Print stylesheet, footer "Imprimir / Salvar em PDF", segmented Gantt, A4 checks                                        | 15         |
+| 17    | `test/project-features-e2e`     | Cross-feature scenarios of §15, final report                                                                           | 10–16      |
+
+### 11a · Compact timeline lanes (owner request)
+
+The portfolio timeline keeps a 240 px column ("Horizontes") with the horizons and the
+project names. With the explorer listing every project, that column can fold:
+
+- A toggle in the column header ("Recolher coluna de projetos"), with `aria-expanded` and
+  `aria-controls`, remembered in this browser (same pattern as the sidebar preference).
+- Collapsed, the column narrows to a strip of about 44 px: each lane keeps its color
+  marker and its fold button; each project row keeps its height (rows and bars stay
+  aligned), its color dot and its button, with the title in a tooltip and still in the
+  accessible name, so keyboard, screen readers and selection work as before.
+- The canvas gets the width (about +196 px on desktop); the visible date range is kept
+  anchored at its start, no jump.
+- Independent from the sidebar: both collapsed give the timeline the most width.
+- Acceptance: width gained; lanes still fold; rows and bars aligned (0 px); preference kept
+  after reload; axe clean; works at 390 px.
+- Tests: store and integration tests, Playwright alignment check.
