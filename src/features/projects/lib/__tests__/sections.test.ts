@@ -3,7 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { makeProject } from '@/test/factories';
 import { PROJECT_STATUSES, type ProjectStatus } from '@/types/project';
 
-import { countSections, isInSection, PROJECT_SECTIONS, selectSection } from '../sections';
+import {
+  countSections,
+  getHomeSection,
+  isInSection,
+  PROJECT_SECTIONS,
+  searchProjects,
+  selectSection,
+  sortByTitle,
+} from '../sections';
 
 const AT = '2026-05-01T10:00:00.000Z';
 const of = (status: ProjectStatus, extra: { hiddenAt?: string; deletedAt?: string } = {}) =>
@@ -70,5 +78,40 @@ describe('sections', () => {
 
   it('counts nothing for an empty portfolio', () => {
     expect(Object.values(countSections([])).every((count) => count === 0)).toBe(true);
+  });
+});
+
+describe('project search', () => {
+  const titles = ['Ação social', 'Reforma da cozinha', 'Campanha de ação', 'Mudança'];
+  const projects = titles.map((title) => makeProject({ title }));
+
+  it('ignores case and accents, and puts titles starting with the query first', () => {
+    expect(searchProjects(projects, 'ACAO').map((project) => project.title)).toEqual([
+      'Ação social',
+      'Campanha de ação',
+    ]);
+    expect(searchProjects(projects, '  mud ').map((project) => project.title)).toEqual(['Mudança']);
+  });
+
+  it('finds nothing for an empty query and searches hidden and trashed projects too', () => {
+    expect(searchProjects(projects, '   ')).toEqual([]);
+    const trashed = makeProject({ title: 'Antigo', deletedAt: AT });
+    expect(searchProjects([trashed], 'anti')).toEqual([trashed]);
+    expect(getHomeSection(trashed)).toBe('trash');
+  });
+
+  it('sorts by title in Portuguese order', () => {
+    expect(sortByTitle(projects).map((project) => project.title)).toEqual([
+      'Ação social',
+      'Campanha de ação',
+      'Mudança',
+      'Reforma da cozinha',
+    ]);
+  });
+
+  it('gives each project one home section', () => {
+    expect(getHomeSection(of('paused'))).toBe('postponed');
+    expect(getHomeSection(of('completed', { hiddenAt: AT }))).toBe('hidden');
+    expect(getHomeSection(of('planned'))).toBe('active');
   });
 });

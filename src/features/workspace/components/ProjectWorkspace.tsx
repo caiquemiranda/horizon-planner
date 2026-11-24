@@ -9,6 +9,10 @@ import { buttonVariants } from '@/components/ui/button-variants';
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { GanttPane } from '@/features/gantt/components/GanttPane';
 import type { BarChange } from '@/features/gantt/lib/barDrag';
+import {
+  NavigationDrawerButton,
+  NavigationRail,
+} from '@/features/projects/components/NavigationSidebar';
 import { COLOR_META } from '@/features/projects/constants';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { getScheduleAccess } from '@/features/schedule/lib/access';
@@ -121,6 +125,7 @@ export function ProjectWorkspace({
         </a>
       )}
       <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b glass px-3 sm:px-4">
+        {isDialog ? null : <NavigationDrawerButton current={null} currentProjectId={projectId} />}
         {isDialog ? null : (
           <>
             <a
@@ -146,32 +151,36 @@ export function ProjectWorkspace({
         </div>
       </header>
 
-      {/* Inside the dialog the page behind already has the `main` landmark. */}
-      <Main
-        id="workspace"
-        tabIndex={-1}
-        className="flex min-h-0 flex-1 flex-col bg-surface-sunken outline-none"
-      >
-        {isLoadingProjects ? (
-          <WorkspaceSkeleton />
-        ) : project ? (
-          <WorkspaceBody project={project} />
-        ) : (
-          <CenteredMessage
-            title="Projeto não encontrado"
-            description="Ele pode ter sido excluído ou o endereço está incorreto."
-            action={
-              <a
-                href={PORTFOLIO_HREF}
-                className={buttonVariants({ size: 'sm', variant: 'outline' })}
-              >
-                <ArrowLeft />
-                Voltar ao portfólio
-              </a>
-            }
-          />
-        )}
-      </Main>
+      <div className="flex min-h-0 flex-1">
+        {/* The project explorer, collapsible to give the width back to the table and chart. */}
+        {isDialog ? null : <NavigationRail current={null} currentProjectId={projectId} />}
+        {/* Inside the dialog the page behind already has the `main` landmark. */}
+        <Main
+          id="workspace"
+          tabIndex={-1}
+          className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface-sunken outline-none"
+        >
+          {isLoadingProjects ? (
+            <WorkspaceSkeleton />
+          ) : project ? (
+            <WorkspaceBody project={project} />
+          ) : (
+            <CenteredMessage
+              title="Projeto não encontrado"
+              description="Ele pode ter sido excluído ou o endereço está incorreto."
+              action={
+                <a
+                  href={PORTFOLIO_HREF}
+                  className={buttonVariants({ size: 'sm', variant: 'outline' })}
+                >
+                  <ArrowLeft />
+                  Voltar ao portfólio
+                </a>
+              }
+            />
+          )}
+        </Main>
+      </div>
     </div>
   );
 }
