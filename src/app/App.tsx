@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { DataNotice } from '@/features/data-io/components/DataNotice';
+import { ImportPage } from '@/features/data-io/components/ImportPage';
 import { DashboardPage } from '@/features/projects/components/DashboardPage';
 import { ProjectListPage } from '@/features/projects/components/ProjectListPage';
 import { ProjectsErrorAlert } from '@/features/projects/components/ProjectsErrorAlert';
@@ -23,6 +24,8 @@ export function App() {
     <>
       {route.name === 'project' ? (
         <ProjectWorkspace key={route.projectId} projectId={route.projectId} />
+      ) : route.name === 'import' ? (
+        <ImportPage />
       ) : route.name === 'dashboard' ? (
         <DashboardPage />
       ) : route.name === 'hidden' || route.name === 'trash' ? (

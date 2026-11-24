@@ -1,4 +1,12 @@
-import { Database, Download, FileSpreadsheet, FlaskConical, Trash2, Upload } from 'lucide-react';
+import {
+  Database,
+  Download,
+  FileSpreadsheet,
+  FileUp,
+  FlaskConical,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { type ChangeEvent, useRef, useState } from 'react';
 
 import {
@@ -23,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
+import { IMPORT_HREF } from '@/lib/router';
 
 import { pluralizeProjects, useDataActions } from '../hooks/useDataActions';
 import { BackupImportError, type HorizonBackup, readBackupFile } from '../lib/backup';
@@ -129,6 +138,12 @@ export function DataMenu() {
           >
             <FileSpreadsheet />
             Baixar modelo de EAP (Excel)
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <a href={IMPORT_HREF}>
+              <FileUp />
+              Importar planilha (Excel/CSV)…
+            </a>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {

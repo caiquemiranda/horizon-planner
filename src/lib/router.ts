@@ -12,7 +12,8 @@ import type { UUID } from '@/types/project';
  * - `#/ativos`, `#/adiados`, `#/nao-concluidos`, `#/concluidos`: one section of it;
  * - `#/projetos/<projectId>`: the planning workspace of one project;
  * - `#/ocultos` and `#/lixeira`: hidden projects and the trash;
- * - `#/painel`: portfolio statistics ("Meu painel").
+ * - `#/painel`: portfolio statistics ("Meu painel");
+ * - `#/importar`: project import from a spreadsheet.
  */
 
 export type Route =
@@ -20,7 +21,8 @@ export type Route =
   | { name: 'project'; projectId: UUID }
   | { name: 'hidden' }
   | { name: 'trash' }
-  | { name: 'dashboard' };
+  | { name: 'dashboard' }
+  | { name: 'import' };
 
 const PROJECT_PATTERN = /^#\/projetos\/([^/?#]+)\/?$/;
 
@@ -28,6 +30,7 @@ export const PORTFOLIO_HREF = '#/';
 export const HIDDEN_HREF = '#/ocultos';
 export const TRASH_HREF = '#/lixeira';
 export const DASHBOARD_HREF = '#/painel';
+export const IMPORT_HREF = '#/importar';
 
 /** Address of every navigation section. */
 export const SECTION_HREFS = {
@@ -56,6 +59,7 @@ export function parseRoute(hash: string): Route {
   if (path === HIDDEN_HREF) return { name: 'hidden' };
   if (path === TRASH_HREF) return { name: 'trash' };
   if (path === DASHBOARD_HREF) return { name: 'dashboard' };
+  if (path === IMPORT_HREF) return { name: 'import' };
   const section = TIMELINE_SECTIONS_BY_HREF.get(path);
   if (section) return { name: 'portfolio', section };
   const match = PROJECT_PATTERN.exec(hash);
