@@ -20,8 +20,8 @@ its acceptance tests pass in CI.
 | 9     | `test/project-experience-e2e`   | Scenarios A–C                   | Delivered | #35          | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
 | 10    | `feat/project-explorer-sidebar` | REQ-NAV-01                      | Delivered | #36          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
 | 10a   | `feat/explorer-horizons`        | REQ-NAV-01 (owner request)      | Delivered | #37          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
-| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07                | In review | —            | `writers.test.ts`, `wbsWorkbook.test.ts`; files read back in Chrome and with openpyxl                              |
-| 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column) | Pending   | —            | —                                                                                                                  |
+| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07                | Delivered | #38          | `writers.test.ts`, `wbsWorkbook.test.ts`; files read back in Chrome and with openpyxl                              |
+| 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column) | In review | —            | `laneColumnStore.test.ts`, `laneColumnFlows.test.tsx` (incl. axe); checked in Chrome                               |
 | 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05                | Pending   | —            | —                                                                                                                  |
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                | Pending   | —            | —                                                                                                                  |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                     | Pending   | —            | —                                                                                                                  |
@@ -340,6 +340,20 @@ its acceptance tests pass in CI.
   links, real dates, frozen header, accents intact. Its warning about a missing default
   cell style was fixed.
 - Tests: 817 Vitest tests passing (17 new) and 11 Playwright tests.
+
+### 11a · `feat/timeline-compact-lanes`
+
+- Owner request: the portfolio timeline's horizon column folds into a 44 px strip from a
+  button in its header (`aria-expanded`, `aria-controls`), remembered in this browser
+  (`timeline/store/laneColumnStore.ts`).
+- Compact: lanes keep their color marker and fold button (tooltip with name and count);
+  project rows keep their height, color dot and button, with "name · %" in a tooltip and
+  the name still in the accessible name. Selection, hover highlight and lane folding work
+  as before.
+- Measured in Chrome at 1 440 × 900: canvas 944 → 1 140 px (1 340 px with the sidebar
+  also collapsed); at 390 px: 238 → 346 px. The visible range keeps its start; rows and
+  bars stay aligned (0 px); the choice survives a reload; no console errors.
+- Tests: 824 Vitest tests passing (5 new, axe included) and 11 Playwright tests.
 
 ## Impediments
 

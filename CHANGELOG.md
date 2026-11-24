@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The timeline's horizon column can fold into a narrow strip (names in tooltips), giving the timeline about 200 px more; the choice is remembered.
 - Excel and CSV export of a project (every task, links, calendar; planned, forecast and actual values in separate columns) and a downloadable WBS template, with formula-injection protection.
 - Project explorer: the sidebar lists the projects of each section, split into short, medium and long-term horizons, searches projects by title (hidden and trashed included) and also appears in the project workspace, marking the open project.
 - Browser end-to-end scenarios across the lifecycle, sidebar, hide and trash, expanded dialog, progress, check-ins and forecast.
