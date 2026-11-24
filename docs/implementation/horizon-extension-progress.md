@@ -19,8 +19,8 @@ its acceptance tests pass in CI.
 | 8     | `feat/portfolio-statistics`     | REQ-05                     | Delivered | #34          | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
 | 9     | `test/project-experience-e2e`   | Scenarios A–C              | Delivered | #35          | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
 | 10    | `feat/project-explorer-sidebar` | REQ-NAV-01                 | Delivered | #36          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
-| 10a   | `feat/explorer-horizons`        | REQ-NAV-01 (owner request) | In review | —            | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
-| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07           | Pending   | —            | —                                                                                                                  |
+| 10a   | `feat/explorer-horizons`        | REQ-NAV-01 (owner request) | Delivered | #37          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
+| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07           | In review | —            | `writers.test.ts`, `wbsWorkbook.test.ts`; files read back in Chrome and with openpyxl                              |
 | 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05           | Pending   | —            | —                                                                                                                  |
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08           | Pending   | —            | —                                                                                                                  |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                | Pending   | —            | —                                                                                                                  |
@@ -314,6 +314,31 @@ its acceptance tests pass in CI.
 - Also carries the approval of decision 1 (sample projects), which missed #36.
 - Tests: 800 Vitest tests passing (2 new) and 11 Playwright tests; Chrome check with the
   sample data, no console errors.
+
+### 11 · `feat/wbs-spreadsheet-export`
+
+- Writers in `src/lib/spreadsheet/`: `.xlsx` parts written by the app and zipped with
+  `fflate` (MIT, about 30 kB, no known vulnerabilities), loaded only when a file is
+  generated (decision 2). Text cells are inline strings, so formula-looking text stays
+  text; dates are real dates; bold frozen header; safe, unique sheet names. CSV with `;`,
+  UTF-8 BOM, CRLF, decimal comma, ISO dates and a leading apostrophe on text starting with
+  `=`, `+`, `-`, `@`, tab or carriage return.
+- Contract in `src/features/data-io/lib/wbsWorkbook.ts` (template version 1), shared with
+  the import: sheets `Instruções`, `Projeto`, `EAP_Tarefas`, `Dependências`, `Calendário`
+  (+ `Exemplo` in the template, never imported); `codigo_externo` is the stable row
+  reference (task id); export-only columns (planned finish, forecast finish, actual
+  dates, work done) are marked and will be ignored by the import.
+- UI: "Exportar" in the project header (Excel complete, CSV tasks only, with a notice
+  stating what CSV leaves out); "Baixar modelo de EAP (Excel)" in the data menu.
+- Acceptance (§13, export items): XLSX keeps project, tasks, WBS and links ✅; CSV states its
+  limits and keeps the structure (parent and predecessor codes) ✅; collapsed tasks are
+  exported ✅; formula injection blocked and dates coherent ✅. Template opens and has the
+  documented structure ✅ (filling and importing it comes with orders 12–13).
+- Checked: the template, the workbook and the CSV downloaded in Chrome were read back with
+  `openpyxl` (an independent reader): all 14 tasks with one phase collapsed on screen, 8
+  links, real dates, frozen header, accents intact. Its warning about a missing default
+  cell style was fixed.
+- Tests: 817 Vitest tests passing (17 new) and 11 Playwright tests.
 
 ## Impediments
 
