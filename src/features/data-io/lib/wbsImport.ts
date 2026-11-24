@@ -206,17 +206,31 @@ const WEEKDAYS: Record<string, Weekday> = {
   sabado: 6,
 };
 
-/** `codigo[:TIPO][+/-dias]`, as written by the export. */
+/**
+ * `codigo[:TIPO[+/-dias]]`, as written by the export. Without a type, the whole text is the
+ * code; the short form `codigo+dias` is accepted only when what remains is a known code
+ * (codes may contain hyphens and digits, such as ids).
+ */
 export function parseLinkReference(
   reference: string,
+  knownCodes: ReadonlySet<string> = new Set(),
 ): { code: string; type: DependencyType; lag: number } | null {
-  const match = /^(.+?)(?::(FS|SS|FF|SF))?([+-]\d+)?$/i.exec(reference.trim());
-  if (!match?.[1]) return null;
-  return {
-    code: match[1].trim(),
-    type: (match[2]?.toUpperCase() ?? 'FS') as DependencyType,
-    lag: match[3] ? Number(match[3]) : 0,
-  };
+  const trimmed = reference.trim();
+  if (trimmed === '') return null;
+  if (knownCodes.has(trimmed)) return { code: trimmed, type: 'FS', lag: 0 };
+  const typed = /^(.+):(FS|SS|FF|SF)([+-]\d+)?$/i.exec(trimmed);
+  if (typed?.[1] && typed[2]) {
+    return {
+      code: typed[1].trim(),
+      type: typed[2].toUpperCase() as DependencyType,
+      lag: typed[3] ? Number(typed[3]) : 0,
+    };
+  }
+  const short = /^(.+?)([+-]\d+)$/.exec(trimmed);
+  if (short?.[1] && short[2] && knownCodes.has(short[1].trim())) {
+    return { code: short[1].trim(), type: 'FS', lag: Number(short[2]) };
+  }
+  return { code: trimmed, type: 'FS', lag: 0 };
 }
 
 // ── Mapping ───────────────────────────────────────────────────────────────────────────
@@ -619,7 +633,7 @@ export function buildImportPreview(source: ImportSource, options: ImportOptions)
         .split(/[,;]/)
         .map((part) => part.trim())
         .filter(Boolean)) {
-        const parsed = parseLinkReference(reference);
+        const parsed = parseLinkReference(reference, new Set(byCode.keys()));
         if (!parsed) {
           error(sheetLabel, draft.row, 'predecessoras', `Predecessora “${reference}” ilegível.`);
           continue;
