@@ -1,10 +1,8 @@
-import { ChartGantt, Maximize2 } from 'lucide-react';
+import { ChartGantt } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { buttonVariants } from '@/components/ui/button-variants';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
-import { projectHref } from '@/lib/router';
 import type { Project } from '@/types/project';
 
 import { useDrawerStore } from '../store/drawerStore';
@@ -56,26 +54,17 @@ export function ProjectPanel({ onProjectCreated }: ProjectPanelProps) {
       title={isCreating ? 'Novo projeto' : (project?.title ?? '')}
       headerActions={
         project ? (
-          <>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Expandir cronograma"
-              title="Expandir cronograma (sem sair desta página)"
-              onClick={() => {
-                expand(project.id);
-              }}
-            >
-              <Maximize2 />
-            </Button>
-            <a
-              href={projectHref(project.id)}
-              className={buttonVariants({ variant: 'outline', size: 'sm' })}
-            >
-              <ChartGantt />
-              Abrir cronograma
-            </a>
-          </>
+          // One way to the schedule, without leaving the page: the large dialog.
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              expand(project.id);
+            }}
+          >
+            <ChartGantt />
+            Abrir cronograma
+          </Button>
         ) : null
       }
       description={

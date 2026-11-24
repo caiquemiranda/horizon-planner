@@ -53,7 +53,7 @@ async function renderPortfolio() {
 
 async function openExpanded(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText(industrial.title, { selector: 'li button span' }));
-  const trigger = await screen.findByRole('button', { name: 'Expandir cronograma' });
+  const trigger = await screen.findByRole('button', { name: 'Abrir cronograma' });
   await user.click(trigger);
   const dialog = await screen.findByRole('dialog', { name: `Cronograma de ${industrial.title}` });
   await within(dialog).findByRole('treegrid');

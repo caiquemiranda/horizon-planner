@@ -1,6 +1,10 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 
-/** Browser preference: the timeline's horizon column shown in full or as a narrow strip. */
+/**
+ * Browser preference: the timeline's horizon column shown in full or as a narrow strip.
+ * Compact by default: the sidebar explorer already lists the projects by horizon, so the
+ * full column would repeat it.
+ */
 export const LANE_COLUMN_STORAGE_KEY = 'horizon-planner:lane-column';
 
 interface LaneColumnState {
@@ -20,11 +24,11 @@ function getStorage(): Storage | null {
 }
 
 export function createLaneColumnStore(storage: Storage | null = getStorage()): LaneColumnStore {
-  let compact = false;
+  let compact = true;
   try {
-    compact = storage?.getItem(LANE_COLUMN_STORAGE_KEY) === 'compact';
+    compact = storage?.getItem(LANE_COLUMN_STORAGE_KEY) !== 'full';
   } catch {
-    // Unreadable storage: start with the full column.
+    // Unreadable storage: start compact.
   }
   return create<LaneColumnState>()((set, get) => ({
     compact,

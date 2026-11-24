@@ -6,6 +6,7 @@ import { DashboardPage } from '@/features/projects/components/DashboardPage';
 import { ProjectListPage } from '@/features/projects/components/ProjectListPage';
 import { ProjectsErrorAlert } from '@/features/projects/components/ProjectsErrorAlert';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
+import { ExpandedProjectDialog } from '@/features/workspace/components/ExpandedProjectDialog';
 import { ProjectWorkspace } from '@/features/workspace/components/ProjectWorkspace';
 import { useRoute } from '@/lib/router';
 
@@ -33,6 +34,8 @@ export function App() {
       ) : (
         <PortfolioPage section={route.section} />
       )}
+      {/* The large schedule dialog, opened from any page without changing the route. */}
+      {route.name === 'project' ? null : <ExpandedProjectDialog />}
       <ProjectsErrorAlert />
       <DataNotice />
     </>

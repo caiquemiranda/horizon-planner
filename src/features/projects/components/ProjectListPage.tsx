@@ -17,11 +17,11 @@ import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { useNoticeStore } from '@/features/data-io/store/noticeStore';
 import { formatDateRange } from '@/features/timeline/lib/format';
-import { projectHref } from '@/lib/router';
 import type { Project } from '@/types/project';
 
 import { COLOR_META } from '../constants';
 import { type ProjectPlacement, selectByPlacement } from '../lib/visibility';
+import { useDrawerStore } from '../store/drawerStore';
 import { useProjectsStore } from '../store/projectsStore';
 import { StatusPill } from './LifecycleSection';
 import { NavigationDrawerButton, NavigationRail } from './NavigationSidebar';
@@ -133,6 +133,7 @@ interface ProjectRowProps {
 
 function ProjectRow({ project, placement, onDelete }: ProjectRowProps) {
   const unhide = useProjectsStore((state) => state.unhide);
+  const expand = useDrawerStore((state) => state.expand);
   const hide = useProjectsStore((state) => state.hide);
   const moveToTrash = useProjectsStore((state) => state.moveToTrash);
   const restore = useProjectsStore((state) => state.restore);
@@ -157,13 +158,16 @@ function ProjectRow({ project, placement, onDelete }: ProjectRowProps) {
       <div className="flex items-center gap-1">
         {placement === 'hidden' ? (
           <>
-            <a
-              href={projectHref(project.id)}
-              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                expand(project.id);
+              }}
             >
               <ChartGantt />
               Abrir cronograma
-            </a>
+            </Button>
             <Button
               variant="outline"
               size="sm"
