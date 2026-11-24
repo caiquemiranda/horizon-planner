@@ -107,6 +107,8 @@ describe('tasks CSV', () => {
     expect(formatLinkReference('LEV', 'FS', 0)).toBe('LEV');
     expect(formatLinkReference('LEV', 'SS', 2)).toBe('LEV:SS+2');
     expect(formatLinkReference('LEV', 'FF', -1)).toBe('LEV:FF-1');
+    expect(formatLinkReference('LEV', 'FS', 3)).toBe('LEV:FS+3');
+    expect(formatLinkReference('LEV', 'SS', 0)).toBe('LEV:SS');
   });
 });
 

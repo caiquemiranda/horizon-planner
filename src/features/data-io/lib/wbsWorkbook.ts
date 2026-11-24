@@ -102,7 +102,7 @@ export const TASK_COLUMNS: readonly ColumnSpec[] = [
   },
   {
     key: 'predecessoras',
-    help: 'Somente no CSV (no Excel use a aba Dependências): codigo_externo[:TIPO][+/-dias], separados por vírgula. Ex.: LEV, PROJ:SS+2.',
+    help: 'Somente no CSV (no Excel use a aba Dependências): codigo_externo[:TIPO[+/-dias]], separados por vírgula. Ex.: LEV, PROJ:SS+2, COMP:FS-1.',
     width: 22,
   },
   {
@@ -161,11 +161,13 @@ export const MODE_LABELS = { auto: 'Automático', manual: 'Manual' } as const;
 
 const WEEKDAY_ORDER: Weekday[] = [1, 2, 3, 4, 5, 6, 0];
 
-/** `codigo_externo[:TIPO][+/-dias]`, the compact form of a link. */
+/**
+ * `codigo_externo[:TIPO[+/-dias]]`, the compact form of a link. The lag always comes after
+ * the type, so codes containing hyphens and digits (such as ids) are never misread.
+ */
 export function formatLinkReference(code: string, type: DependencyType, lag: number): string {
-  const typePart = type === 'FS' ? '' : `:${type}`;
-  const lagPart = lag === 0 ? '' : lag > 0 ? `+${String(lag)}` : String(lag);
-  return `${code}${typePart}${lagPart}`;
+  if (lag === 0) return type === 'FS' ? code : `${code}:${type}`;
+  return `${code}:${type}${lag > 0 ? '+' : ''}${String(lag)}`;
 }
 
 function instructionsSheet(): Sheet {

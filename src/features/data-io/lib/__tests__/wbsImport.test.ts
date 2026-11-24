@@ -319,5 +319,15 @@ describe('value parsing', () => {
     expect(parseLinkReference('LEV')).toEqual({ code: 'LEV', type: 'FS', lag: 0 });
     expect(parseLinkReference('PROJ:ss+2')).toEqual({ code: 'PROJ', type: 'SS', lag: 2 });
     expect(parseLinkReference('X:FF-1')).toEqual({ code: 'X', type: 'FF', lag: -1 });
+    // Ids with hyphens and digits are codes, not lags.
+    const id = '8c190f7d-06e8-4c8a-8ac5-215480252194';
+    expect(parseLinkReference(id)).toEqual({ code: id, type: 'FS', lag: 0 });
+    expect(parseLinkReference(`${id}:FS+2`)).toEqual({ code: id, type: 'FS', lag: 2 });
+    // The short form only when the rest is a known code.
+    expect(parseLinkReference('LEV+2', new Set(['LEV']))).toEqual({
+      code: 'LEV',
+      type: 'FS',
+      lag: 2,
+    });
   });
 });
