@@ -103,6 +103,14 @@ docs: add screenshot capture guide
 5. Address review comments with new commits, then tidy the history (`git rebase -i`) before the merge if needed.
 6. Add a line to the `[Unreleased]` section of [`CHANGELOG.md`](./CHANGELOG.md) for user-facing changes.
 
+### Authorship and attribution
+
+Commits, pull requests, issues, code, comments and documentation carry no attribution to
+AI assistants or code generators: no co-author trailers, "generated with" footers,
+signatures or mentions of such tools. Authorship is the contributor's, who reviews and
+answers for every change. Pull requests that add such attribution are asked to remove it
+before review.
+
 ## Code standards
 
 - **TypeScript strict mode** is mandatory. Avoid `any`; prefer precise union types and `unknown` with narrowing.
