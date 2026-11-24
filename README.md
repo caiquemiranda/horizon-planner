@@ -34,6 +34,10 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 | **Side drawer**              | Click any bar to open an animated drawer on the right. Create, edit and delete projects without losing the timeline context; edits show on the timeline in real time.            |
 | **Rich project model**       | Title, description, horizon, start/end dates, progress (0–100%), status, color, category and milestones.                                                                         |
 | **Filters**                  | Filter by horizon, category and status.                                                                                                                                          |
+| **Lifecycle**                | Start, postpone (with an expected resume or revised finish), resume, complete, close without completing and reopen, each with its reason and a kept history.                     |
+| **Sections and sidebar**     | Collapsible sidebar with **Active**, **Postponed**, **Not completed**, **Completed**, **Hidden** and **Trash**, each with its count and its own address.                         |
+| **Hide and trash**           | Hide a project from the lists or move it to a restorable trash, both with undo; permanent deletion only from the trash.                                                          |
+| **Meu painel**               | Projects started, completed and not completed in a period, completion rate and current states.                                                                                   |
 | **Persistence**              | Automatic `localStorage` persistence behind a decoupled repository layer, ready to be swapped for a REST/GraphQL API.                                                            |
 | **Portability**              | Schema-validated JSON export / import and one-click **sample data** for an instant demo.                                                                                         |
 | **Theming**                  | Dark mode by default, light mode supported, Geist typography and accessible contrast.                                                                                            |
@@ -49,9 +53,13 @@ Open any project ("Abrir cronograma") to plan it in detail: an editable **task t
 | **Dependencies**      | Finish-to-start, start-to-start, finish-to-finish and start-to-finish links with lag/lead, drawn as orthogonal staircase arrows; cycles refused.     |
 | **Scheduling engine** | Working-day calendar with holidays, automatic and manual tasks, propagation through the dependency graph, summary roll-up.                           |
 | **Direct editing**    | Drag bars to move them and their edges to change dates; drag rows to reorder or nest; draw links from bar to bar.                                    |
+| **Progress**          | Summary and project progress count tasks (each task weighs the same); the header shows how many are done.                                            |
+| **Daily check-ins**   | "Atividades do dia" confirms the work planned for a day (or an earlier day) and lists late tasks.                                                    |
+| **Finish forecast**   | Planned finish, forecast from the remaining work and the links, variance in working days with its causes, and an optional baseline.                  |
+| **Expanded view**     | The workspace in a large dialog over the portfolio, without leaving the page.                                                                        |
 | **Robustness**        | Saved per project with conflict detection across tabs, read-only closed projects, row virtualization for 1 000+ tasks.                               |
 
-Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module.md) · measurements: [`docs/performance.md`](./docs/performance.md).
+Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module.md) · measurements: [`docs/performance.md`](./docs/performance.md) · lifecycle, progress and forecast: [`docs/implementation/`](./docs/implementation/horizon-extension-progress.md).
 
 ### ⌨️ Keyboard shortcuts
 

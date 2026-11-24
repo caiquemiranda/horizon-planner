@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Browser end-to-end scenarios across the lifecycle, sidebar, hide and trash, expanded dialog, progress, check-ins and forecast.
 - "Meu painel": projects started, completed and not completed in a period, completion rate, projects in progress, postponed and planned, and their average progress; hidden projects count, the trash does not.
 - Finish forecast: the planned finish, a forecast computed from the remaining work, the daily confirmations, the links and the calendar (with its variance in working days and the tasks that caused it), and an optional baseline kept as the reference.
 - Daily check-ins: "Atividades do dia" confirms the work of each task planned for a day (or an earlier day) and lists late ones; each task keeps the work done and its actual dates, and one confirmed day of a 5-day task counts 20% without closing it.
