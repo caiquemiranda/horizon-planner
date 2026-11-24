@@ -9,6 +9,10 @@ interface SidebarState {
   /** The phone drawer (below the `md` breakpoint the rail is not shown). */
   mobileOpen: boolean;
   toggleCollapsed: () => void;
+  /** Increments to move the focus to the search field (from the collapsed rail). */
+  searchRequest: number;
+  /** Expands the rail and focuses its search field. */
+  requestSearch: () => void;
   setMobileOpen: (open: boolean) => void;
 }
 
@@ -34,6 +38,11 @@ export function createSidebarStore(storage: Storage | null = getStorage()): Side
   return create<SidebarState>()((set, get) => ({
     collapsed: readCollapsed(storage),
     mobileOpen: false,
+    searchRequest: 0,
+    requestSearch: () => {
+      if (get().collapsed) get().toggleCollapsed();
+      set((state) => ({ searchRequest: state.searchRequest + 1 }));
+    },
     toggleCollapsed: () => {
       const collapsed = !get().collapsed;
       set({ collapsed });

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { SIDEBAR_STORAGE_KEY, useSidebarStore } from '@/features/projects/store/sidebarStore';
-import { PORTFOLIO_HREF, SECTION_HREFS } from '@/lib/router';
+import { PORTFOLIO_HREF, projectHref, SECTION_HREFS } from '@/lib/router';
 import { projectRepository } from '@/services/persistence';
 import { makeProject } from '@/test/factories';
 import type { Project } from '@/types/project';
@@ -175,5 +175,74 @@ describe('navigation sidebar', () => {
       useDrawerStore.getState().close();
     });
     expect(timelineTitles()).toEqual(['Planejado A']);
+  });
+
+  it('lists the projects of a section, sorted, and opens one', async () => {
+    const user = userEvent.setup();
+    await renderAt(PORTFOLIO_HREF);
+    await user.click(nav().getByRole('button', { name: 'Mostrar projetos de Ativos' }));
+    const list = within(nav().getByRole('list', { name: 'Projetos de Ativos' }));
+    expect(list.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Andamento B',
+      'Planejado A',
+    ]);
+    expect(nav().getByRole('button', { name: 'Ocultar projetos de Ativos' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(list.getByRole('link', { name: 'Andamento B' })).toHaveAttribute(
+      'href',
+      projectHref(inProgress.id),
+    );
+  });
+
+  it('finds any project by title, hidden and trashed ones included', async () => {
+    const user = userEvent.setup();
+    await renderAt(PORTFOLIO_HREF);
+    const search = nav().getByRole('searchbox', { name: 'Buscar projeto' });
+
+    await user.type(search, 'feito');
+    const results = within(nav().getByRole('list', { name: 'Resultados da busca' }));
+    expect(results.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Feito EConcluídos',
+      'Feito oculto FOcultos',
+    ]);
+    expect(nav().getByText('2 projetos encontrados')).toBeInTheDocument();
+
+    await user.clear(search);
+    await user.type(search, 'lixo');
+    expect(
+      within(nav().getByRole('list', { name: 'Resultados da busca' })).getByText('Lixeira'),
+    ).toBeInTheDocument();
+
+    await user.clear(search);
+    await user.type(search, 'zzz');
+    expect(nav().getByText('Nenhum projeto encontrado')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(search).toHaveValue('');
+  });
+
+  it('opens the search from the collapsed rail', async () => {
+    const user = userEvent.setup();
+    await renderAt(PORTFOLIO_HREF);
+    await user.click(screen.getByRole('button', { name: 'Recolher menu' }));
+    await user.click(nav().getByRole('button', { name: 'Buscar projeto' }));
+    expect(nav().getByRole('searchbox', { name: 'Buscar projeto' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Recolher menu' })).toBeInTheDocument();
+  });
+
+  it('marks the open project in the workspace sidebar, expanded and collapsed', async () => {
+    const user = userEvent.setup();
+    await renderAt(projectHref(inProgress.id));
+    await screen.findByRole('heading', { level: 1, name: inProgress.title });
+    expect(nav().getByRole('link', { name: 'Andamento B' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await user.click(screen.getByRole('button', { name: 'Recolher menu' }));
+    expect(nav().getByRole('link', { name: 'Projeto atual: Andamento B' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 });

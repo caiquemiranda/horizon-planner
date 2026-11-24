@@ -65,3 +65,48 @@ export function countSections(projects: readonly Project[]): Record<ProjectSecti
   }
   return counts;
 }
+
+/** Lowercase without accents, so "acao" finds "Ação". */
+function normalize(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase('pt-BR')
+    .trim();
+}
+
+/** Projects by title, as people look for them in a list. */
+export function sortByTitle(projects: readonly Project[]): Project[] {
+  return [...projects].sort((a, b) =>
+    a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' }),
+  );
+}
+
+/**
+ * Finds projects by title, ignoring case and accents, in every section (hidden and
+ * trashed ones included, so nothing is out of reach). Titles starting with the query come
+ * first. An empty query finds nothing.
+ */
+export function searchProjects(projects: readonly Project[], query: string): Project[] {
+  const needle = normalize(query);
+  if (needle === '') return [];
+  const matches = projects.filter((project) => normalize(project.title).includes(needle));
+  const starts = matches.filter((project) => normalize(project.title).startsWith(needle));
+  const contains = matches.filter((project) => !normalize(project.title).startsWith(needle));
+  return [...sortByTitle(starts), ...sortByTitle(contains)];
+}
+
+/** The section a project is listed in: its status section, or hidden, or the trash. */
+export function getHomeSection(project: Project): Exclude<ProjectSection, 'all'> {
+  for (const section of [
+    'trash',
+    'hidden',
+    'active',
+    'postponed',
+    'not_completed',
+    'completed',
+  ] as const) {
+    if (isInSection(project, section)) return section;
+  }
+  return 'active';
+}
