@@ -21,8 +21,8 @@ its acceptance tests pass in CI.
 | 10    | `feat/project-explorer-sidebar` | REQ-NAV-01                      | Delivered | #36          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
 | 10a   | `feat/explorer-horizons`        | REQ-NAV-01 (owner request)      | Delivered | #37          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
 | 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07                | Delivered | #38          | `writers.test.ts`, `wbsWorkbook.test.ts`; files read back in Chrome and with openpyxl                              |
-| 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column) | In review | —            | `laneColumnStore.test.ts`, `laneColumnFlows.test.tsx` (incl. axe); checked in Chrome                               |
-| 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05                | Pending   | —            | —                                                                                                                  |
+| 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column) | Delivered | #39          | `laneColumnStore.test.ts`, `laneColumnFlows.test.tsx` (incl. axe); checked in Chrome                               |
+| 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05                | In review | —            | `readers.test.ts`, `wbsImport.test.ts`, `importFlows.test.tsx` (incl. axe); round trip in Chrome                   |
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                | Pending   | —            | —                                                                                                                  |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                     | Pending   | —            | —                                                                                                                  |
 | 15    | `feat/project-report`           | REQ-RPT-01–04                   | Pending   | —            | —                                                                                                                  |
@@ -354,6 +354,38 @@ its acceptance tests pass in CI.
   also collapsed); at 390 px: 238 → 346 px. The visible range keeps its start; rows and
   bars stay aligned (0 px); the choice survives a reload; no console errors.
 - Tests: 824 Vitest tests passing (5 new, axe included) and 11 Playwright tests.
+
+### 12 · `feat/wbs-import-preview`
+
+- Readers (`src/lib/spreadsheet/xlsxReader.ts`, `csvReader.ts`): zip signature checked;
+  password-protected or legacy `.xls` files and workbooks with macros refused; only the
+  parts holding cells inflated, each checked against a size limit first (zip bombs);
+  DOCTYPE refused; 5 MB, 5 000 rows, 100 columns; formulas never evaluated (stored value
+  used and counted). CSV: UTF-8 (with or without BOM) or Windows-1252, `;`, `,` or tab,
+  RFC 4180 quoting, the export's protective apostrophe removed.
+- Interpretation (`src/features/data-io/lib/wbsImport.ts`): columns matched by name and
+  aliases and adjustable; hierarchy from `codigo_pai` or WBS numbers; links from
+  `Dependências` or `predecessoras`; calendar and project name. Errors (block): missing or
+  self parent, hierarchy or link cycles (including a link in both directions), duplicate
+  or unknown codes, links to summaries, invalid kinds, dates (`dd/mm/aaaa` or ISO),
+  durations, progress, empty names, summary without subtasks, no name column, no tasks.
+  Warnings: ignored columns, missing starts (announced default), kinds inferred, formulas,
+  imported progress without check-ins. The candidate schedule is validated by the schema
+  and computed by the engine.
+- Page `#/importar` (data menu "Importar planilha (Excel/CSV)…"): file, tasks sheet,
+  column mapping, counts and period, issues by sheet/row/column, WBS preview. Nothing is
+  saved (the commit is order 13).
+- Bugs found while checking in Chrome and fixed: link references misread ids ending in
+  digits as lags (export format now `codigo:TIPO±dias`; old files still import); the
+  preview's period ended a day early when the plan ended on a milestone.
+- Acceptance (§13, preview items): preview with hierarchy and counts before writing ✅;
+  missing parent, duplicate code, self link and cycles detected ✅; invalid date, negative
+  duration and missing required column give clear errors ✅; CSV delimiter and encoding
+  keep accents ✅; no macro or formula executed, file limits applied ✅; round trip of the
+  exported workbook and CSV reads back the same outline, links and dates ✅.
+- Tests: 862 Vitest tests passing (44 new) and 11 Playwright tests; Chrome check with the
+  exported workbook, the exported CSV, a CSV from the previous format and a CSV with
+  formula-looking names (kept as text), no console errors.
 
 ## Impediments
 
