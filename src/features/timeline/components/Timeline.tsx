@@ -1,5 +1,9 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { type Horizon, HORIZONS, type Project, type UUID } from '@/types/project';
 
 import { TIMELINE_METRICS } from '../constants';
@@ -8,6 +12,7 @@ import { usePointerNavigation } from '../hooks/usePointerNavigation';
 import { useTodayDay } from '../hooks/useTodayDay';
 import { useWheelNavigation } from '../hooks/useWheelNavigation';
 import { computeBarLayouts, layoutLanes } from '../lib/layout';
+import { useLaneColumnStore } from '../store/laneColumnStore';
 import { useViewportStoreApi } from '../store/viewportContext';
 import { GridLines } from './GridLines';
 import { LaneSidebar } from './LaneSidebar';
@@ -49,6 +54,10 @@ export function Timeline({
   const setWidth = viewportStore((state) => state.setWidth);
   const today = useTodayDay();
   const [collapsed, setCollapsed] = useState<ReadonlySet<Horizon>>(() => new Set());
+  // The horizon column can shrink to a strip: projects are also reachable from the sidebar.
+  const compact = useLaneColumnStore((state) => state.compact);
+  const toggleCompact = useLaneColumnStore((state) => state.toggleCompact);
+  const laneColumnId = useId();
   const [hoveredProjectId, setHoveredProjectId] = useState<UUID | null>(null);
 
   useElementWidth(canvasRef, setWidth);
@@ -80,8 +89,33 @@ export function Timeline({
     <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 border-b bg-background" style={{ height: rulerHeight }}>
         {/* Responsive width from `--sidebar-width`; the canvas takes the rest. */}
-        <div className="flex w-(--sidebar-width) shrink-0 items-end border-r px-3 pb-2 md:px-4">
-          <span className="text-label">Horizontes</span>
+        <div
+          className={cn(
+            'flex shrink-0 items-end border-r pb-2 motion-safe:transition-[width] motion-safe:duration-200',
+            compact ? 'w-11 justify-center px-0' : 'w-(--sidebar-width) gap-1 px-3 md:px-4',
+          )}
+        >
+          <span className={cn('text-label', compact && 'sr-only')}>Horizontes</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className={cn('text-muted-foreground', !compact && 'ml-auto')}
+                aria-expanded={!compact}
+                aria-controls={laneColumnId}
+                aria-label={compact ? 'Expandir coluna de projetos' : 'Recolher coluna de projetos'}
+                onClick={toggleCompact}
+              >
+                {compact ? <PanelLeftOpen /> : <PanelLeftClose />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {compact
+                ? 'Expandir coluna de projetos'
+                : 'Recolher coluna (mais espaço para a linha do tempo)'}
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="relative min-w-0 flex-1">
           <TimeRuler viewport={viewport} />
@@ -92,8 +126,12 @@ export function Timeline({
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <div className="flex min-h-full">
           <section
+            id={laneColumnId}
             aria-label="Horizontes"
-            className="w-(--sidebar-width) shrink-0 border-r bg-background"
+            className={cn(
+              'shrink-0 border-r bg-background motion-safe:transition-[width] motion-safe:duration-200',
+              compact ? 'w-11' : 'w-(--sidebar-width)',
+            )}
           >
             <LaneSidebar
               lanes={lanes}
@@ -102,6 +140,7 @@ export function Timeline({
               hoveredProjectId={hoveredProjectId}
               onHoverChange={setHoveredProjectId}
               selectedProjectId={selectedProjectId}
+              compact={compact}
               {...(onSelectProject ? { onSelectProject } : {})}
             />
           </section>
