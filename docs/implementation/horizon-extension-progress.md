@@ -15,8 +15,8 @@ its acceptance tests pass in CI.
 | 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Delivered | #31          | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
 | 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Delivered | #32          | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
 | 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Delivered | #33          | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
-| 8     | `feat/portfolio-statistics`     | REQ-05              | In review | —            | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
-| 9     | `test/project-experience-e2e`   | Scenarios A–C       | Pending   | —            | —                                                                                                                  |
+| 8     | `feat/portfolio-statistics`     | REQ-05              | Delivered | #34          | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
+| 9     | `test/project-experience-e2e`   | Scenarios A–C       | In review | —            | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
 
 ## Log
 
@@ -223,6 +223,50 @@ its acceptance tests pass in CI.
   status changes are reflected at once ✅.
 - Tests: 790 Vitest tests passing (11 new) and 8 Playwright tests; Chrome check at 1 440
   and 390 px (no horizontal overflow), no console errors.
+
+### 9 · `test/project-experience-e2e`
+
+- `e2e/extension.spec.ts`, in Chrome on the production build:
+  - **A** start, postpone with a forecast, resume, complete (moves to "Concluídos" and to
+    the dashboard), close another one without completing, hide the completed one (out of
+    "Concluídos", in "Ocultos", still counted), trash it (out of the indicators), restore
+    it (back to "Ocultos" as completed), collapse the sidebar (8 destinations, remembered
+    after reload);
+  - **B** expanded dialog without route change, rows and bars aligned, edit saved,
+    Escape closes and focus returns to the opener, the full page shows the same value;
+  - **C** completing a task from "Atividades do dia" sets it to 100% and the done-tasks
+    count, survives a reload, and undoing restores both.
+- Repeated twice in a row without failures.
+
+## Final report
+
+### Definition of done (specification §16)
+
+| Item                                                                           | State                                                                                                                  |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Coverage matrix inspected and updated with real evidence                       | Done: `horizon-extension-audit.md` and the log above                                                                   |
+| Every new requirement covered or justified                                     | Done: REQ-01 to REQ-09; REQ-06 needed no change; multi-user items not applicable (one local user)                      |
+| Status, hiding, trash, progress, check-ins and forecast separate in the domain | Done: `lifecycle.ts`, `visibility.ts`, `progress.ts`, `checkIns.ts`, `forecast.ts`, each with its own fields and tests |
+| Sidebar, dialog, filters and indicators meet acceptance                        | Done: orders 3, 4 and 8                                                                                                |
+| Bars and percentages kept their look                                           | Done: before/after check and `GanttBar.test.tsx` (order 5)                                                             |
+| Check-ins and forecast handle calendars, parallel work and links               | Done: spec scenarios as unit tests (orders 6 and 7)                                                                    |
+| No duplicated penalty for reprocessing, holidays or closed projects            | Done: pure forecast, one check-in per task and day, days off ask nothing, forecast suspended when not in progress      |
+| Baseline, planned, forecast and actual dates distinct and stored               | Done: baseline and actual dates stored; plan and forecast derived; never overwritten                                   |
+| Tests and migrations recorded with real results                                | Done: 790 Vitest and 11 Playwright tests; project data v1 → v3 and schedule v1 → v3 migrations, each tested            |
+| Authorization and multi-user scope coherent                                    | Applies as a single local user: closed and trashed projects are read-only in the store; no accounts exist yet          |
+| Pull requests with description, evidence and rollback                          | Done for #26–#34 and this one; rollback = revert the PR (data migrations only add fields, older data stays readable)   |
+| Progress and handoff documents match the repository                            | Done: this file                                                                                                        |
+
+### Known limitations
+
+- No user accounts: per-user hiding, owner filters and "who confirmed" are not possible
+  yet; the access rule (`getScheduleAccess`) is the extension point.
+- The forecast is computed when a schedule is read, not by a background job; nothing is
+  stored that could go stale, and the history of forecast changes is not kept.
+- Check-ins are in half-day steps; there is no effort field, so progress weighting by
+  effort is not offered.
+- The portfolio timeline shows planned dates; the forecast is shown in the project
+  workspace.
 
 ## Impediments
 
