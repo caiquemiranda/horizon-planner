@@ -6,26 +6,27 @@ Real delivery state of the extension planned in
 request. An item is **Delivered** only when it is integrated, persists after a reload and
 its acceptance tests pass in CI.
 
-| Order | Branch                          | Requirement         | State     | Pull request | Tests                                                                                                              |
-| ----- | ------------------------------- | ------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| 0     | `chore/extension-audit`         | Audit, plan, REQ-06 | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                                                    |
-| 1     | `feat/project-lifecycle`        | REQ-01              | Delivered | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome                            |
-| 2     | `feat/project-visibility-trash` | REQ-07 (data)       | Delivered | #28          | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
-| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI) | Delivered | #29          | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
-| 4     | `feat/expanded-project-dialog`  | REQ-04              | Delivered | #30          | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
-| 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Delivered | #31          | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
-| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Delivered | #32          | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
-| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Delivered | #33          | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
-| 8     | `feat/portfolio-statistics`     | REQ-05              | Delivered | #34          | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
-| 9     | `test/project-experience-e2e`   | Scenarios A–C       | Delivered | #35          | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
-| 10    | `feat/project-explorer-sidebar` | REQ-NAV-01          | In review | —            | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
-| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07    | Pending   | —            | —                                                                                                                  |
-| 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05    | Pending   | —            | —                                                                                                                  |
-| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08    | Pending   | —            | —                                                                                                                  |
-| 14    | `feat/sample-projects`          | REQ-DEMO-01         | Pending   | —            | —                                                                                                                  |
-| 15    | `feat/project-report`           | REQ-RPT-01–04       | Pending   | —            | —                                                                                                                  |
-| 16    | `feat/project-report-print`     | REQ-PRINT-01–03     | Pending   | —            | —                                                                                                                  |
-| 17    | `test/project-features-e2e`     | §15                 | Pending   | —            | —                                                                                                                  |
+| Order | Branch                          | Requirement                | State     | Pull request | Tests                                                                                                              |
+| ----- | ------------------------------- | -------------------------- | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| 0     | `chore/extension-audit`         | Audit, plan, REQ-06        | Delivered | #26          | Docs only; dev server watch ignores checked by hand (see below)                                                    |
+| 1     | `feat/project-lifecycle`        | REQ-01                     | Delivered | #27          | `lifecycle.test.ts`, `migrations.test.ts`, `lifecycleFlows.test.tsx`; checked in Chrome                            |
+| 2     | `feat/project-visibility-trash` | REQ-07 (data)              | Delivered | #28          | `visibility.test.ts`, `projectsStore.test.ts`, `migrations.test.ts`, `visibilityFlows.test.tsx`; checked in Chrome |
+| 3     | `feat/navigation-sidebar`       | REQ-02, REQ-07 (UI)        | Delivered | #29          | `sections.test.ts`, `router.test.ts`, `navigationFlows.test.tsx`; checked in Chrome (desktop, collapsed, phone)    |
+| 4     | `feat/expanded-project-dialog`  | REQ-04                     | Delivered | #30          | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
+| 5     | `feat/task-based-progress`      | REQ-03, REQ-08             | Delivered | #31          | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
+| 6     | `feat/daily-checkins`           | REQ-09 (check-ins)         | Delivered | #32          | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
+| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)          | Delivered | #33          | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
+| 8     | `feat/portfolio-statistics`     | REQ-05                     | Delivered | #34          | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
+| 9     | `test/project-experience-e2e`   | Scenarios A–C              | Delivered | #35          | `e2e/extension.spec.ts` (scenarios A–C), all 11 Playwright tests                                                   |
+| 10    | `feat/project-explorer-sidebar` | REQ-NAV-01                 | Delivered | #36          | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
+| 10a   | `feat/explorer-horizons`        | REQ-NAV-01 (owner request) | In review | —            | `sections.test.ts`, `navigationFlows.test.tsx`; checked in Chrome                                                  |
+| 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07           | Pending   | —            | —                                                                                                                  |
+| 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05           | Pending   | —            | —                                                                                                                  |
+| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08           | Pending   | —            | —                                                                                                                  |
+| 14    | `feat/sample-projects`          | REQ-DEMO-01                | Pending   | —            | —                                                                                                                  |
+| 15    | `feat/project-report`           | REQ-RPT-01–04              | Pending   | —            | —                                                                                                                  |
+| 16    | `feat/project-report-print`     | REQ-PRINT-01–03            | Pending   | —            | —                                                                                                                  |
+| 17    | `test/project-features-e2e`     | §15                        | Pending   | —            | —                                                                                                                  |
 
 ## Log
 
@@ -301,6 +302,18 @@ its acceptance tests pass in CI.
   bars stay aligned (0 px) when toggling ✅. Print: the report (order 16) hides it.
 - Tests: 798 Vitest tests passing (8 new) and 11 Playwright tests; Chrome check with the
   sample data and with 250 projects (search answered in about 60 ms), no console errors.
+
+### 10a · `feat/explorer-horizons`
+
+- Requested by the product owner after #36: the projects listed under each section of
+  the explorer are split into the portfolio horizons (Curto, Médio and Longo prazo), as
+  subcategories with their color and count, each one foldable. Same lanes and colors as
+  the timeline; rule in `groupByHorizon` (`src/features/projects/lib/sections.ts`).
+- The flow it serves: open a project from the sidebar, then collapse the sidebar to give
+  the width to the table and the chart.
+- Also carries the approval of decision 1 (sample projects), which missed #36.
+- Tests: 800 Vitest tests passing (2 new) and 11 Playwright tests; Chrome check with the
+  sample data, no console errors.
 
 ## Impediments
 
