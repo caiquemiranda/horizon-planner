@@ -27,7 +27,6 @@ import { TimelineToolbar } from '@/features/timeline/components/TimelineToolbar'
 import { isRangeVisible } from '@/features/timeline/lib/layout';
 import { isoRangeToDays } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
-import { ExpandedProjectDialog } from '@/features/workspace/components/ExpandedProjectDialog';
 import { HIDDEN_HREF, PORTFOLIO_HREF, TRASH_HREF } from '@/lib/router';
 import type { Project } from '@/types/project';
 
@@ -188,7 +187,6 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
       </div>
 
       <ProjectPanel onProjectCreated={revealProject} />
-      <ExpandedProjectDialog />
     </div>
   );
 }

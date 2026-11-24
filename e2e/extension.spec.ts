@@ -131,7 +131,7 @@ test.describe('project experience', () => {
     await loadSample(page);
     const url = page.url();
     await page.locator('li button', { hasText: 'Implantação de Sistema Industrial' }).click();
-    const expand = page.getByRole('button', { name: 'Expandir cronograma' });
+    const expand = page.getByRole('button', { name: 'Abrir cronograma' });
     await expand.click();
     const dialog = page.getByRole('dialog', { name: /Cronograma de/ });
     await expect(dialog.getByRole('treegrid')).toBeVisible();
@@ -147,7 +147,8 @@ test.describe('project experience', () => {
     await expect(dialog).toHaveCount(0);
     await expect(expand).toBeFocused();
 
-    await page.getByRole('link', { name: 'Abrir cronograma' }).click();
+    await expand.click();
+    await page.getByRole('link', { name: 'Abrir página completa' }).click();
     await expect(page.getByRole('treegrid')).toBeVisible();
     await expect(cell(page, 'Levantamento técnico', 2)).toHaveText('3 dias');
   });

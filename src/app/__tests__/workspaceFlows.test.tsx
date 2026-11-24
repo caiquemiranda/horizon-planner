@@ -77,12 +77,19 @@ describe('project workspace', () => {
     window.location.hash = '';
   });
 
-  it('opens the project screen from the portfolio drawer and goes back', async () => {
+  it('opens the schedule from the portfolio drawer, then its full page, and goes back', async () => {
     const user = userEvent.setup();
     await renderAt(PORTFOLIO_HREF);
 
     await user.click(screen.getByText(industrial.title, { selector: 'li button span' }));
-    await user.click(await screen.findByRole('link', { name: 'Abrir cronograma' }));
+    // The panel's only schedule action opens it without leaving the page.
+    expect(screen.queryByRole('link', { name: 'Abrir cronograma' })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Abrir cronograma' }));
+    expect(window.location.hash).toBe(PORTFOLIO_HREF);
+    await user.click(await screen.findByRole('link', { name: 'Abrir página completa' }));
+    act(() => {
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
 
     expect(
       await screen.findByRole('treegrid', { name: `Tarefas de ${industrial.title}` }),
