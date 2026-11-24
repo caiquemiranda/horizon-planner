@@ -280,7 +280,7 @@ its acceptance tests pass in CI.
 ### 10 · `feat/project-explorer-sidebar`
 
 - Consolidated audit of the third document: `horizon-addendum-03-audit.md` (matrix,
-  reuse, decisions, plan). Decision 1 (sample projects) is to be confirmed before order 14.
+  reuse, decisions, plan). Decision 1 (sample projects) was approved.
 - The existing sidebar becomes the project explorer (no second sidebar): each section
   (except "Todos", which would repeat them all) expands to list its projects by title, up
   to 50 with "Ver todos"; a search field finds any project by title, ignoring case and

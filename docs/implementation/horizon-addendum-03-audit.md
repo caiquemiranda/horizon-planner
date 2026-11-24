@@ -52,8 +52,7 @@ single local user; the access rule stays the extension point), file storage of P
    structure, durations and links with new ids and a chosen start date, without
    check-ins, actual dates or progress; "Remover exemplos" removes only flagged projects.
    The old "replace everything with sample data" action is retired (the screenshot and
-   performance scripts keep their own fixtures). **To be confirmed before
-   `feat/sample-projects`.**
+   performance scripts keep their own fixtures). **Approved by the product owner.**
 2. **Spreadsheet library.** `.xlsx` is a zip of XML parts. Instead of a large spreadsheet
    dependency, the export writes the parts itself and the import reads them with
    `fflate` (MIT, small, maintained) and the browser's `DOMParser` (which does not resolve
