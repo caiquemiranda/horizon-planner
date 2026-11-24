@@ -11,20 +11,23 @@ import type { UUID } from '@/types/project';
  * - `#/` (or anything unknown): the portfolio timeline with every visible project;
  * - `#/ativos`, `#/adiados`, `#/nao-concluidos`, `#/concluidos`: one section of it;
  * - `#/projetos/<projectId>`: the planning workspace of one project;
- * - `#/ocultos` and `#/lixeira`: hidden projects and the trash.
+ * - `#/ocultos` and `#/lixeira`: hidden projects and the trash;
+ * - `#/painel`: portfolio statistics ("Meu painel").
  */
 
 export type Route =
   | { name: 'portfolio'; section: TimelineSection }
   | { name: 'project'; projectId: UUID }
   | { name: 'hidden' }
-  | { name: 'trash' };
+  | { name: 'trash' }
+  | { name: 'dashboard' };
 
 const PROJECT_PATTERN = /^#\/projetos\/([^/?#]+)\/?$/;
 
 export const PORTFOLIO_HREF = '#/';
 export const HIDDEN_HREF = '#/ocultos';
 export const TRASH_HREF = '#/lixeira';
+export const DASHBOARD_HREF = '#/painel';
 
 /** Address of every navigation section. */
 export const SECTION_HREFS = {
@@ -52,6 +55,7 @@ export function parseRoute(hash: string): Route {
   const path = hash.replace(/\/$/, '');
   if (path === HIDDEN_HREF) return { name: 'hidden' };
   if (path === TRASH_HREF) return { name: 'trash' };
+  if (path === DASHBOARD_HREF) return { name: 'dashboard' };
   const section = TIMELINE_SECTIONS_BY_HREF.get(path);
   if (section) return { name: 'portfolio', section };
   const match = PROJECT_PATTERN.exec(hash);
