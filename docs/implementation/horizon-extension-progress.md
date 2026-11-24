@@ -14,8 +14,8 @@ its acceptance tests pass in CI.
 | 4     | `feat/expanded-project-dialog`  | REQ-04              | Delivered | #30          | `escapeGuard.test.ts`, `expandedDialogFlows.test.tsx` (incl. axe); checked in Chrome (desktop, phone)              |
 | 5     | `feat/task-based-progress`      | REQ-03, REQ-08      | Delivered | #31          | `progress.test.ts`, `engine.test.ts`, `GanttBar.test.tsx`, `progressFlows.test.tsx`; before/after check in Chrome  |
 | 6     | `feat/daily-checkins`           | REQ-09 (check-ins)  | Delivered | #32          | `checkIns.test.ts`, `ScheduleRepository.test.ts`, `checkInFlows.test.tsx`; checked in Chrome                       |
-| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | In review | —            | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
-| 8     | `feat/portfolio-statistics`     | REQ-05              | Pending   | —            | —                                                                                                                  |
+| 7     | `feat/schedule-forecast`        | REQ-09 (forecast)   | Delivered | #33          | `forecast.test.ts` (spec scenarios), `forecastFlows.test.tsx`; checked in Chrome                                   |
+| 8     | `feat/portfolio-statistics`     | REQ-05              | In review | —            | `statistics.test.ts`, `dashboardFlows.test.tsx` (incl. axe); checked in Chrome                                     |
 | 9     | `test/project-experience-e2e`   | Scenarios A–C       | Pending   | —            | —                                                                                                                  |
 
 ## Log
@@ -204,6 +204,25 @@ its acceptance tests pass in CI.
   sample schedule (a task on the driving path with 1,2 days left on its last planned day
   gives +1 working day; completing a late task with slack changes nothing), no console
   errors.
+
+### 8 · `feat/portfolio-statistics`
+
+- Rules in `src/features/projects/lib/statistics.ts`: started (actual start in the
+  period), completed (completion date in the period), not completed (closing date in the
+  period), completion rate = completed / (completed + not completed), and current states
+  (in progress, postponed, planned) plus the plain average progress of projects in
+  progress, labelled as such.
+- Scope: every project outside the trash, hidden ones included; the trash is counted
+  apart and comes back when restored. Single local user, so no owner filter.
+- Periods: all, this year, last 90 days, last 30 days; dated indicators only.
+- "Meu painel" at `#/painel`, first item of the sidebar; each card states what it counts;
+  a note says the indicators overlap and must not be added up.
+- Also: `CONTRIBUTING.md` states that contributions carry no AI tool attribution.
+- Acceptance (REQ-05): counts match the data and survive reloads ✅; a hidden completed
+  project stays counted ✅; a trashed one leaves the indicators and comes back on restore ✅;
+  status changes are reflected at once ✅.
+- Tests: 790 Vitest tests passing (11 new) and 8 Playwright tests; Chrome check at 1 440
+  and 390 px (no horizontal overflow), no console errors.
 
 ## Impediments
 
