@@ -96,10 +96,9 @@ describe('readXlsx', () => {
 
   it('refuses files larger than 5 MB and sheets with too many rows', () => {
     expect(errorCode(() => readXlsx(new Uint8Array(XLSX_LIMITS.fileBytes + 1)))).toBe('too-large');
-    const tall = writeXlsx([
-      { name: 'x', rows: Array.from({ length: XLSX_LIMITS.rows + 2 }, () => ['a']) },
-    ]);
-    expect(errorCode(() => readXlsx(tall))).toBe('too-many-rows');
+    // A small limit keeps the test fast; the rule is the same at 5 000 rows.
+    const tall = writeXlsx([{ name: 'x', rows: Array.from({ length: 12 }, () => ['a']) }]);
+    expect(errorCode(() => readXlsx(tall, { ...XLSX_LIMITS, rows: 10 }))).toBe('too-many-rows');
   });
 
   it('refuses a DOCTYPE (no external entities)', () => {

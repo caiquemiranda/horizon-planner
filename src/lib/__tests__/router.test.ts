@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DASHBOARD_HREF,
   HIDDEN_HREF,
+  IMPORT_HREF,
   parseRoute,
   projectHref,
   SECTION_HREFS,
@@ -39,6 +40,7 @@ describe('router', () => {
     expect(parseRoute(HIDDEN_HREF)).toEqual({ name: 'hidden' });
     expect(parseRoute(`${TRASH_HREF}/`)).toEqual({ name: 'trash' });
     expect(parseRoute(DASHBOARD_HREF)).toEqual({ name: 'dashboard' });
+    expect(parseRoute(IMPORT_HREF)).toEqual({ name: 'import' });
   });
 
   it('ignores malformed escapes', () => {

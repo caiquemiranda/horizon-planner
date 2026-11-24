@@ -26,6 +26,8 @@ export const XLSX_LIMITS = {
   columns: 100,
 } as const;
 
+export type SpreadsheetLimits = Record<keyof typeof XLSX_LIMITS, number>;
+
 export type ReadValue = string | number | boolean | { date: ISODate } | null;
 
 export interface ReadSheet {
@@ -111,8 +113,8 @@ function dateStyles(styles: Document | null): Set<number> {
   return result;
 }
 
-export function readXlsx(bytes: Uint8Array): ReadWorkbook {
-  if (bytes.length > XLSX_LIMITS.fileBytes) {
+export function readXlsx(bytes: Uint8Array, limits: SpreadsheetLimits = XLSX_LIMITS): ReadWorkbook {
+  if (bytes.length > limits.fileBytes) {
     throw new SpreadsheetReadError('too-large', 'Arquivo maior que 5 MB.');
   }
   if (startsWith(bytes, OLE_MAGIC)) {
@@ -140,7 +142,7 @@ export function readXlsx(bytes: Uint8Array): ReadWorkbook {
           /^xl\/worksheets\/sheet\d+\.xml$/.test(file.name);
         if (!wanted) return false;
         total += file.originalSize;
-        if (file.originalSize > XLSX_LIMITS.partBytes || total > XLSX_LIMITS.totalBytes) {
+        if (file.originalSize > limits.partBytes || total > limits.totalBytes) {
           throw new SpreadsheetReadError('too-large', 'O conteúdo da planilha é grande demais.');
         }
         return true;
@@ -198,11 +200,11 @@ export function readXlsx(bytes: Uint8Array): ReadWorkbook {
     for (const rowElement of elements(parseXml(xml), 'row')) {
       for (const cell of elements(rowElement, 'c')) {
         const position = parseReference(cell.getAttribute('r') ?? '');
-        if (!position || position.column >= XLSX_LIMITS.columns) continue;
-        if (position.row >= XLSX_LIMITS.rows + 1) {
+        if (!position || position.column >= limits.columns) continue;
+        if (position.row >= limits.rows + 1) {
           throw new SpreadsheetReadError(
             'too-many-rows',
-            `A planilha tem mais de ${String(XLSX_LIMITS.rows)} linhas.`,
+            `A planilha tem mais de ${String(limits.rows)} linhas.`,
           );
         }
         if (elements(cell, 'f').length > 0) formulaCells += 1;
