@@ -24,7 +24,8 @@ its acceptance tests pass in CI.
 | 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column)                      | Delivered | #39          | `laneColumnStore.test.ts`, `laneColumnFlows.test.tsx` (incl. axe); checked in Chrome                               |
 | 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05                                     | Delivered | #40          | `readers.test.ts`, `wbsImport.test.ts`, `importFlows.test.tsx` (incl. axe); round trip in Chrome                   |
 | 12a   | `feat/single-schedule-entry`    | Owner request (one schedule entry, no repeated list) | Delivered | #41          | `workspaceFlows`, `expandedDialogFlows`, `laneColumnStore` tests, e2e; checked in Chrome                           |
-| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | In review | —            | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
+| 12b   | `feat/remove-lane-column`       | Owner request (only one project list)                | In review | —            | `Timeline.test.tsx`, app flows reading the bars, e2e; checked in Chrome                                            |
+| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | Delivered | #42          | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | Pending   | —            | —                                                                                                                  |
 | 15    | `feat/project-report`           | REQ-RPT-01–04                                        | Pending   | —            | —                                                                                                                  |
 | 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Pending   | —            | —                                                                                                                  |
@@ -401,6 +402,18 @@ its acceptance tests pass in CI.
 - Tests: 862 Vitest tests and 11 Playwright tests passing (updated to the new entry);
   Chrome check of the panel, the dialog from the portfolio and from "Ocultos", no console
   errors.
+
+### 12b · `feat/remove-lane-column`
+
+- Owner request: even compact, the timeline's horizon column still repeated the projects
+  of the navigation sidebar. The column is removed (with its compact preference and the
+  `--sidebar-width` variable); the timeline uses the whole width.
+- Each horizon band keeps its title and count inside the timeline and still folds. Bars
+  are grouped in one list per horizon, so assistive technology keeps the grouping; a
+  project outside the visible period is reached from the sidebar.
+- Tests: 858 Vitest tests and 11 Playwright tests passing (tests now read the bars, and
+  jsdom tests widen the viewport with `src/test/timeline.ts`); Chrome check with the
+  sample data, no console errors.
 
 ### 13 · `feat/wbs-import-commit`
 
