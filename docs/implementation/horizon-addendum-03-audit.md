@@ -62,10 +62,12 @@ single local user; the access rule stays the extension point), file storage of P
 3. **No history, no fake curves.** Reports are "as of now" (with date and time); there is
    no past as-of date and no progress curve, because the app keeps the current state, the
    check-ins and the baseline, not snapshots. "Salvar versão do relatório" is not offered.
-4. **Atomic import without a server.** The schedule is validated and saved first, then the
-   project; if the project fails, the schedule is removed. A content hash of the previewed
-   file is the idempotency key, so a double click or retry opens the project already
-   created instead of creating a second one.
+4. **Atomic import without a server.** The project is created first, because its
+   repository gives the id, then the schedule is validated and saved; if the schedule
+   fails, the project is removed again. A hash of the file content, the tasks sheet and
+   the column mapping is the idempotency key, so a double click or retry opens the project
+   already created instead of creating a second one. (Updated in PR 13: the first plan
+   saved the schedule first, which needs an id the project repository does not accept.)
 5. **Sidebar in the workspace.** The explorer also appears in the project workspace,
    following the same collapsed/expanded preference, so another project is one click
    away; collapsing gives the width back to the table and the chart.

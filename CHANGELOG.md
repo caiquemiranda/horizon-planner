@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Spreadsheet import: "Importar projeto" creates the previewed project and its schedule together (undone if either fails), shows what was created and opens it; importing the same file again does not create a second project.
 - Spreadsheet import preview (`#/importar`): reads Excel or CSV safely, matches the columns, shows the project, its WBS, counts and every problem by row before anything is saved.
 - The timeline's horizon column can fold into a narrow strip (names in tooltips), giving the timeline about 200 px more; the choice is remembered.
 - Excel and CSV export of a project (every task, links, calendar; planned, forecast and actual values in separate columns) and a downloadable WBS template, with formula-injection protection.
