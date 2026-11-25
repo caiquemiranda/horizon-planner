@@ -1,5 +1,13 @@
-import { CircleAlert, FileSpreadsheet, TriangleAlert, Upload } from 'lucide-react';
-import { useId, useMemo, useRef, useState } from 'react';
+import {
+  ChartGantt,
+  CircleAlert,
+  CircleCheck,
+  FileSpreadsheet,
+  FileUp,
+  TriangleAlert,
+  Upload,
+} from 'lucide-react';
+import { type ReactNode, useId, useMemo, useRef, useState } from 'react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
@@ -8,14 +16,17 @@ import {
   NavigationDrawerButton,
   NavigationRail,
 } from '@/features/projects/components/NavigationSidebar';
+import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { getDisplayFinish } from '@/features/schedule/lib/engine';
 import { buildTreeIndex, getTasksInWbsOrder, getWbsNumbers } from '@/features/schedule/lib/tree';
 import { formatDate } from '@/features/timeline/lib/format';
 import { dayToIsoDate, getTodayIsoDate } from '@/features/timeline/lib/time';
 import { createId } from '@/lib/id';
+import { projectHref } from '@/lib/router';
 import { cn } from '@/lib/utils';
 
 import { downloadTemplate } from '../lib/spreadsheetDownloads';
+import { getImportFingerprint, type ImportCommitResult } from '../lib/wbsCommit';
 import {
   buildImportPreview,
   type ColumnMapping,
@@ -25,6 +36,7 @@ import {
   type ImportPreview,
   type ImportSource,
 } from '../lib/wbsImport';
+import { importCommitter } from '../store/importCommitter';
 
 /** Rows of the WBS shown in the preview; the counts always cover everything. */
 const PREVIEW_ROWS = 200;
@@ -45,26 +57,36 @@ function readBytes(file: File): Promise<Uint8Array> {
   });
 }
 
-async function readSource(file: File): Promise<ImportSource> {
+interface ReadFile {
+  source: ImportSource;
+  /** Kept for the idempotency fingerprint. */
+  bytes: Uint8Array;
+}
+
+async function readSource(file: File): Promise<ReadFile> {
   const bytes = await readBytes(file);
   const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b;
   if (isZip || /\.xlsx$/i.test(file.name)) {
     const { readXlsx } = await import('@/lib/spreadsheet/xlsxReader');
-    return { kind: 'xlsx', workbook: readXlsx(bytes), fileName: file.name };
+    return { source: { kind: 'xlsx', workbook: readXlsx(bytes), fileName: file.name }, bytes };
   }
   const { readCsv } = await import('@/lib/spreadsheet/csvReader');
-  return { kind: 'csv', rows: readCsv(bytes).rows, fileName: file.name };
+  return { source: { kind: 'csv', rows: readCsv(bytes).rows, fileName: file.name }, bytes };
 }
 
 /**
- * Spreadsheet import, first phase: read the file, match its columns, and preview the
- * project it describes with every problem found. Nothing is saved in this phase.
+ * Spreadsheet import: read the file, match its columns and preview the project it
+ * describes with every problem found. Nothing is saved until "Importar projeto".
  */
 export function ImportPage() {
-  const [source, setSource] = useState<ImportSource | null>(null);
+  const [file, setFile] = useState<ReadFile | null>(null);
+  const source = file?.source ?? null;
   const [readError, setReadError] = useState<string | null>(null);
   const [tasksSheet, setTasksSheet] = useState<string | undefined>(undefined);
   const [mapping, setMapping] = useState<ColumnMapping | undefined>(undefined);
+  const [isCommitting, setCommitting] = useState(false);
+  const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
+  const [commitError, setCommitError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const today = getTodayIsoDate();
 
@@ -76,20 +98,40 @@ export function ImportPage() {
     [source, tasksSheet, mapping, today],
   );
 
-  const choose = async (file: File | undefined) => {
-    if (!file) return;
+  const choose = async (chosen: File | undefined) => {
+    if (!chosen) return;
     setReadError(null);
-    setSource(null);
+    setFile(null);
     setTasksSheet(undefined);
     setMapping(undefined);
+    setCommitResult(null);
+    setCommitError(null);
     try {
-      setSource(await readSource(file));
+      setFile(await readSource(chosen));
     } catch (error) {
       setReadError(
         error instanceof Error && error.name === 'SpreadsheetReadError'
           ? error.message
           : 'Não foi possível ler o arquivo.',
       );
+    }
+  };
+
+  const commit = async () => {
+    if (!file || !preview || isCommitting) return;
+    setCommitting(true);
+    setCommitError(null);
+    try {
+      const fingerprint = getImportFingerprint(file.bytes, preview.tasksSheet, preview.mapping);
+      setCommitResult(await importCommitter.commit(preview, fingerprint, today));
+    } catch (error) {
+      setCommitError(
+        error instanceof Error && error.name === 'ImportCommitError'
+          ? error.message
+          : 'Não foi possível importar o projeto. Nada foi criado.',
+      );
+    } finally {
+      setCommitting(false);
     }
   };
 
@@ -104,7 +146,7 @@ export function ImportPage() {
               <h2 className="text-lg font-semibold">Importar projeto de planilha</h2>
               <p className="text-sm text-muted-foreground">
                 Excel (.xlsx) ou CSV, até 5 MB e 5 000 linhas. Fórmulas e macros nunca são
-                executadas. Esta etapa só mostra a prévia: nada é gravado.
+                executadas. Nada é gravado até você confirmar a importação.
               </p>
             </div>
 
@@ -149,7 +191,14 @@ export function ImportPage() {
               </p>
             ) : null}
 
-            {preview ? (
+            {commitResult ? (
+              <CommitOutcome
+                result={commitResult}
+                warnings={
+                  preview?.issues.filter((issue) => issue.severity === 'warning').length ?? 0
+                }
+              />
+            ) : preview ? (
               <Preview
                 preview={preview}
                 onSheet={(sheet) => {
@@ -157,6 +206,25 @@ export function ImportPage() {
                   setMapping(undefined);
                 }}
                 onMapping={setMapping}
+                commit={
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      disabled={!preview.canImport || isCommitting}
+                      onClick={() => {
+                        void commit();
+                      }}
+                    >
+                      <FileUp />
+                      {isCommitting ? 'Importando…' : 'Importar projeto'}
+                    </Button>
+                    {commitError ? (
+                      <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+                        <CircleAlert aria-hidden="true" className="size-4" />
+                        {commitError}
+                      </p>
+                    ) : null}
+                  </div>
+                }
               />
             ) : null}
           </div>
@@ -166,14 +234,58 @@ export function ImportPage() {
   );
 }
 
+/** What the import created, or the project a repeated import points to. */
+function CommitOutcome({ result, warnings }: { result: ImportCommitResult; warnings: number }) {
+  const expand = useDrawerStore((state) => state.expand);
+  const projectId = result.status === 'created' ? result.project.id : result.projectId;
+  const counts =
+    result.status === 'created'
+      ? `Foram criados ${String(result.counts.summaries)} fase(s), ${String(result.counts.tasks)} tarefa(s), ${String(result.counts.milestones)} marco(s) e ${String(result.counts.links)} vínculo(s)`
+      : '';
+  return (
+    <section
+      aria-label="Resultado da importação"
+      className="flex flex-col gap-3 rounded-lg border bg-background p-4"
+    >
+      <h3 className="flex items-center gap-2 text-sm font-semibold">
+        <CircleCheck aria-hidden="true" className="size-4 text-green-700 dark:text-green-400" />
+        {result.status === 'created'
+          ? `Projeto “${result.project.title}” importado`
+          : 'Este arquivo já foi importado'}
+      </h3>
+      <p role="status" className="text-sm">
+        {result.status === 'created'
+          ? `${counts}${warnings > 0 ? `, com ${String(warnings)} aviso(s) mostrados na prévia` : ''}.`
+          : 'Nada foi gravado de novo: o projeto criado antes continua como estava.'}
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          onClick={() => {
+            expand(projectId);
+          }}
+        >
+          <ChartGantt />
+          Abrir cronograma
+        </Button>
+        <a href={projectHref(projectId)} className="text-sm underline underline-offset-4">
+          Abrir página do projeto
+        </a>
+      </div>
+    </section>
+  );
+}
+
 function Preview({
   preview,
   onSheet,
   onMapping,
+  commit,
 }: {
   preview: ImportPreview;
   onSheet: (sheet: string) => void;
   onMapping: (mapping: ColumnMapping) => void;
+  /** The confirmation controls, under the summary. */
+  commit: ReactNode;
 }) {
   const sheetId = useId();
   const errors = preview.issues.filter((issue) => issue.severity === 'error');
@@ -246,7 +358,7 @@ function Preview({
       >
         <h3 className="text-sm font-semibold">Projeto “{preview.project.title}”</h3>
         <p className="text-sm">
-          Seria criado 1 projeto com {preview.counts.summaries} fase(s), {preview.counts.tasks}{' '}
+          Será criado 1 projeto com {preview.counts.summaries} fase(s), {preview.counts.tasks}{' '}
           tarefa(s), {preview.counts.milestones} marco(s) e {preview.counts.links} vínculo(s)
           {range && lastDay !== null
             ? `, de ${formatDate(dayToIsoDate(range.start))} a ${formatDate(dayToIsoDate(lastDay))}`
@@ -263,6 +375,7 @@ function Preview({
             ? 'Pronto para importar.'
             : `${String(errors.length)} erro(s) impedem a importação: corrija a planilha e escolha o arquivo de novo.`}
         </p>
+        {commit}
       </section>
 
       {preview.issues.length > 0 ? (

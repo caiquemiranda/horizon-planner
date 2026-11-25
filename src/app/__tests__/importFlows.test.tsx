@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { buildProjectWorkbook } from '@/features/data-io/lib/wbsWorkbook';
+import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { computeSchedule } from '@/features/schedule/lib/engine';
 import { createIndustrialSchedule } from '@/features/schedule/lib/fixtures';
@@ -21,6 +22,7 @@ async function renderImport() {
   await projectRepository.replaceAll([]);
   await scheduleRepository.replaceAll([]);
   useProjectsStore.setState({ projects: [], status: 'idle', error: null });
+  useDrawerStore.setState({ view: { mode: 'closed' }, expandedProjectId: null });
   render(
     <Providers>
       <App />
@@ -66,6 +68,34 @@ describe('spreadsheet import preview', () => {
     expect(structure.getAllByRole('row')).toHaveLength(15);
     // Nothing is saved in this phase.
     expect(await projectRepository.list()).toEqual([]);
+  });
+
+  it('imports the previewed project once and opens its schedule', async () => {
+    const user = userEvent.setup();
+    await renderImport();
+    await user.upload(screen.getByLabelText('Arquivo da planilha'), exportedWorkbook());
+    await user.click(await screen.findByRole('button', { name: 'Importar projeto' }));
+
+    const outcome = within(await screen.findByRole('region', { name: 'Resultado da importação' }));
+    expect(outcome.getByText('Projeto “Implantação SDAI” importado')).toBeInTheDocument();
+    expect(outcome.getByRole('status')).toHaveTextContent(
+      /^Foram criados 4 fase\(s\), 9 tarefa\(s\), 1 marco\(s\) e 8 vínculo\(s\), com \d aviso/,
+    );
+    const [project] = await projectRepository.list();
+    expect(project?.title).toBe('Implantação SDAI');
+    expect((await scheduleRepository.get(project?.id ?? ''))?.tasks).toHaveLength(14);
+
+    // The same file again: nothing new is written, the existing project is offered.
+    await user.upload(screen.getByLabelText('Arquivo da planilha'), exportedWorkbook());
+    await user.click(await screen.findByRole('button', { name: 'Importar projeto' }));
+    expect(await screen.findByText('Este arquivo já foi importado')).toBeInTheDocument();
+    expect(await projectRepository.list()).toHaveLength(1);
+
+    await user.click(screen.getByRole('button', { name: 'Abrir cronograma' }));
+    expect(
+      await screen.findByRole('dialog', { name: /Cronograma de Implantação SDAI/ }),
+    ).toBeInTheDocument();
+    expect(window.location.hash).toBe(IMPORT_HREF);
   });
 
   it('lists blocking errors by row and lets the user remap columns', async () => {
