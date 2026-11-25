@@ -10,6 +10,7 @@ import { useScheduleStore } from '@/features/schedule/store';
 import { PORTFOLIO_HREF, projectHref, TRASH_HREF } from '@/lib/router';
 import { projectRepository, scheduleRepository } from '@/services/persistence';
 import { makeProject } from '@/test/factories';
+import { timelineBarTitles } from '@/test/timeline';
 import type { ISODate, Project } from '@/types/project';
 
 import { App } from '../App';
@@ -39,10 +40,7 @@ async function renderApp(projects: Project[], hash = PORTFOLIO_HREF) {
 }
 
 function timelineTitles() {
-  return screen
-    .queryAllByRole('listitem')
-    .filter((item) => item.closest('section[aria-label="Horizontes"]'))
-    .map((item) => item.textContent.replace(/\d+%$/, ''));
+  return timelineBarTitles();
 }
 
 async function stored(id: string) {

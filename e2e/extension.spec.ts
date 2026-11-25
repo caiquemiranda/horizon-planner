@@ -29,7 +29,10 @@ async function goTo(page: Page, section: RegExp) {
 }
 
 async function openPanel(page: Page, title: string) {
-  await page.locator('li button', { hasText: title }).click();
+  await page
+    .getByRole('region', { name: 'Linha do tempo' })
+    .getByRole('button', { name: title })
+    .click();
   return page.getByRole('region', { name: 'Status do projeto' });
 }
 
@@ -54,7 +57,9 @@ test.describe('project experience', () => {
     const title = 'Certificação AWS';
     await loadSample(page);
     await goTo(page, /^Ativos/);
-    await expect(page.locator('li button', { hasText: title })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title }),
+    ).toBeVisible();
 
     // Start, postpone with a forecast, resume.
     let dialog = await changeStatus(page, title, 'Iniciar');
@@ -67,13 +72,17 @@ test.describe('project experience', () => {
     await expect(page.getByRole('region', { name: 'Status do projeto' })).toContainText('Adiado');
     await page.keyboard.press('Escape');
     await goTo(page, /^Adiados/);
-    await expect(page.locator('li button', { hasText: title })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title }),
+    ).toBeVisible();
 
     dialog = await changeStatus(page, title, 'Retomar');
     await dialog.getByRole('button', { name: 'Retomar' }).click();
     await page.keyboard.press('Escape');
     await goTo(page, /^Ativos/);
-    await expect(page.locator('li button', { hasText: title })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title }),
+    ).toBeVisible();
 
     // Complete: it moves to "Concluídos" and the dashboard counts it.
     const completedBefore = Number(await completedOnDashboard(page));
@@ -82,7 +91,9 @@ test.describe('project experience', () => {
     await dialog.getByRole('button', { name: 'Concluir' }).click();
     await page.keyboard.press('Escape');
     await goTo(page, /^Concluídos/);
-    await expect(page.locator('li button', { hasText: title })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title }),
+    ).toBeVisible();
     expect(Number(await completedOnDashboard(page))).toBe(completedBefore + 1);
 
     // Close another one without completing it.
@@ -92,13 +103,19 @@ test.describe('project experience', () => {
     await dialog.getByRole('button', { name: 'Encerrar' }).click();
     await page.keyboard.press('Escape');
     await goTo(page, /^Não concluídos/);
-    await expect(page.locator('li button', { hasText: 'Side project SaaS' })).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Linha do tempo' })
+        .getByRole('button', { name: 'Side project SaaS' }),
+    ).toBeVisible();
 
     // Hide the completed project: out of "Concluídos", in "Ocultos", still counted.
     await goTo(page, /^Concluídos/);
     await openPanel(page, title);
     await page.getByRole('dialog').getByRole('button', { name: 'Ocultar' }).click();
-    await expect(page.locator('li button', { hasText: title })).toHaveCount(0);
+    await expect(
+      page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title }),
+    ).toHaveCount(0);
     expect(await countOf(page, /^Ocultos/)).toBe(1);
     expect(Number(await completedOnDashboard(page))).toBe(completedBefore + 1);
 
@@ -130,7 +147,10 @@ test.describe('project experience', () => {
   }) => {
     await loadSample(page);
     const url = page.url();
-    await page.locator('li button', { hasText: 'Implantação de Sistema Industrial' }).click();
+    await page
+      .getByRole('region', { name: 'Linha do tempo' })
+      .getByRole('button', { name: 'Implantação de Sistema Industrial' })
+      .click();
     const expand = page.getByRole('button', { name: 'Abrir cronograma' });
     await expand.click();
     const dialog = page.getByRole('dialog', { name: /Cronograma de/ });

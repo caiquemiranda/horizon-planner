@@ -81,7 +81,11 @@ describe('project workspace', () => {
     const user = userEvent.setup();
     await renderAt(PORTFOLIO_HREF);
 
-    await user.click(screen.getByText(industrial.title, { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: industrial.title,
+      }),
+    );
     // The panel's only schedule action opens it without leaving the page.
     expect(screen.queryByRole('link', { name: 'Abrir cronograma' })).not.toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Abrir cronograma' }));

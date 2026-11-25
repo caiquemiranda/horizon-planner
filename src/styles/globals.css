@@ -19,12 +19,6 @@
   --row-height: 2.5rem;
   --ruler-height: 3.5rem;
   --drawer-width: 26rem;
-  /* Narrower on phones so the time canvas keeps most of the screen. */
-  --sidebar-width: 9.5rem;
-
-  @media (width >= 48rem) {
-    --sidebar-width: 15rem;
-  }
 
   /* Motion (see docs/design.md) */
   --duration-fast: 120ms;
