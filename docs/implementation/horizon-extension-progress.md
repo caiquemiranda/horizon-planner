@@ -23,8 +23,8 @@ its acceptance tests pass in CI.
 | 11    | `feat/wbs-spreadsheet-export`   | REQ-XLS-02/06/07                                     | Delivered | #38          | `writers.test.ts`, `wbsWorkbook.test.ts`; files read back in Chrome and with openpyxl                              |
 | 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column)                      | Delivered | #39          | `laneColumnStore.test.ts`, `laneColumnFlows.test.tsx` (incl. axe); checked in Chrome                               |
 | 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05                                     | Delivered | #40          | `readers.test.ts`, `wbsImport.test.ts`, `importFlows.test.tsx` (incl. axe); round trip in Chrome                   |
-| 12a   | `feat/single-schedule-entry`    | Owner request (one schedule entry, no repeated list) | In review | —            | `workspaceFlows`, `expandedDialogFlows`, `laneColumnStore` tests, e2e; checked in Chrome                           |
-| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | Pending   | —            | —                                                                                                                  |
+| 12a   | `feat/single-schedule-entry`    | Owner request (one schedule entry, no repeated list) | Delivered | #41          | `workspaceFlows`, `expandedDialogFlows`, `laneColumnStore` tests, e2e; checked in Chrome                           |
+| 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | In review | —            | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | Pending   | —            | —                                                                                                                  |
 | 15    | `feat/project-report`           | REQ-RPT-01–04                                        | Pending   | —            | —                                                                                                                  |
 | 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Pending   | —            | —                                                                                                                  |
@@ -401,6 +401,23 @@ its acceptance tests pass in CI.
 - Tests: 862 Vitest tests and 11 Playwright tests passing (updated to the new entry);
   Chrome check of the panel, the dialog from the portfolio and from "Ocultos", no console
   errors.
+
+### 13 · `feat/wbs-import-commit`
+
+- "Importar projeto" writes the previewed project: the project is created first (its
+  repository gives the id), then its schedule is saved as revision 1; if the schedule
+  cannot be saved, the project is removed again and nothing is left half imported.
+- The project takes its dates from the schedule (a final milestone included), its
+  progress from the tasks and a horizon suggested by its length; status "Planejado".
+- Idempotency: a fingerprint of the file content, the tasks sheet and the column mapping
+  is kept after a successful import. A double click shares the write in progress; the
+  same file imported again (even after a reload) writes nothing and offers the project
+  already created, while it exists and is not in the trash.
+- The result shows the counts created, the warnings seen in the preview and "Abrir
+  cronograma" (the large dialog, without leaving the page) or the project page.
+- Decision 4 of the addendum audit updated: project first, then schedule, with rollback.
+- Tests: 869 Vitest tests passing (7 new); Chrome check of the import, the repeated
+  import and the opened schedule, no console errors.
 
 ## Impediments
 
