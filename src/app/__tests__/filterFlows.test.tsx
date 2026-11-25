@@ -27,8 +27,8 @@ async function renderApp() {
 function sidebarTitles() {
   return screen
     .getAllByRole('listitem')
-    .filter((item) => item.closest('section[aria-label="Horizontes"]'))
-    .map((item) => item.textContent.replace(/\d+%$/, ''));
+    .filter((item) => item.closest('[aria-label="Linha do tempo"]'))
+    .map((item) => item.querySelector('[data-project-id]')?.getAttribute('aria-label') ?? '');
 }
 
 async function toggleOption(user: ReturnType<typeof userEvent.setup>, name: RegExp) {
@@ -125,7 +125,11 @@ describe('filter flows', () => {
     await renderApp();
     await toggleOption(user, /^Música/);
 
-    await user.click(screen.getByText('Piano', { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: 'Piano',
+      }),
+    );
     const category = within(screen.getByRole('dialog')).getByLabelText('Categoria');
     await user.clear(category);
     await user.type(category, 'Arte');

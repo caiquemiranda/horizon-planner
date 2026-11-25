@@ -1,8 +1,7 @@
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { HORIZON_META } from '@/features/projects/constants';
 import { cn } from '@/lib/utils';
 import { type Horizon, HORIZONS, type Project, type UUID } from '@/types/project';
 
@@ -12,10 +11,8 @@ import { usePointerNavigation } from '../hooks/usePointerNavigation';
 import { useTodayDay } from '../hooks/useTodayDay';
 import { useWheelNavigation } from '../hooks/useWheelNavigation';
 import { computeBarLayouts, layoutLanes } from '../lib/layout';
-import { useLaneColumnStore } from '../store/laneColumnStore';
 import { useViewportStoreApi } from '../store/viewportContext';
 import { GridLines } from './GridLines';
-import { LaneSidebar } from './LaneSidebar';
 import { ProjectBar } from './ProjectBar';
 import { TimelineEmptyState } from './TimelineEmptyState';
 import { TimeRuler } from './TimeRuler';
@@ -36,8 +33,9 @@ interface TimelineProps {
 }
 
 /**
- * Gantt-like timeline: a fixed sidebar with the horizon lanes on the left and the
- * time canvas on the right. Only the canvas width feeds the viewport.
+ * Gantt-like timeline over the whole width: one band per horizon (foldable) and one row
+ * per project. Projects are listed by name in the navigation sidebar, so there is no
+ * second list here; each bar carries its project's name.
  */
 export function Timeline({
   projects,
@@ -54,10 +52,7 @@ export function Timeline({
   const setWidth = viewportStore((state) => state.setWidth);
   const today = useTodayDay();
   const [collapsed, setCollapsed] = useState<ReadonlySet<Horizon>>(() => new Set());
-  // The horizon column can shrink to a strip: projects are also reachable from the sidebar.
-  const compact = useLaneColumnStore((state) => state.compact);
-  const toggleCompact = useLaneColumnStore((state) => state.toggleCompact);
-  const laneColumnId = useId();
+  const lanesId = useId();
   const [hoveredProjectId, setHoveredProjectId] = useState<UUID | null>(null);
 
   useElementWidth(canvasRef, setWidth);
@@ -76,6 +71,15 @@ export function Timeline({
     () => new Map(projects.map((project) => [project.id, project])),
     [projects],
   );
+  const barsByLane = useMemo(() => {
+    const byProject = new Map(bars.map((bar) => [bar.projectId, bar]));
+    return new Map(
+      lanes.map((lane) => [
+        lane.horizon,
+        lane.projectIds.flatMap((projectId) => byProject.get(projectId) ?? []),
+      ]),
+    );
+  }, [bars, lanes]);
 
   const toggleLane = useCallback((horizon: Horizon) => {
     setCollapsed((current) => {
@@ -88,35 +92,6 @@ export function Timeline({
   return (
     <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 border-b bg-background" style={{ height: rulerHeight }}>
-        {/* Responsive width from `--sidebar-width`; the canvas takes the rest. */}
-        <div
-          className={cn(
-            'flex shrink-0 items-end border-r pb-2 motion-safe:transition-[width] motion-safe:duration-200',
-            compact ? 'w-11 justify-center px-0' : 'w-(--sidebar-width) gap-1 px-3 md:px-4',
-          )}
-        >
-          <span className={cn('text-label', compact && 'sr-only')}>Horizontes</span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className={cn('text-muted-foreground', !compact && 'ml-auto')}
-                aria-expanded={!compact}
-                aria-controls={laneColumnId}
-                aria-label={compact ? 'Expandir coluna de projetos' : 'Recolher coluna de projetos'}
-                onClick={toggleCompact}
-              >
-                {compact ? <PanelLeftOpen /> : <PanelLeftClose />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {compact
-                ? 'Expandir coluna de projetos'
-                : 'Recolher coluna (mais espaço para a linha do tempo)'}
-            </TooltipContent>
-          </Tooltip>
-        </div>
         <div className="relative min-w-0 flex-1">
           <TimeRuler viewport={viewport} />
           <TodayIndicator viewport={viewport} today={today} variant="ruler" />
@@ -125,26 +100,6 @@ export function Timeline({
 
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <div className="flex min-h-full">
-          <section
-            id={laneColumnId}
-            aria-label="Horizontes"
-            className={cn(
-              'shrink-0 border-r bg-background motion-safe:transition-[width] motion-safe:duration-200',
-              compact ? 'w-11' : 'w-(--sidebar-width)',
-            )}
-          >
-            <LaneSidebar
-              lanes={lanes}
-              projectsById={projectsById}
-              onToggleLane={toggleLane}
-              hoveredProjectId={hoveredProjectId}
-              onHoverChange={setHoveredProjectId}
-              selectedProjectId={selectedProjectId}
-              compact={compact}
-              {...(onSelectProject ? { onSelectProject } : {})}
-            />
-          </section>
-
           {/*
            * `overflow-clip`, not `overflow-hidden`: a hidden overflow is still a scroll
            * container, and focusing a bar would scroll it out of sync with the ruler.
@@ -178,22 +133,68 @@ export function Timeline({
               </div>
             ))}
 
-            {bars.map((bar) => {
-              const project = projectsById.get(bar.projectId);
-              const position = rows.get(bar.projectId);
-              if (!project || !position) return null;
-
+            {lanes.map((lane) => {
+              const meta = HORIZON_META[lane.horizon];
+              const listId = `${lanesId}-${lane.horizon}`;
               return (
-                <ProjectBar
-                  key={bar.projectId}
-                  project={project}
-                  layout={bar}
-                  rowTop={position.top}
-                  highlighted={hoveredProjectId === bar.projectId}
-                  selected={selectedProjectId === bar.projectId}
-                  {...(onSelectProject ? { onSelect: onSelectProject } : {})}
-                  onHoverChange={setHoveredProjectId}
-                />
+                <div key={lane.horizon} role="group" aria-labelledby={`${listId}-label`}>
+                  {/* The band's title: folds the lane (its projects stay in the sidebar). */}
+                  <button
+                    type="button"
+                    aria-expanded={!lane.collapsed}
+                    aria-controls={listId}
+                    title={meta.description}
+                    onClick={() => {
+                      toggleLane(lane.horizon);
+                    }}
+                    className="group absolute left-2 z-10 my-1 flex items-center gap-1.5 rounded-md px-1.5 text-left transition-colors duration-(--duration-fast) hover:bg-accent/60"
+                    style={{ top: lane.top, height: laneHeaderHeight - 8 }}
+                  >
+                    <ChevronRight
+                      aria-hidden="true"
+                      className={cn(
+                        'size-3.5 shrink-0 text-subtle-foreground transition-transform duration-(--duration-base) ease-out-expo group-hover:text-muted-foreground',
+                        !lane.collapsed && 'rotate-90',
+                      )}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: `var(${meta.cssVar})` }}
+                    />
+                    <span
+                      id={`${listId}-label`}
+                      className="text-[13px] font-medium whitespace-nowrap"
+                    >
+                      {meta.label}
+                    </span>
+                    <span className="font-mono text-[11px] text-subtle-foreground tabular-nums">
+                      {lane.projectCount}
+                    </span>
+                  </button>
+                  {lane.collapsed ? null : (
+                    <ul id={listId} aria-label={`Projetos de ${meta.label.toLowerCase()}`}>
+                      {(barsByLane.get(lane.horizon) ?? []).map((bar) => {
+                        const project = projectsById.get(bar.projectId);
+                        const position = rows.get(bar.projectId);
+                        if (!project || !position) return null;
+                        return (
+                          <li key={bar.projectId}>
+                            <ProjectBar
+                              project={project}
+                              layout={bar}
+                              rowTop={position.top}
+                              highlighted={hoveredProjectId === bar.projectId}
+                              selected={selectedProjectId === bar.projectId}
+                              {...(onSelectProject ? { onSelect: onSelectProject } : {})}
+                              onHoverChange={setHoveredProjectId}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               );
             })}
 

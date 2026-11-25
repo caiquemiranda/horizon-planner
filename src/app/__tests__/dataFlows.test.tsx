@@ -12,6 +12,7 @@ import { useViewportStore } from '@/features/timeline/store/viewportStore';
 import { projectRepository } from '@/services/persistence';
 import { makeDraft } from '@/services/persistence/__tests__/helpers';
 import { makeProject } from '@/test/factories';
+import { timelineBarTitles } from '@/test/timeline';
 import type { HorizonSnapshot } from '@/types/project';
 
 import { App } from '../App';
@@ -67,9 +68,7 @@ describe('data flows', () => {
     await waitFor(async () => {
       expect(await storedTitles()).toContain('Reforma da cozinha');
     });
-    expect(screen.getByRole('list', { name: 'Projetos de longo prazo' })).toHaveTextContent(
-      'Mestrado',
-    );
+    expect(timelineBarTitles()).toContain('Mestrado');
     expect(screen.getByText('Dados de exemplo carregados.')).toBeInTheDocument();
   });
 

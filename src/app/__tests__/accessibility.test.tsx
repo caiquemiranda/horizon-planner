@@ -10,6 +10,7 @@ import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
 import { projectRepository } from '@/services/persistence';
 import { expectNoAxeViolations } from '@/test/axe';
+import { showWholeTimeline } from '@/test/timeline';
 
 import { App } from '../App';
 import { Providers } from '../providers';
@@ -69,8 +70,13 @@ describe('accessibility', () => {
     const user = userEvent.setup();
     await projectRepository.replaceAll(createSampleProjects(getTodayIsoDate()));
     await renderApp();
+    showWholeTimeline();
 
-    await user.click(screen.getByText('Mestrado', { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: 'Mestrado',
+      }),
+    );
     await within(screen.getByRole('dialog')).findByLabelText('Título');
 
     await expectNoAxeViolations();

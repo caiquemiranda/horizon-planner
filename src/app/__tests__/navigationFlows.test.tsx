@@ -8,6 +8,7 @@ import { SIDEBAR_STORAGE_KEY, useSidebarStore } from '@/features/projects/store/
 import { PORTFOLIO_HREF, projectHref, SECTION_HREFS } from '@/lib/router';
 import { projectRepository } from '@/services/persistence';
 import { makeProject } from '@/test/factories';
+import { timelineBarTitles } from '@/test/timeline';
 import type { Project } from '@/types/project';
 
 import { App } from '../App';
@@ -49,11 +50,7 @@ function navigateTo(hash: string) {
 }
 
 function timelineTitles() {
-  return screen
-    .queryAllByRole('listitem')
-    .filter((item) => item.closest('section[aria-label="Horizontes"]'))
-    .map((item) => item.textContent.replace(/\d+%$/, ''))
-    .sort();
+  return timelineBarTitles().sort();
 }
 
 function nav() {

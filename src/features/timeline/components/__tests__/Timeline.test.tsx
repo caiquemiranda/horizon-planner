@@ -68,7 +68,7 @@ describe('Timeline', () => {
     ).toHaveAccessibleDescription('Adiado, 11 – 20 mar 2026, 20% concluído');
   });
 
-  it('lists projects by horizon in the sidebar', () => {
+  it('groups the bars by horizon', () => {
     renderTimeline([
       makeProject({ title: 'Curso de inglês', horizon: 'medium' }),
       makeProject({ title: 'Reforma', horizon: 'short' }),
@@ -160,19 +160,26 @@ describe('Timeline', () => {
     expect(tooltip).toHaveTextContent('40%');
   });
 
-  it('highlights the same project in the sidebar and on the canvas', async () => {
+  it('highlights the hovered project and its row', async () => {
     const user = userEvent.setup();
     renderTimeline([makeProject({ title: 'Reforma' })]);
 
     const bar = screen.getByRole('button', { name: /Reforma/, pressed: false });
-    const row = screen.getByText('Reforma', { selector: 'li span' }).closest('li');
+    const highlightedRows = () =>
+      document.querySelectorAll('[aria-hidden="true"] > [data-highlighted]').length;
 
     await user.hover(bar);
     expect(bar).toHaveAttribute('data-highlighted');
-    expect(row).toHaveAttribute('data-highlighted');
+    expect(highlightedRows()).toBe(1);
 
     await user.unhover(bar);
-    expect(row).not.toHaveAttribute('data-highlighted');
+    expect(highlightedRows()).toBe(0);
+  });
+
+  it('has no second list of projects beside the canvas', () => {
+    renderTimeline([makeProject({ title: 'Reforma' })]);
+    expect(screen.queryByRole('region', { name: 'Horizontes' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('Reforma')).toHaveLength(1);
   });
 
   it('clips the canvas without making it scrollable', () => {
@@ -256,7 +263,11 @@ describe('Timeline', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Reforma', pressed: false }));
-    await user.click(screen.getByText('Reforma', { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: 'Reforma',
+      }),
+    );
 
     expect(onSelectProject).toHaveBeenNthCalledWith(1, project.id);
     expect(onSelectProject).toHaveBeenNthCalledWith(2, project.id);
@@ -274,6 +285,5 @@ describe('Timeline', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Reforma', pressed: true })).toBeInTheDocument();
-    expect(screen.getByRole('button', { current: true })).toHaveTextContent('Reforma');
   });
 });

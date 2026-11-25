@@ -5,7 +5,10 @@ export async function openSampleSchedule(page: Page): Promise<void> {
   await page.goto('./');
   await page.getByRole('button', { name: 'Carregar dados de exemplo' }).click();
   await page.getByRole('button', { name: 'Fechar aviso' }).click();
-  await page.locator('li button', { hasText: 'Implantação de Sistema Industrial' }).click();
+  await page
+    .getByRole('region', { name: 'Linha do tempo' })
+    .getByRole('button', { name: 'Implantação de Sistema Industrial' })
+    .click();
   // The panel opens the schedule in the large dialog; the full page is one step further.
   await page.getByRole('button', { name: 'Abrir cronograma' }).click();
   await page.getByRole('link', { name: 'Abrir página completa' }).click();

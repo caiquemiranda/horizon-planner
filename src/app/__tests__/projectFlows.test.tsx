@@ -94,7 +94,11 @@ describe('project flows', () => {
     await projectRepository.create(makeDraft({ title: 'Piano', horizon: 'medium' }));
     await renderApp();
 
-    await user.click(screen.getByText('Piano', { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: 'Piano',
+      }),
+    );
     const title = within(getDrawer()).getByLabelText('Título');
     await user.type(title, ' clássico');
 
@@ -118,7 +122,11 @@ describe('project flows', () => {
     );
     await renderApp();
 
-    await user.click(screen.getByText('Piano', { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: 'Piano',
+      }),
+    );
     const drawer = getDrawer();
     const end = within(drawer).getByLabelText('Término');
     await user.clear(end);
@@ -134,7 +142,11 @@ describe('project flows', () => {
     await projectRepository.create(makeDraft({ title: 'Piano' }));
     await renderApp();
 
-    await user.click(screen.getByText('Piano', { selector: 'li button span' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('button', {
+        name: 'Piano',
+      }),
+    );
     expect(getDrawer()).toBeInTheDocument();
 
     await user.keyboard('{Escape}');
