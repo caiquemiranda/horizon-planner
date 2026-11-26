@@ -11,6 +11,7 @@ import type { UUID } from '@/types/project';
  * - `#/` (or anything unknown): the portfolio timeline with every visible project;
  * - `#/ativos`, `#/adiados`, `#/nao-concluidos`, `#/concluidos`: one section of it;
  * - `#/projetos/<projectId>`: the planning workspace of one project;
+ * - `#/projetos/<projectId>/relatorio`: its report;
  * - `#/ocultos` and `#/lixeira`: hidden projects and the trash;
  * - `#/exemplos`: the sample projects ("Exemplos");
  * - `#/painel`: portfolio statistics ("Meu painel");
@@ -20,6 +21,7 @@ import type { UUID } from '@/types/project';
 export type Route =
   | { name: 'portfolio'; section: TimelineSection }
   | { name: 'project'; projectId: UUID }
+  | { name: 'report'; projectId: UUID }
   | { name: 'hidden' }
   | { name: 'trash' }
   | { name: 'examples' }
@@ -27,6 +29,7 @@ export type Route =
   | { name: 'import' };
 
 const PROJECT_PATTERN = /^#\/projetos\/([^/?#]+)\/?$/;
+const REPORT_PATTERN = /^#\/projetos\/([^/?#]+)\/relatorio\/?$/;
 
 export const PORTFOLIO_HREF = '#/';
 export const HIDDEN_HREF = '#/ocultos';
@@ -58,6 +61,11 @@ export function projectHref(projectId: UUID): string {
   return `#/projetos/${encodeURIComponent(projectId)}`;
 }
 
+/** Address of a project's report. */
+export function reportHref(projectId: UUID): string {
+  return `${projectHref(projectId)}/relatorio`;
+}
+
 export function parseRoute(hash: string): Route {
   const path = hash.replace(/\/$/, '');
   if (path === HIDDEN_HREF) return { name: 'hidden' };
@@ -67,6 +75,14 @@ export function parseRoute(hash: string): Route {
   if (path === IMPORT_HREF) return { name: 'import' };
   const section = TIMELINE_SECTIONS_BY_HREF.get(path);
   if (section) return { name: 'portfolio', section };
+  const report = REPORT_PATTERN.exec(hash);
+  if (report?.[1]) {
+    try {
+      return { name: 'report', projectId: decodeURIComponent(report[1]) };
+    } catch {
+      // Malformed escape sequence: fall back to the portfolio.
+    }
+  }
   const match = PROJECT_PATTERN.exec(hash);
   if (match?.[1]) {
     try {

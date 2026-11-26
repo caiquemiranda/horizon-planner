@@ -6,6 +6,7 @@ import {
   IMPORT_HREF,
   parseRoute,
   projectHref,
+  reportHref,
   SECTION_HREFS,
   TRASH_HREF,
 } from '../router';
@@ -21,6 +22,13 @@ describe('router', () => {
   it('round-trips project ids, including characters that need escaping', () => {
     for (const id of ['00000000-0000-4000-8000-000000000001', 'a b/ç']) {
       expect(parseRoute(projectHref(id))).toEqual({ name: 'project', projectId: id });
+    }
+  });
+
+  it('round-trips report addresses', () => {
+    for (const id of ['00000000-0000-4000-8000-000000000001', 'a b/ç']) {
+      expect(parseRoute(reportHref(id))).toEqual({ name: 'report', projectId: id });
+      expect(parseRoute(`${reportHref(id)}/`)).toEqual({ name: 'report', projectId: id });
     }
   });
 

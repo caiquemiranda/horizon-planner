@@ -26,8 +26,8 @@ its acceptance tests pass in CI.
 | 12a   | `feat/single-schedule-entry`    | Owner request (one schedule entry, no repeated list) | Delivered | #41          | `workspaceFlows`, `expandedDialogFlows`, `laneColumnStore` tests, e2e; checked in Chrome                           |
 | 12b   | `feat/remove-lane-column`       | Owner request (only one project list)                | Delivered | #43          | `Timeline.test.tsx`, app flows reading the bars, e2e; checked in Chrome                                            |
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | Delivered | #42          | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
-| 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | In review | —            | `catalog.test.ts` (catalog, clone), store, sections, statistics, migration, `examplesFlows` (incl. axe), e2e E     |
-| 15    | `feat/project-report`           | REQ-RPT-01–04                                        | Pending   | —            | —                                                                                                                  |
+| 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | Delivered | #44          | `catalog.test.ts` (catalog, clone), store, sections, statistics, migration, `examplesFlows` (incl. axe), e2e E     |
+| 15    | `feat/project-report`           | REQ-RPT-01–04                                        | In review | —            | `report.test.ts`, `router.test.ts`, `reportFlows` (incl. axe), e2e F; checked in Chrome                            |
 | 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Pending   | —            | —                                                                                                                  |
 | 17    | `test/project-features-e2e`     | §15                                                  | Pending   | —            | —                                                                                                                  |
 
@@ -456,6 +456,31 @@ its acceptance tests pass in CI.
 - Tests: 878 Vitest tests and 12 Playwright tests passing (scenario E covers the samples);
   Chrome check of the page, a sample schedule and the copy dialog, desktop and phone, no
   console errors.
+
+### 15 · `feat/project-report`
+
+- "Relatório" in the project header opens `#/projetos/<id>/relatorio`, a page of its own
+  with the explorer and "Voltar ao projeto".
+- Read model `features/report/lib/report.ts`, one pure function of the project, its
+  schedule and the data date, made of the existing rules: progress from
+  `summarizeProgress` (the number of the table and the Gantt), task states as in the
+  table (future work is never late; in a final report unfinished work is "não
+  concluída"), the forecast from `computeForecast` (not for postponed or closed
+  projects), and planned, forecast, baseline and actual finish kept apart.
+- Kind from the status: "Relatório de andamento" while running or postponed,
+  "Relatório final" once completed or closed. "Dados considerados até" and "Gerado em"
+  with time and time zone; no past cut-off dates and no progress curve (decision 3).
+- Page: cover, executive summary (deterministic sentences), KPIs with their basis,
+  charts (completion by phase, tasks by state, planned × forecast × actual, milestones),
+  pending work and next steps (or closing facts), the whole WBS (phases collapsed in the
+  workspace included) and a read-only Gantt with links, independent of the workspace's
+  scroll and zoom. Charts are SVG or HTML with direct labels and a table each for
+  assistive technology. Costs, hours and team are not recorded, so not shown.
+- The report follows changes saved in another tab; a project without a schedule reports
+  its portfolio data.
+- Printing (stylesheet, footer button, segmented Gantt) is order 16.
+- Tests: 892 Vitest tests and 13 Playwright tests passing (scenario F); Chrome check in
+  both themes with the samples (in progress and final), no console errors.
 
 ## Impediments
 

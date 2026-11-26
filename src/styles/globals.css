@@ -60,6 +60,8 @@
   --today-foreground: oklch(1 0 0);
   --timeline-grid: oklch(0.94 0.003 286);
   --timeline-weekend: oklch(0.5 0.01 286 / 4%);
+  /* Done work in report charts. */
+  --report-done: oklch(0.55 0.13 150);
 }
 
 .dark {
@@ -97,6 +99,7 @@
   --today-foreground: oklch(0.17 0.02 25);
   --timeline-grid: oklch(1 0 0 / 5%);
   --timeline-weekend: oklch(1 0 0 / 2.5%);
+  --report-done: oklch(0.72 0.15 150);
 }
 
 @theme inline {
