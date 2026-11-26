@@ -232,4 +232,33 @@ test.describe('project experience', () => {
     expect(await countOf(page, /^Todos os projetos/)).toBe(1);
     expect(await countOf(page, /^Exemplos/)).toBe(3);
   });
+
+  test('scenario F: the report shows the same plan as the workspace, whole', async ({ page }) => {
+    await openSampleSchedule(page);
+    const header = page.locator('header').first();
+    const percent = /· (\d+)%/.exec((await header.textContent()) ?? '')?.[1];
+    // Collapse a phase in the workspace: the report still lists every task.
+    await page
+      .getByRole('row')
+      .filter({ hasText: 'Engenharia' })
+      .first()
+      .getByRole('button')
+      .first()
+      .click();
+
+    await page.getByRole('link', { name: 'Visualizar relatório' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Implantação de Sistema Industrial',
+    );
+    await expect(page.getByText('Relatório de andamento')).toBeVisible();
+    const indicators = page.getByRole('region', { name: 'Indicadores' });
+    await expect(indicators.getByText(`${percent ?? '?'}%`, { exact: true })).toBeVisible();
+    const wbs = page.getByRole('region', { name: 'Estrutura analítica (EAP)' });
+    await expect(wbs.getByRole('row')).toHaveCount(15);
+    await expect(wbs.getByText('Levantamento técnico')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Cronograma' }).locator('svg')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Voltar ao projeto' }).click();
+    await expect(page.getByRole('treegrid')).toBeVisible();
+  });
 });

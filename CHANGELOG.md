@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Project report ("Relatório" in the project header): its own page with the executive summary, indicators, charts (completion by phase, tasks by state, planned × forecast × actual, milestones), pending work, the whole WBS and a read-only Gantt, all from the current data. Progress report while the project runs, final report once it is closed.
 - "Exemplos": three sample projects with fictional data (an industrial installation in progress, a SaaS launch and a finished retrofit), installed on request, read-only and kept out of the other lists, the timeline, "Meu painel" and backups. "Criar projeto a partir deste exemplo" copies a sample's plan into a new project from a chosen start date, without its progress or history. Data format v4 (migrated automatically).
 - Spreadsheet import: "Importar projeto" creates the previewed project and its schedule together (undone if either fails), shows what was created and opens it; importing the same file again does not create a second project.
 - Spreadsheet import preview (`#/importar`): reads Excel or CSV safely, matches the columns, shows the project, its WBS, counts and every problem by row before anything is saved.

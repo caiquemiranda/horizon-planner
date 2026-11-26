@@ -39,6 +39,7 @@ import { DeleteTaskDialog } from './DeleteTaskDialog';
 import { ExportMenu } from './ExportMenu';
 import { ForecastPanel } from './ForecastPanel';
 import { LinksDialog } from './LinksDialog';
+import { ReportLink } from './ReportLink';
 import { SaveStatus } from './SaveStatus';
 import { SplitView } from './SplitView';
 import { TaskGrid } from './TaskGrid';
@@ -148,6 +149,7 @@ export function ProjectWorkspace({
         {project ? <ProjectTitle project={project} asDialogTitle={isDialog} /> : null}
         <div className="ml-auto flex items-center gap-2">
           <SaveStatus />
+          {project ? <ReportLink projectId={project.id} /> : null}
           {project ? <ExportMenu project={project} /> : null}
           {isDialog ? dialogActions : <ThemeToggle />}
         </div>
