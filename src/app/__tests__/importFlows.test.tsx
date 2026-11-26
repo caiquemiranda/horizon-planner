@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { configure, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -49,6 +49,8 @@ function exportedWorkbook(): File {
 
 describe('spreadsheet import preview', () => {
   beforeEach(() => {
+    // Reading a workbook loads the zip library on demand: slow when the whole suite runs.
+    configure({ asyncUtilTimeout: 5000 });
     window.localStorage.clear();
   });
 
@@ -73,7 +75,9 @@ describe('spreadsheet import preview', () => {
   it('imports the previewed project once and opens its schedule', async () => {
     const user = userEvent.setup();
     await renderImport();
-    await user.upload(screen.getByLabelText('Arquivo da planilha'), exportedWorkbook());
+    // One file for both uploads: two exports differ (generation time), so they are two files.
+    const file = exportedWorkbook();
+    await user.upload(screen.getByLabelText('Arquivo da planilha'), file);
     await user.click(await screen.findByRole('button', { name: 'Importar projeto' }));
 
     const outcome = within(await screen.findByRole('region', { name: 'Resultado da importação' }));
@@ -86,7 +90,7 @@ describe('spreadsheet import preview', () => {
     expect((await scheduleRepository.get(project?.id ?? ''))?.tasks).toHaveLength(14);
 
     // The same file again: nothing new is written, the existing project is offered.
-    await user.upload(screen.getByLabelText('Arquivo da planilha'), exportedWorkbook());
+    await user.upload(screen.getByLabelText('Arquivo da planilha'), file);
     await user.click(await screen.findByRole('button', { name: 'Importar projeto' }));
     expect(await screen.findByText('Este arquivo já foi importado')).toBeInTheDocument();
     expect(await projectRepository.list()).toHaveLength(1);
