@@ -33,7 +33,7 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 | **Navigation**               | Drag to pan, horizontal scroll, zoom presets and a **Go to today** action with a vertical "today" indicator.                                                                     |
 | **Side drawer**              | Click any bar to open an animated drawer on the right. Create, edit and delete projects without losing the timeline context; edits show on the timeline in real time.            |
 | **Rich project model**       | Title, description, horizon, start/end dates, progress (0–100%), status, color, category and milestones.                                                                         |
-| **Filters**                  | Filter by horizon, category and status.                                                                                                                                          |
+| **Filters**                  | Filter by horizon, category and status from the navigation sidebar, next to the view controls (today, zoom scale, fit).                                                          |
 | **Lifecycle**                | Start, postpone (with an expected resume or revised finish), resume, complete, close without completing and reopen, each with its reason and a kept history.                     |
 | **Sections and sidebar**     | Collapsible sidebar with **Active**, **Postponed**, **Not completed**, **Completed**, **Hidden** and **Trash**, each with its count and its own address.                         |
 | **Hide and trash**           | Hide a project from the lists or move it to a restorable trash, both with undo; permanent deletion only from the trash.                                                          |
@@ -193,7 +193,7 @@ src/
 │   │   ├── lib/            # ⚙️ Pure scale, ticks and layout engine (fully tested)
 │   │   └── store/
 │   ├── projects/           # Drawer, form, milestones, projects store, zod schemas
-│   ├── filters/            # Filter bar and filtering logic
+│   ├── filters/            # Sidebar filter panel and filtering logic
 │   ├── examples/           # Sample projects ("Exemplos") and their copy
 │   └── data-io/            # Export and import (JSON, Excel/CSV)
 ├── services/

@@ -1,12 +1,10 @@
-import { Keyboard } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Kbd } from '@/components/ui/kbd';
 
 import { SHORTCUT_HELP } from '../lib/shortcuts';
@@ -16,24 +14,16 @@ interface ShortcutsHelpProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Keyboard icon that opens the list of shortcuts (also opened with `?`). */
+/** The list of shortcuts, opened with `?` or from the sidebar's keyboard button. */
 export function ShortcutsHelp({ open, onOpenChange }: ShortcutsHelpProps) {
   return (
-    <DropdownMenu open={open} onOpenChange={onOpenChange}>
-      <DropdownMenuTrigger asChild>
-        {/* Hidden on phones, where there is rarely a keyboard (`?` still opens it). */}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Atalhos de teclado"
-          className="hidden md:inline-flex"
-        >
-          <Keyboard />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-2">
-        <DropdownMenuLabel className="px-1 pb-2 text-label">Atalhos de teclado</DropdownMenuLabel>
-        <dl className="flex flex-col gap-1.5 px-1 pb-1">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Atalhos de teclado</DialogTitle>
+          <DialogDescription>Teclas que movem e aproximam a linha do tempo.</DialogDescription>
+        </DialogHeader>
+        <dl className="flex flex-col gap-1.5">
           {SHORTCUT_HELP.map((shortcut) => (
             <div key={shortcut.label} className="flex items-center justify-between gap-4 text-sm">
               <dt className="text-muted-foreground">{shortcut.label}</dt>
@@ -45,7 +35,7 @@ export function ShortcutsHelp({ open, onOpenChange }: ShortcutsHelpProps) {
             </div>
           ))}
         </dl>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </DialogContent>
+    </Dialog>
   );
 }
