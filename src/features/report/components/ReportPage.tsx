@@ -1,7 +1,8 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { StatusPill } from '@/features/projects/components/LifecycleSection';
 import {
@@ -29,7 +30,7 @@ import {
   type ReportRow,
 } from '../lib/report';
 import { DatesChart, MilestonesChart, PhaseChart, StateChart } from './ReportCharts';
-import { ReportGantt } from './ReportGantt';
+import { GanttLegend, ReportGantt, ReportGanttPages } from './ReportGantt';
 
 type ScheduleState =
   | { status: 'loading' }
@@ -71,7 +72,9 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /**
  * The project report page (spec REQ-RPT-04): its own page, filled from the current data
- * (see `lib/report.ts`). Printing comes with its own stylesheet in a later step.
+ * (see `lib/report.ts`). It prints as an A4 document (spec REQ-PRINT-01/02): the browser's
+ * print dialog, opened from "Imprimir / Salvar em PDF", also saves it as a PDF; navigation
+ * and controls are left out, the cards are not split and the Gantt is cut into pages.
  */
 export function ReportPage({ projectId }: { projectId: UUID }) {
   const project = useProjectsStore((state) => state.projects.find((item) => item.id === projectId));
@@ -112,8 +115,8 @@ export function ReportPage({ projectId }: { projectId: UUID }) {
     projectsStatus === 'idle' || projectsStatus === 'loading' || stored.status === 'loading';
 
   return (
-    <div className="flex h-svh flex-col overflow-hidden">
-      <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b glass px-3 sm:px-4">
+    <div className="flex h-svh flex-col overflow-hidden print:block print:h-auto print:overflow-visible">
+      <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b glass px-3 sm:px-4 print:hidden">
         <NavigationDrawerButton current={null} currentProjectId={projectId} />
         <a
           href={projectHref(projectId)}
@@ -126,13 +129,27 @@ export function ReportPage({ projectId }: { projectId: UUID }) {
           Voltar ao projeto
         </a>
         <div className="ml-auto flex items-center gap-1">
+          {report ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              aria-label="Imprimir relatório"
+              onClick={printReport}
+            >
+              <Printer />
+              <span className="hidden sm:inline">Imprimir</span>
+            </Button>
+          ) : null}
           <ThemeToggle />
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <NavigationRail current={null} currentProjectId={projectId} />
-        <main className="min-w-0 flex-1 overflow-y-auto bg-surface-sunken">
+      <div className="flex min-h-0 flex-1 print:block">
+        <div className="contents print:hidden">
+          <NavigationRail current={null} currentProjectId={projectId} />
+        </div>
+        <main className="min-w-0 flex-1 overflow-y-auto bg-surface-sunken print:overflow-visible print:bg-transparent">
           {loading ? (
             <p className="p-6 text-sm text-muted-foreground">Carregando o relatório…</p>
           ) : !project ? (
@@ -152,6 +169,11 @@ export function ReportPage({ projectId }: { projectId: UUID }) {
   );
 }
 
+/** The browser's print dialog, where "Salvar como PDF" is one of the destinations. */
+function printReport() {
+  window.print();
+}
+
 function Section({
   title,
   children,
@@ -163,7 +185,7 @@ function Section({
 }) {
   return (
     <section aria-label={title} className={cn('flex flex-col gap-3', className)}>
-      <h2 className="text-base font-semibold">{title}</h2>
+      <h2 className="break-after-avoid text-base font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -179,7 +201,7 @@ function Kpi({
   detail?: string | undefined;
 }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-lg border bg-background px-3 py-2.5">
+    <div className="flex break-inside-avoid flex-col gap-0.5 rounded-lg border bg-background px-3 py-2.5">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="text-lg font-semibold tabular-nums">{value}</dd>
       {detail ? <dd className="text-xs text-muted-foreground">{detail}</dd> : null}
@@ -201,8 +223,8 @@ function ReportDocument({
   const milestonesDone = report.milestones.filter((milestone) => milestone.done).length;
 
   return (
-    <article className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-6 sm:px-6">
-      <header className="flex flex-col gap-3 border-b pb-5">
+    <article className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-6 sm:px-6 print:max-w-none print:gap-6 print:p-0">
+      <header className="flex break-inside-avoid flex-col gap-3 border-b pb-5">
         <p className="text-label">{report.title}</p>
         <div className="flex flex-wrap items-center gap-3">
           <span
@@ -225,22 +247,22 @@ function ReportDocument({
         ) : null}
         <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
           <div className="flex gap-2">
-            <dt className="text-muted-foreground">Dados considerados até:</dt>
+            <dt className="shrink-0 text-muted-foreground">Dados considerados até:</dt>
             <dd>
               {generated} ({timeZone})
             </dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-muted-foreground">Gerado em:</dt>
+            <dt className="shrink-0 text-muted-foreground">Gerado em:</dt>
             <dd>{generated}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-muted-foreground">Horizonte:</dt>
+            <dt className="shrink-0 text-muted-foreground">Horizonte:</dt>
             <dd>{HORIZON_META[project.horizon].label}</dd>
           </div>
           {project.category ? (
             <div className="flex gap-2">
-              <dt className="text-muted-foreground">Categoria:</dt>
+              <dt className="shrink-0 text-muted-foreground">Categoria:</dt>
               <dd>{project.category}</dd>
             </div>
           ) : null}
@@ -263,7 +285,7 @@ function ReportDocument({
       </Section>
 
       <Section title="Indicadores">
-        <dl className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-2 md:grid-cols-4 print:grid-cols-4">
           <Kpi
             label="Progresso"
             value={`${String(report.progress.percent)}%`}
@@ -331,7 +353,7 @@ function ReportDocument({
       {report.hasSchedule && schedule && result ? (
         <>
           <Section title="Gráficos">
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid gap-3 lg:grid-cols-2 print:grid-cols-2">
               <PhaseChart report={report} />
               <StateChart report={report} />
               <DatesChart report={report} />
@@ -349,15 +371,25 @@ function ReportDocument({
             <WbsTable rows={report.rows} />
           </Section>
 
-          <Section title="Cronograma">
-            <div className="overflow-x-auto rounded-lg border bg-background p-2">
-              <ReportGantt
-                project={project}
-                schedule={schedule}
-                result={result}
-                today={report.asOf}
-              />
+          <Section title="Cronograma" className="print:break-before-page">
+            <div className="flex flex-col gap-2 print:hidden">
+              <div className="overflow-x-auto rounded-lg border bg-background p-2">
+                <ReportGantt
+                  project={project}
+                  schedule={schedule}
+                  result={result}
+                  today={report.asOf}
+                />
+              </div>
+              <GanttLegend />
             </div>
+            <ReportGanttPages
+              project={project}
+              schedule={schedule}
+              result={result}
+              today={report.asOf}
+              className="hidden flex-col gap-6 print:flex"
+            />
           </Section>
         </>
       ) : null}
@@ -379,8 +411,30 @@ function ReportDocument({
           <li>Custos, horas e equipe não são registrados no Horizon e não aparecem aqui.</li>
         </ul>
       </Section>
+
+      <footer className="flex flex-col gap-4 border-t pt-5">
+        <div className="flex flex-col items-start gap-2 print:hidden">
+          <Button size="lg" onClick={printReport}>
+            <Printer />
+            Imprimir / Salvar em PDF
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            No diálogo de impressão, escolha “Salvar como PDF” para guardar o arquivo.
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {report.title} · {project.title} · documento {documentId(report)} · gerado em {generated}{' '}
+          pelo Horizon
+        </p>
+      </footer>
     </article>
   );
+}
+
+/** A stable reference for the printed copy: kind, project and data date. */
+function documentId(report: ProjectReport): string {
+  const kind = report.kind === 'final' ? 'RF' : 'RA';
+  return `${kind}-${report.project.id.slice(0, 8).toUpperCase()}-${report.asOf.replaceAll('-', '')}`;
 }
 
 function RowList({ rows, empty }: { rows: ReportRow[]; empty: string }) {
@@ -408,12 +462,12 @@ function Attention({ report }: { report: ProjectReport }) {
     const notDone = report.rows.filter((row) => row.state === 'not_done');
     return (
       <Section title="Encerramento">
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+        <div className="grid gap-3 md:grid-cols-2 print:grid-cols-2">
+          <div className="flex break-inside-avoid flex-col gap-2 rounded-lg border bg-background p-4">
             <h3 className="text-sm font-semibold">Não concluídas ({notDone.length})</h3>
             <RowList rows={notDone} empty="Todas as tarefas foram concluídas." />
           </div>
-          <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+          <div className="flex break-inside-avoid flex-col gap-2 rounded-lg border bg-background p-4">
             <h3 className="text-sm font-semibold">Marcos</h3>
             <ul className="flex flex-col gap-1 text-sm">
               {report.milestones.map((milestone) => (
@@ -430,22 +484,22 @@ function Attention({ report }: { report: ProjectReport }) {
   }
   return (
     <Section title="Pendências e próximos passos">
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+      <div className="grid gap-3 md:grid-cols-2 print:grid-cols-2">
+        <div className="flex break-inside-avoid flex-col gap-2 rounded-lg border bg-background p-4">
           <h3 className="text-sm font-semibold">
             Vencidas na data de corte ({attention.late.length})
           </h3>
           <RowList rows={attention.late} empty="Nenhuma atividade vencida." />
         </div>
-        <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+        <div className="flex break-inside-avoid flex-col gap-2 rounded-lg border bg-background p-4">
           <h3 className="text-sm font-semibold">Em andamento ({attention.inProgress.length})</h3>
           <RowList rows={attention.inProgress} empty="Nenhuma tarefa em andamento." />
         </div>
-        <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+        <div className="flex break-inside-avoid flex-col gap-2 rounded-lg border bg-background p-4">
           <h3 className="text-sm font-semibold">Próximas tarefas</h3>
           <RowList rows={attention.next} empty="Nenhuma tarefa a iniciar." />
         </div>
-        <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+        <div className="flex break-inside-avoid flex-col gap-2 rounded-lg border bg-background p-4">
           <h3 className="text-sm font-semibold">Próximos marcos</h3>
           {attention.upcomingMilestones.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum marco pendente.</p>
@@ -466,8 +520,8 @@ function Attention({ report }: { report: ProjectReport }) {
 
 function WbsTable({ rows }: { rows: ReportRow[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border bg-background">
-      <table className="w-full min-w-[760px] text-left text-sm">
+    <div className="overflow-x-auto rounded-lg border bg-background print:overflow-visible">
+      <table className="w-full min-w-[760px] text-left text-sm print:min-w-0 print:text-xs">
         <caption className="sr-only">
           Estrutura analítica completa, com todas as fases abertas
         </caption>
@@ -507,7 +561,7 @@ function WbsTable({ rows }: { rows: ReportRow[] }) {
             <tr
               key={row.id}
               className={cn(
-                'border-b last:border-0',
+                'break-inside-avoid border-b last:border-0',
                 row.kind === 'summary' && 'bg-muted/50 font-medium',
               )}
             >

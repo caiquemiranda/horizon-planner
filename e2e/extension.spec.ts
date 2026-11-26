@@ -250,15 +250,69 @@ test.describe('project experience', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       'Implantação de Sistema Industrial',
     );
-    await expect(page.getByText('Relatório de andamento')).toBeVisible();
+    await expect(page.getByText('Relatório de andamento', { exact: true })).toBeVisible();
     const indicators = page.getByRole('region', { name: 'Indicadores' });
     await expect(indicators.getByText(`${percent ?? '?'}%`, { exact: true })).toBeVisible();
     const wbs = page.getByRole('region', { name: 'Estrutura analítica (EAP)' });
     await expect(wbs.getByRole('row')).toHaveCount(15);
     await expect(wbs.getByText('Levantamento técnico')).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Cronograma' }).locator('svg')).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Cronograma' })
+        .getByRole('img', { name: /^Gráfico de Gantt/ }),
+    ).toBeVisible();
 
     await page.getByRole('link', { name: 'Voltar ao projeto' }).click();
     await expect(page.getByRole('treegrid')).toBeVisible();
+  });
+
+  test('scenario G: the report prints as a light A4 document without the app around it', async ({
+    page,
+  }, testInfo) => {
+    await openSampleSchedule(page);
+    await page.getByRole('link', { name: 'Visualizar relatório' }).click();
+    const printButton = page.getByRole('button', { name: 'Imprimir / Salvar em PDF' });
+    await expect(printButton).toBeVisible();
+    const tokens = () =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--background'),
+      );
+    const light = await page.evaluate(() => {
+      const root = document.documentElement;
+      const dark = root.classList.contains('dark');
+      root.classList.remove('dark');
+      const value = getComputedStyle(root).getPropertyValue('--background');
+      root.classList.toggle('dark', dark);
+      return value;
+    });
+    // The dark theme, as the theme switch sets it (class and inline color scheme).
+    await page.evaluate(() => {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    });
+
+    await page.emulateMedia({ media: 'print' });
+    // Paper is white even with the dark theme on screen.
+    expect(await tokens()).toBe(light);
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
+      'light',
+    );
+    await expect(printButton).toBeHidden();
+    await expect(page.getByRole('link', { name: 'Voltar ao projeto' })).toBeHidden();
+    await expect(page.getByRole('complementary', { name: 'Navegação' })).toBeHidden();
+    const gantt = page.getByRole('region', { name: 'Cronograma' });
+    await expect(gantt.getByRole('img', { name: /^Gráfico de Gantt/ })).toBeHidden();
+    await expect(gantt.getByRole('img', { name: /^Parte do gráfico de Gantt/ })).toBeVisible();
+    await expect(page.getByText(/documento RA-.+ · gerado em/)).toBeVisible();
+
+    // A real PDF from the print stylesheet, kept with the test results for a look.
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+    await testInfo.attach('relatorio.pdf', { body: pdf, contentType: 'application/pdf' });
+    const pages = pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)?.length ?? 0;
+    expect(pages).toBeGreaterThanOrEqual(2);
+    expect(pages).toBeLessThanOrEqual(8);
+
+    await page.emulateMedia({ media: 'screen' });
+    await expect(printButton).toBeVisible();
   });
 });
