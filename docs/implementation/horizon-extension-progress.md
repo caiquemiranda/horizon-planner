@@ -24,9 +24,9 @@ its acceptance tests pass in CI.
 | 11a   | `feat/timeline-compact-lanes`   | Owner request (timeline column)                      | Delivered | #39          | `laneColumnStore.test.ts`, `laneColumnFlows.test.tsx` (incl. axe); checked in Chrome                               |
 | 12    | `feat/wbs-import-preview`       | REQ-XLS-01/03/05                                     | Delivered | #40          | `readers.test.ts`, `wbsImport.test.ts`, `importFlows.test.tsx` (incl. axe); round trip in Chrome                   |
 | 12a   | `feat/single-schedule-entry`    | Owner request (one schedule entry, no repeated list) | Delivered | #41          | `workspaceFlows`, `expandedDialogFlows`, `laneColumnStore` tests, e2e; checked in Chrome                           |
-| 12b   | `feat/remove-lane-column`       | Owner request (only one project list)                | In review | —            | `Timeline.test.tsx`, app flows reading the bars, e2e; checked in Chrome                                            |
+| 12b   | `feat/remove-lane-column`       | Owner request (only one project list)                | Delivered | #43          | `Timeline.test.tsx`, app flows reading the bars, e2e; checked in Chrome                                            |
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | Delivered | #42          | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
-| 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | Pending   | —            | —                                                                                                                  |
+| 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | In review | —            | `catalog.test.ts` (catalog, clone), store, sections, statistics, migration, `examplesFlows` (incl. axe), e2e E     |
 | 15    | `feat/project-report`           | REQ-RPT-01–04                                        | Pending   | —            | —                                                                                                                  |
 | 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Pending   | —            | —                                                                                                                  |
 | 17    | `test/project-features-e2e`     | §15                                                  | Pending   | —            | —                                                                                                                  |
@@ -431,6 +431,31 @@ its acceptance tests pass in CI.
 - Decision 4 of the addendum audit updated: project first, then schedule, with rollback.
 - Tests: 869 Vitest tests passing (7 new); Chrome check of the import, the repeated
   import and the opened schedule, no console errors.
+
+### 14 · `feat/sample-projects`
+
+- Decision 1 of the addendum audit. Projects get a `demo` flag (data format v4; stored
+  and imported v3 data is migrated with `demo: false`).
+- "Exemplos" (`#/exemplos`, last group of the sidebar) installs three sample projects on
+  request: an industrial fire alarm installation in progress (25 leaf tasks, FS, SS and
+  FF links with lags, two milestones, two tasks behind plan, so the forecast shows a
+  delay), a SaaS launch with parallel work, and a short retrofit already completed. Ids
+  are fixed: installing again ("Reiniciar exemplos") resets them, never duplicates them.
+  Dates and progress are computed from the install day; there are no fictional check-ins.
+- Samples are only in "Exemplos": not in the other sections or their counts, not on the
+  timeline, not in "Meu painel" and not in the JSON backup. They open read-only (schedule
+  access and store guards: no edit, status change, hide or trash).
+- "Criar projeto a partir deste exemplo" asks for a title and a start date and creates a
+  real project with the phases, tasks, durations, notes, links and calendar, new ids and
+  no progress, actual dates, check-ins, baseline or fictional assignees. Written like an
+  import: project, then schedule, with rollback.
+- "Remover exemplos" removes only the samples and their schedules.
+- The old "Carregar dados de exemplo" (replace everything) is retired. The test portfolio
+  moved to `src/test/sampleData.ts`; e2e tests and the screenshot script now write it to
+  `localStorage` before the app starts (`src/test/sampleStorage.ts`).
+- Tests: 878 Vitest tests and 12 Playwright tests passing (scenario E covers the samples);
+  Chrome check of the page, a sample schedule and the copy dialog, desktop and phone, no
+  console errors.
 
 ## Impediments
 

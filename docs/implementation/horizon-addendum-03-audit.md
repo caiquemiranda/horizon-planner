@@ -53,6 +53,8 @@ single local user; the access rule stays the extension point), file storage of P
    check-ins, actual dates or progress; "Remover exemplos" removes only flagged projects.
    The old "replace everything with sample data" action is retired (the screenshot and
    performance scripts keep their own fixtures). **Approved by the product owner.**
+   Delivered in order 14: samples are also left out of the timeline and of the JSON
+   backup, and the copy does not take the fictional assignees.
 2. **Spreadsheet library.** `.xlsx` is a zip of XML parts. Instead of a large spreadsheet
    dependency, the export writes the parts itself and the import reads them with
    `fflate` (MIT, small, maintained) and the browser's `DOMParser` (which does not resolve

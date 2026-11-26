@@ -39,7 +39,7 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 | **Hide and trash**           | Hide a project from the lists or move it to a restorable trash, both with undo; permanent deletion only from the trash.                                                          |
 | **Meu painel**               | Projects started, completed and not completed in a period, completion rate and current states.                                                                                   |
 | **Persistence**              | Automatic `localStorage` persistence behind a decoupled repository layer, ready to be swapped for a REST/GraphQL API.                                                            |
-| **Portability**              | Schema-validated JSON export / import and one-click **sample data** for an instant demo.                                                                                         |
+| **Portability**              | Schema-validated JSON export / import and opt-in **sample projects** ("Exemplos") for an instant demo.                                                                           |
 | **Theming**                  | Dark mode by default, light mode supported, Geist typography and accessible contrast.                                                                                            |
 
 ### 🗂️ Project planning workspace
@@ -78,7 +78,7 @@ Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module
 
 ## 📸 Screenshots
 
-> Captured from the sample data with `npm run screenshots`. Assets live in [`docs/assets/`](./docs/assets); the [capture guide](./docs/assets/README.md) covers naming and the manual GIFs.
+> Captured from the test portfolio with `npm run screenshots`. Assets live in [`docs/assets/`](./docs/assets); the [capture guide](./docs/assets/README.md) covers naming and the manual GIFs.
 
 <img src="docs/assets/timeline-macro-dark.png" alt="Timeline fitted to all projects, from 2026 to 2029, with the short, medium and long-term lanes" width="100%" />
 
@@ -100,7 +100,7 @@ Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module
 
 ## 🚀 Getting started
 
-> **Just want to try it?** Open the [live demo](https://caiquemiranda.github.io/horizon-planner/) and click **Carregar dados de exemplo**. Your projects are saved only in your browser.
+> **Just want to try it?** Open the [live demo](https://caiquemiranda.github.io/horizon-planner/) and click **Explorar exemplos**. Your projects are saved only in your browser.
 
 ### Prerequisites
 
@@ -121,7 +121,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173> and click **Carregar dados de exemplo** (Load sample data) to explore the timeline right away.
+Open <http://localhost:5173> and click **Explorar exemplos** (Explore examples) to open the sample projects right away.
 
 ### Available scripts
 
@@ -194,7 +194,8 @@ src/
 │   │   └── store/
 │   ├── projects/           # Drawer, form, milestones, projects store, zod schemas
 │   ├── filters/            # Filter bar and filtering logic
-│   └── data-io/            # Export, import, sample data
+│   ├── examples/           # Sample projects ("Exemplos") and their copy
+│   └── data-io/            # Export and import (JSON, Excel/CSV)
 ├── services/
 │   └── persistence/        # Repository contract + localStorage / in-memory implementations
 ├── lib/                    # Cross-cutting utilities

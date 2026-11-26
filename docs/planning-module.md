@@ -322,8 +322,8 @@ browser. The UI only reads their results and sends commands.
 
 ```bash
 npm install
-npm run dev            # http://localhost:5173 → Dados → Carregar dados de exemplo →
-                       # "Implantação de Sistema Industrial" → Abrir cronograma
+npm run dev            # http://localhost:5173 → Exemplos → Explorar exemplos →
+                       # "Implantação de SDAI na planta fabril" → Abrir cronograma
 npm test               # unit and integration tests (Vitest, jsdom)
 npm run test:e2e       # browser end-to-end tests (Playwright, installed Chrome)
 npm run perf           # performance measurements with 100, 500 and 1 000 tasks

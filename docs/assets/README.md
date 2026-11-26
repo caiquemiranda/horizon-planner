@@ -39,7 +39,7 @@ npm run screenshots
 The script ([`scripts/capture-screenshots.js`](../../scripts/capture-screenshots.js)) builds
 the app, serves it with `vite preview` and drives your installed Chrome (or Edge, with
 `HORIZON_BROWSER=msedge`) through `playwright-core`. Every capture starts from a clean
-profile with the sample data, at 1440×900 and a 2× pixel ratio, with animations off, so
+profile with the test portfolio (`src/test/sampleData.ts`), at 1440×900 and a 2× pixel ratio, with animations off, so
 reruns are consistent. Sample dates are relative to the current day, which keeps the
 "today" line in the middle of the content.
 
