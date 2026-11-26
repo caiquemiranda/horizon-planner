@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- "Exemplos": three sample projects with fictional data (an industrial installation in progress, a SaaS launch and a finished retrofit), installed on request, read-only and kept out of the other lists, the timeline, "Meu painel" and backups. "Criar projeto a partir deste exemplo" copies a sample's plan into a new project from a chosen start date, without its progress or history. Data format v4 (migrated automatically).
 - Spreadsheet import: "Importar projeto" creates the previewed project and its schedule together (undone if either fails), shows what was created and opens it; importing the same file again does not create a second project.
 - Spreadsheet import preview (`#/importar`): reads Excel or CSV safely, matches the columns, shows the project, its WBS, counts and every problem by row before anything is saved.
 - The timeline's horizon column can fold into a narrow strip (names in tooltips), giving the timeline about 200 px more; the choice is remembered.
@@ -63,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- "Carregar dados de exemplo", which replaced every project with fictional ones, is retired: the sample projects now live in "Exemplos", next to your data.
 - The timeline no longer has a horizon column: the navigation sidebar is the only project list, and the horizon bands keep their title and fold from the timeline itself.
 - One way to open a schedule from the project panel ("Abrir cronograma", in the large dialog, without leaving the page), and the timeline's project column starts compact since the sidebar lists the projects.
 - Summary and project progress count tasks: every leaf task weighs the same (instead of being weighted by its duration), milestones count only when they are all there is, and 100% means every task is done. The project header shows how many tasks are done. The bars look the same.
