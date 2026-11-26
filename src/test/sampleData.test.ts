@@ -6,7 +6,7 @@ import { projectScheduleSchema } from '@/features/schedule/schemas';
 import { createIdGenerator } from '@/services/persistence/__tests__/helpers';
 import { HORIZONS, type ISODate } from '@/types/project';
 
-import { createSampleData, createSampleProjects } from '../sampleData';
+import { createSampleData, createSampleProjects } from './sampleData';
 
 const today = '2026-11-22' as ISODate;
 const now = new Date('2026-11-22T12:00:00.000Z');

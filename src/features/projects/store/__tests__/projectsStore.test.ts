@@ -6,6 +6,7 @@ import {
   type ProjectRepository,
 } from '@/services/persistence';
 import { createDependencies, makeDraft } from '@/services/persistence/__tests__/helpers';
+import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
 
 import { createProjectsStore, describeError, type ProjectsStore } from '../projectsStore';
@@ -20,6 +21,44 @@ async function seed(count = 2) {
   await store.getState().load();
   return store.getState().projects;
 }
+
+describe('projectsStore and sample projects', () => {
+  beforeEach(() => {
+    repository = new InMemoryRepository([], createDependencies());
+    store = createProjectsStore(repository, { now: () => new Date('2026-05-01T10:00:00.000Z') });
+  });
+
+  it('replaces only the samples and keeps them read-only', async () => {
+    const [own] = await seed(1);
+    const sample = makeProject({
+      id: 'e0000000-0000-4000-8000-000000000009',
+      title: 'Exemplo',
+      demo: true,
+    });
+    await store.getState().replaceExamples([sample]);
+    await store.getState().replaceExamples([sample]);
+    expect((await repository.list()).map((project) => project.title)).toEqual([
+      own?.title,
+      'Exemplo',
+    ]);
+
+    await store.getState().update(sample.id, { title: 'Mudado' });
+    await store.getState().hide(sample.id);
+    await store.getState().moveToTrash(sample.id);
+    await expect(
+      store.getState().transition(sample.id, { action: 'start', date: '2026-05-01' as ISODate }),
+    ).rejects.toThrow('Projetos de exemplo não mudam de status.');
+    expect(await repository.get(sample.id)).toMatchObject({
+      title: 'Exemplo',
+      hiddenAt: null,
+      deletedAt: null,
+      demo: true,
+    });
+
+    await store.getState().replaceExamples([]);
+    expect((await repository.list()).map((project) => project.title)).toEqual([own?.title]);
+  });
+});
 
 describe('projectsStore', () => {
   beforeEach(() => {

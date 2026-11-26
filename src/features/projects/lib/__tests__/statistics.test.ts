@@ -36,6 +36,19 @@ describe('getPeriodStart', () => {
   });
 });
 
+describe('computeStatistics and sample projects', () => {
+  it('leaves the samples out of every indicator', () => {
+    const own = [project('in_progress', { started: '2026-11-01' }, { progress: 40 })];
+    const samples = [
+      project('in_progress', { started: '2026-11-02' }, { demo: true, progress: 90 }),
+      project('completed', { started: '2026-10-01', completed: '2026-11-10' }, { demo: true }),
+    ];
+    expect(computeStatistics([...own, ...samples], 'all', TODAY)).toEqual(
+      computeStatistics(own, 'all', TODAY),
+    );
+  });
+});
+
 describe('computeStatistics', () => {
   const portfolio = [
     project('planned'),

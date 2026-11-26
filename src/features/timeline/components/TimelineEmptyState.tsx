@@ -11,7 +11,7 @@ interface TimelineEmptyStateProps {
 
 export function TimelineEmptyState({
   title = 'Sua linha do tempo está vazia',
-  description = 'Crie seu primeiro projeto ou carregue os dados de exemplo para começar a planejar.',
+  description = 'Crie seu primeiro projeto ou explore os projetos de exemplo para começar a planejar.',
   icon: Icon = CalendarRange,
   action,
 }: TimelineEmptyStateProps) {

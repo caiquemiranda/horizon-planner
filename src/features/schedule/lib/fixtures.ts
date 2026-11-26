@@ -7,8 +7,8 @@ import { workFromProgress } from './checkIns';
 
 /**
  * Deterministic demo schedule "Implantação de Sistema Industrial" (spec section 13).
- * Used by tests and by the user-triggered "Carregar dados de exemplo" action only; the
- * app never adds it on its own.
+ * Used by tests and their sample portfolio (`src/test/sampleData.ts`) only; the app's
+ * own samples are in `features/examples`.
  *
  * Every phase is a summary task; A → … → H → Aceite final are chained finish-to-start,
  * and "Treinamento da equipe" runs in parallel without links.

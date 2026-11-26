@@ -12,6 +12,7 @@ import type { UUID } from '@/types/project';
  * - `#/ativos`, `#/adiados`, `#/nao-concluidos`, `#/concluidos`: one section of it;
  * - `#/projetos/<projectId>`: the planning workspace of one project;
  * - `#/ocultos` and `#/lixeira`: hidden projects and the trash;
+ * - `#/exemplos`: the sample projects ("Exemplos");
  * - `#/painel`: portfolio statistics ("Meu painel");
  * - `#/importar`: project import from a spreadsheet.
  */
@@ -21,6 +22,7 @@ export type Route =
   | { name: 'project'; projectId: UUID }
   | { name: 'hidden' }
   | { name: 'trash' }
+  | { name: 'examples' }
   | { name: 'dashboard' }
   | { name: 'import' };
 
@@ -29,6 +31,7 @@ const PROJECT_PATTERN = /^#\/projetos\/([^/?#]+)\/?$/;
 export const PORTFOLIO_HREF = '#/';
 export const HIDDEN_HREF = '#/ocultos';
 export const TRASH_HREF = '#/lixeira';
+export const EXAMPLES_HREF = '#/exemplos';
 export const DASHBOARD_HREF = '#/painel';
 export const IMPORT_HREF = '#/importar';
 
@@ -41,6 +44,7 @@ export const SECTION_HREFS = {
   completed: '#/concluidos',
   hidden: HIDDEN_HREF,
   trash: TRASH_HREF,
+  examples: EXAMPLES_HREF,
 } as const satisfies Record<ProjectSection, string>;
 
 const TIMELINE_SECTIONS_BY_HREF = new Map<string, TimelineSection>([
@@ -58,6 +62,7 @@ export function parseRoute(hash: string): Route {
   const path = hash.replace(/\/$/, '');
   if (path === HIDDEN_HREF) return { name: 'hidden' };
   if (path === TRASH_HREF) return { name: 'trash' };
+  if (path === EXAMPLES_HREF) return { name: 'examples' };
   if (path === DASHBOARD_HREF) return { name: 'dashboard' };
   if (path === IMPORT_HREF) return { name: 'import' };
   const section = TIMELINE_SECTIONS_BY_HREF.get(path);

@@ -106,6 +106,7 @@ const projectFieldsSchema = z.object({
   lifecycle: lifecycleSchema,
   hiddenAt: isoDateTimeSchema.nullable(),
   deletedAt: isoDateTimeSchema.nullable(),
+  demo: z.boolean(),
   sortOrder: z.number().int().nonnegative(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
@@ -169,6 +170,7 @@ export const projectDraftSchema = projectFieldsSchema
     lifecycle: true,
     hiddenAt: true,
     deletedAt: true,
+    demo: true,
   })
   .superRefine(checkDateInvariants);
 

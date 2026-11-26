@@ -1,18 +1,12 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { cell, maxRowBarOffset, openSampleSchedule } from './helpers';
+import { cell, maxRowBarOffset, openSamplePortfolio, openSampleSchedule } from './helpers';
 
 /**
  * Cross-module scenarios of the project lifecycle extension (status, sidebar, hide and
  * trash, expanded dialog, task-based progress, daily check-ins and the forecast), run in
  * the real browser on the production build.
  */
-
-async function loadSample(page: Page) {
-  await page.goto('./');
-  await page.getByRole('button', { name: 'Carregar dados de exemplo' }).click();
-  await page.getByRole('button', { name: 'Fechar aviso' }).click();
-}
 
 function nav(page: Page): Locator {
   return page.getByRole('navigation', { name: 'Seções' });
@@ -55,7 +49,7 @@ async function completedOnDashboard(page: Page): Promise<string> {
 test.describe('project experience', () => {
   test('scenario A: lifecycle, sections, hidden projects and the trash', async ({ page }) => {
     const title = 'Certificação AWS';
-    await loadSample(page);
+    await openSamplePortfolio(page);
     await goTo(page, /^Ativos/);
     await expect(
       page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title }),
@@ -133,7 +127,7 @@ test.describe('project experience', () => {
 
     // Collapsed sidebar: every destination still reachable, and remembered.
     await page.getByRole('button', { name: 'Recolher menu' }).click();
-    await expect(nav(page).getByRole('link')).toHaveCount(8);
+    await expect(nav(page).getByRole('link')).toHaveCount(9);
     await page.reload();
     await expect(page.getByRole('button', { name: 'Expandir menu' })).toBeVisible();
     await nav(page)
@@ -145,7 +139,7 @@ test.describe('project experience', () => {
   test('scenario B: the expanded dialog shows the same project as the full page', async ({
     page,
   }) => {
-    await loadSample(page);
+    await openSamplePortfolio(page);
     const url = page.url();
     await page
       .getByRole('region', { name: 'Linha do tempo' })
@@ -205,5 +199,37 @@ test.describe('project experience', () => {
     await page.keyboard.press('Escape');
     await expect(cell(page, name, 7)).not.toHaveText('100%');
     expect(await counted()).toBe(before);
+  });
+
+  test('scenario E: sample projects stay apart and can start a real project', async ({ page }) => {
+    await page.goto('./');
+    await page.getByRole('link', { name: 'Explorar exemplos' }).click();
+    await page.getByRole('button', { name: 'Explorar exemplos' }).click();
+    const samples = page.getByRole('list', { name: 'Projetos de exemplo', exact: true });
+    await expect(samples.getByRole('listitem')).toHaveCount(3);
+    expect(await countOf(page, /^Exemplos/)).toBe(3);
+    expect(await countOf(page, /^Todos os projetos/)).toBe(0);
+
+    // A sample opens read-only, with its full plan.
+    await samples.getByRole('link', { name: 'Implantação de SDAI na planta fabril' }).click();
+    await expect(page.getByRole('treegrid')).toBeVisible();
+    await expect(page.getByText(/Projeto de exemplo, com dados fictícios/)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Nova tarefa/ })).toBeDisabled();
+
+    // Its copy is a real, editable project with nothing of what happened in the sample.
+    await page.goBack();
+    await page
+      .getByRole('button', {
+        name: 'Criar projeto a partir de “Implantação de SDAI na planta fabril”',
+      })
+      .click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Título do novo projeto').fill('SDAI planta 2');
+    await dialog.getByRole('button', { name: 'Criar projeto' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('SDAI planta 2');
+    await expect(page.getByRole('button', { name: /Nova tarefa/ })).toBeEnabled();
+    await expect(page.locator('header')).toContainText(/0 de \d+ tarefas concluídas/);
+    expect(await countOf(page, /^Todos os projetos/)).toBe(1);
+    expect(await countOf(page, /^Exemplos/)).toBe(3);
   });
 });

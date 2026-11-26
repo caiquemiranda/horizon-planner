@@ -1,10 +1,27 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-/** Opens the app with the sample data and the industrial project's schedule. */
-export async function openSampleSchedule(page: Page): Promise<void> {
+import { getTodayIsoDate } from '@/features/timeline/lib/time';
+import { createSampleStorage } from '@/test/sampleStorage';
+
+/**
+ * Opens the app with the test portfolio already stored (`src/test/sampleData.ts`), as a
+ * returning user would. Written once per page, before the app starts.
+ */
+export async function openSamplePortfolio(page: Page): Promise<void> {
+  await page.addInitScript((entries: [string, string][]) => {
+    if (window.sessionStorage.getItem('e2e-seeded')) return;
+    window.sessionStorage.setItem('e2e-seeded', '1');
+    for (const [key, value] of entries) window.localStorage.setItem(key, value);
+  }, createSampleStorage(getTodayIsoDate()));
   await page.goto('./');
-  await page.getByRole('button', { name: 'Carregar dados de exemplo' }).click();
-  await page.getByRole('button', { name: 'Fechar aviso' }).click();
+  await expect(page.getByRole('region', { name: 'Linha do tempo' })).toBeVisible();
+  // Every project in view, as after loading data in the app.
+  await page.keyboard.press('f');
+}
+
+/** Opens the app with the test portfolio and the industrial project's schedule. */
+export async function openSampleSchedule(page: Page): Promise<void> {
+  await openSamplePortfolio(page);
   await page
     .getByRole('region', { name: 'Linha do tempo' })
     .getByRole('button', { name: 'Implantação de Sistema Industrial' })

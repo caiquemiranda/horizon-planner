@@ -2,7 +2,6 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createSampleProjects } from '@/features/data-io/lib/sampleData';
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
@@ -10,6 +9,7 @@ import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
 import { projectRepository } from '@/services/persistence';
 import { expectNoAxeViolations } from '@/test/axe';
+import { createSampleProjects } from '@/test/sampleData';
 import { showWholeTimeline } from '@/test/timeline';
 
 import { App } from '../App';

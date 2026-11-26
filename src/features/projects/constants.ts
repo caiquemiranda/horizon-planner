@@ -1,7 +1,7 @@
 import type { Horizon, ProjectColor, ProjectStatus } from '@/types/project';
 
 /** Current version of the persisted / exported data format. */
-export const SNAPSHOT_SCHEMA_VERSION = 3 as const;
+export const SNAPSHOT_SCHEMA_VERSION = 4 as const;
 
 /** Validation limits shared by the schemas and the form. */
 export const FIELD_LIMITS = {

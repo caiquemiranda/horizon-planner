@@ -23,7 +23,8 @@ describe('sections', () => {
   const hiddenCompleted = of('completed', { hiddenAt: AT });
   const trashedHidden = of('paused', { hiddenAt: AT, deletedAt: AT });
   const trashed = of('in_progress', { deletedAt: AT });
-  const all = [...visible, hiddenCompleted, trashedHidden, trashed];
+  const sample = makeProject({ status: 'in_progress', title: 'Exemplo', demo: true });
+  const all = [...visible, hiddenCompleted, trashedHidden, trashed, sample];
 
   it('splits visible projects by status without overlap', () => {
     expect(selectSection(all, 'active').map((project) => project.status)).toEqual([
@@ -50,6 +51,13 @@ describe('sections', () => {
     expect(isInSection(hiddenCompleted, 'all')).toBe(false);
   });
 
+  it('keeps a sample project in "Exemplos" only, whatever its status', () => {
+    expect(PROJECT_SECTIONS.filter((section) => isInSection(sample, section))).toEqual([
+      'examples',
+    ]);
+    expect(getHomeSection(sample)).toBe('examples');
+  });
+
   it('puts every trashed project in the trash only', () => {
     for (const project of [trashedHidden, trashed]) {
       expect(PROJECT_SECTIONS.filter((section) => isInSection(project, section))).toEqual([
@@ -68,6 +76,7 @@ describe('sections', () => {
       completed: 1,
       hidden: 1,
       trash: 2,
+      examples: 1,
     });
     for (const section of PROJECT_SECTIONS) {
       expect(counts[section]).toBe(selectSection(all, section).length);

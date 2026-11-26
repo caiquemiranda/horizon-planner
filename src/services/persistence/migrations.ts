@@ -20,6 +20,7 @@ export type SnapshotMigration = (snapshot: UnknownRecord) => UnknownRecord;
 export const SNAPSHOT_MIGRATIONS: Readonly<Partial<Record<number, SnapshotMigration>>> = {
   1: addLifecycle,
   2: addVisibility,
+  3: addDemoFlag,
 };
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -43,6 +44,18 @@ function addVisibility(snapshot: UnknownRecord): UnknownRecord {
     schemaVersion: 3,
     projects: projects.map((project: unknown) =>
       isRecord(project) ? { ...project, hiddenAt: null, deletedAt: null } : project,
+    ),
+  };
+}
+
+/** v3 → v4: sample projects did not exist as such, so every stored project is a real one. */
+function addDemoFlag(snapshot: UnknownRecord): UnknownRecord {
+  const projects = Array.isArray(snapshot.projects) ? snapshot.projects : [];
+  return {
+    ...snapshot,
+    schemaVersion: 4,
+    projects: projects.map((project: unknown) =>
+      isRecord(project) ? { ...project, demo: false } : project,
     ),
   };
 }

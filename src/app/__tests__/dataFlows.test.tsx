@@ -9,10 +9,10 @@ import { SNAPSHOT_SCHEMA_VERSION } from '@/features/projects/constants';
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
+import { EXAMPLES_HREF } from '@/lib/router';
 import { projectRepository } from '@/services/persistence';
 import { makeDraft } from '@/services/persistence/__tests__/helpers';
 import { makeProject } from '@/test/factories';
-import { timelineBarTitles } from '@/test/timeline';
 import type { HorizonSnapshot } from '@/types/project';
 
 import { App } from '../App';
@@ -59,32 +59,16 @@ describe('data flows', () => {
     vi.restoreAllMocks();
   });
 
-  it('loads the sample data from the empty state', async () => {
+  it('offers the sample projects from the empty state, never replacing data with them', async () => {
     const user = userEvent.setup();
     await renderApp();
 
-    await user.click(screen.getByRole('button', { name: 'Carregar dados de exemplo' }));
-
-    await waitFor(async () => {
-      expect(await storedTitles()).toContain('Reforma da cozinha');
-    });
-    expect(timelineBarTitles()).toContain('Mestrado');
-    expect(screen.getByText('Dados de exemplo carregados.')).toBeInTheDocument();
-  });
-
-  it('asks before replacing projects with the sample data', async () => {
-    const user = userEvent.setup();
-    await projectRepository.create(makeDraft({ title: 'Piano' }));
-    await renderApp();
-
-    await chooseDataAction(user, 'Carregar dados de exemplo');
-    const dialog = await screen.findByRole('alertdialog');
-    expect(dialog).toHaveTextContent(
-      'O projeto atual será substituído pelos projetos de exemplo. Exporte um backup antes se quiser guardá-lo.',
+    expect(screen.getByRole('link', { name: 'Explorar exemplos' })).toHaveAttribute(
+      'href',
+      EXAMPLES_HREF,
     );
-
-    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
-    expect(await storedTitles()).toEqual(['Piano']);
+    await user.click(screen.getByRole('button', { name: 'Dados' }));
+    expect(await screen.findByRole('menu')).not.toHaveTextContent(/exemplo/i);
   });
 
   it('exports every project as a JSON backup', async () => {

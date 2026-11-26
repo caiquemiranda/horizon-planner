@@ -1,12 +1,4 @@
-import {
-  Database,
-  Download,
-  FileSpreadsheet,
-  FileUp,
-  FlaskConical,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { Database, Download, FileSpreadsheet, FileUp, Trash2, Upload } from 'lucide-react';
 import { type ChangeEvent, useRef, useState } from 'react';
 
 import {
@@ -30,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { selectOwnProjects } from '@/features/projects/lib/visibility';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { IMPORT_HREF } from '@/lib/router';
 
@@ -40,14 +33,14 @@ import { useNoticeStore } from '../store/noticeStore';
 
 type PendingAction =
   | { kind: 'import'; snapshot: HorizonBackup; fileName: string }
-  | { kind: 'sample' }
   | { kind: 'clear' }
   | { kind: 'error'; message: string; details: readonly string[] };
 
-/** Export, import, sample data and "clear all", each replacing data only after confirmation. */
+/** Export, import and "clear all", each replacing data only after confirmation. */
 export function DataMenu() {
-  const projectCount = useProjectsStore((state) => state.projects.length);
-  const { exportBackup, replaceProjects, loadSample, clearAll } = useDataActions();
+  // The user's own projects: the samples of "Exemplos" are never exported or counted.
+  const projectCount = useProjectsStore((state) => selectOwnProjects(state.projects).length);
+  const { exportBackup, replaceProjects, clearAll } = useDataActions();
   const showNotice = useNoticeStore((state) => state.show);
   const inputRef = useRef<HTMLInputElement>(null);
   // Kept after closing so the dialog content does not change during its exit animation.
@@ -90,7 +83,6 @@ export function DataMenu() {
     if (!pending) return;
     setDialogOpen(false);
     if (pending.kind === 'import') await importSnapshot(pending.snapshot);
-    else if (pending.kind === 'sample') await loadSample();
     else if (pending.kind === 'clear') await clearAll();
   };
 
@@ -107,7 +99,7 @@ export function DataMenu() {
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent>Importar, exportar e dados de exemplo</TooltipContent>
+          <TooltipContent>Importar e exportar dados</TooltipContent>
         </Tooltip>
 
         <DropdownMenuContent align="end" className="w-60">
@@ -144,15 +136,6 @@ export function DataMenu() {
               <FileUp />
               Importar planilha (Excel/CSV)…
             </a>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              if (hasProjects) setPending({ kind: 'sample' });
-              else void loadSample();
-            }}
-          >
-            <FlaskConical />
-            Carregar dados de exemplo
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -198,11 +181,7 @@ export function DataMenu() {
                     void confirm();
                   }}
                 >
-                  {pending?.kind === 'import'
-                    ? 'Importar e substituir'
-                    : pending?.kind === 'sample'
-                      ? 'Carregar exemplo'
-                      : 'Apagar tudo'}
+                  {pending?.kind === 'import' ? 'Importar e substituir' : 'Apagar tudo'}
                 </AlertDialogAction>
               </>
             )}
@@ -227,15 +206,6 @@ function DialogBody({ pending, projectCount }: { pending: PendingAction; project
           <AlertDialogDescription>
             {current} {replaced} pelo conteúdo de “{pending.fileName}” (
             {pluralizeProjects(pending.snapshot.projects.length)}). {backupTip}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-      );
-    case 'sample':
-      return (
-        <AlertDialogHeader>
-          <AlertDialogTitle>Carregar os dados de exemplo?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {current} {replaced} pelos projetos de exemplo. {backupTip}
           </AlertDialogDescription>
         </AlertDialogHeader>
       );

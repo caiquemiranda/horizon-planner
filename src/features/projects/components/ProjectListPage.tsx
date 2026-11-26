@@ -20,13 +20,13 @@ import { formatDateRange } from '@/features/timeline/lib/format';
 import type { Project } from '@/types/project';
 
 import { COLOR_META } from '../constants';
-import { type ProjectPlacement, selectByPlacement } from '../lib/visibility';
+import { selectByPlacement } from '../lib/visibility';
 import { useDrawerStore } from '../store/drawerStore';
 import { useProjectsStore } from '../store/projectsStore';
 import { StatusPill } from './LifecycleSection';
 import { NavigationDrawerButton, NavigationRail } from './NavigationSidebar';
 
-type ListPlacement = Exclude<ProjectPlacement, 'listed'>;
+type ListPlacement = 'hidden' | 'trash';
 
 const COPY: Record<ListPlacement, { title: string; description: string; empty: string }> = {
   hidden: {

@@ -1,17 +1,16 @@
 import { useCallback } from 'react';
 
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
+import { selectOwnProjects } from '@/features/projects/lib/visibility';
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { getProjectsExtent } from '@/features/timeline/lib/layout';
-import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
 import { scheduleRepository } from '@/services/persistence';
 import type { Project } from '@/types/project';
 import type { ProjectSchedule } from '@/types/schedule';
 
 import { createBackup, downloadTextFile, getBackupFileName, serializeBackup } from '../lib/backup';
-import { createSampleData } from '../lib/sampleData';
 import { useNoticeStore } from '../store/noticeStore';
 
 export function pluralizeProjects(count: number): string {
@@ -29,7 +28,6 @@ export interface DataActions {
     notice: string,
     schedules?: ProjectSchedule[],
   ) => Promise<void>;
-  loadSample: () => Promise<void>;
   clearAll: () => Promise<void>;
 }
 
@@ -40,7 +38,8 @@ export function useDataActions(): DataActions {
 
   const exportBackup = useCallback(async () => {
     const now = new Date();
-    const { projects } = useProjectsStore.getState();
+    // The samples are not the user's data: "Exemplos" installs them again at any time.
+    const projects = selectOwnProjects(useProjectsStore.getState().projects);
     let schedules: ProjectSchedule[];
     try {
       schedules = await scheduleRepository.listAll();
@@ -86,15 +85,10 @@ export function useDataActions(): DataActions {
     [replaceAll, showNotice],
   );
 
-  const loadSample = useCallback(() => {
-    const { projects, schedules } = createSampleData(getTodayIsoDate());
-    return replaceProjects(projects, 'Dados de exemplo carregados.', schedules);
-  }, [replaceProjects]);
-
   const clearAll = useCallback(
     () => replaceProjects([], 'Todos os projetos foram apagados.'),
     [replaceProjects],
   );
 
-  return { exportBackup, replaceProjects, loadSample, clearAll };
+  return { exportBackup, replaceProjects, clearAll };
 }

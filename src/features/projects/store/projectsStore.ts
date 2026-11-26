@@ -57,6 +57,11 @@ export interface ProjectsState {
    * failure leaves both the list and the storage untouched.
    */
   replaceAll: (projects: Project[]) => Promise<void>;
+  /**
+   * Replaces the sample projects only (`demo`), keeping every other project as stored.
+   * An empty list removes the samples.
+   */
+  replaceExamples: (examples: Project[]) => Promise<void>;
   clearError: () => void;
 }
 
@@ -126,7 +131,8 @@ export function createProjectsStore(
       on: boolean,
     ): Promise<void> {
       const project = get().projects.find((item) => item.id === id);
-      if (!project || (project[field] !== null) === on) return;
+      // Samples are never hidden or trashed: "Remover exemplos" removes them.
+      if (!project || project.demo || (project[field] !== null) === on) return;
       const timestamp = now().toISOString();
       await applyPatch(id, { [field]: on ? timestamp : null }, timestamp);
     }
@@ -157,6 +163,8 @@ export function createProjectsStore(
       },
 
       update: async (id, fields) => {
+        // Samples are read-only: their data is the catalog's.
+        if (get().projects.find((project) => project.id === id)?.demo) return;
         // Status, lifecycle and visibility have their own actions, even for untyped callers.
         const {
           status: _status,
@@ -188,6 +196,9 @@ export function createProjectsStore(
       transition: async (id, request, pendingTasks = 0) => {
         const project = get().projects.find((item) => item.id === id);
         if (!project) throw new LifecycleError('Projeto não encontrado.', 'status');
+        if (project.demo) {
+          throw new LifecycleError('Projetos de exemplo não mudam de status.', 'status');
+        }
         const clock = now();
         const patch = applyTransition(project, request, {
           today: getTodayIsoDate(clock),
@@ -224,6 +235,20 @@ export function createProjectsStore(
       replaceAll: async (projects) => {
         try {
           await repository.replaceAll(projects);
+          set({ projects: await repository.list(), error: null });
+        } catch (error) {
+          set({ error: describeError(error) });
+          throw error;
+        }
+      },
+
+      replaceExamples: async (examples) => {
+        try {
+          const own = (await repository.list()).filter((project) => !project.demo);
+          await repository.replaceAll([
+            ...own,
+            ...examples.map((project) => ({ ...project, demo: true })),
+          ]);
           set({ projects: await repository.list(), error: null });
         } catch (error) {
           set({ error: describeError(error) });
