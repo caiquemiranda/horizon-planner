@@ -54,9 +54,11 @@ describe('project flows', () => {
     await waitFor(() => {
       expect(within(getDrawer()).getByRole('heading', { name: 'Maratona' })).toBeInTheDocument();
     });
-    expect(screen.getByRole('list', { name: 'Projetos de curto prazo' })).toHaveTextContent(
-      'Maratona',
-    );
+    expect(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('list', {
+        name: 'Projetos',
+      }),
+    ).toHaveTextContent('Maratona');
     expect((await projectRepository.list()).map((project) => project.title)).toEqual(['Maratona']);
   });
 
@@ -103,9 +105,11 @@ describe('project flows', () => {
     await user.type(title, ' clássico');
 
     // The sidebar (and the bar) update before anything is "saved".
-    expect(screen.getByRole('list', { name: 'Projetos de médio prazo' })).toHaveTextContent(
-      'Piano clássico',
-    );
+    expect(
+      within(screen.getByRole('region', { name: 'Linha do tempo' })).getByRole('list', {
+        name: 'Projetos',
+      }),
+    ).toHaveTextContent('Piano clássico');
     await waitFor(async () => {
       expect((await projectRepository.list())[0]?.title).toBe('Piano clássico');
     });

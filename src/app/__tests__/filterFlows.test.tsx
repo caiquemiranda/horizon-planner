@@ -68,14 +68,15 @@ describe('filter flows', () => {
     expect(screen.getByRole('button', { name: 'Filtros (1 ativos)' })).toBeInTheDocument();
   });
 
-  it('hides the lanes of unselected horizons', async () => {
+  it('hides the projects of unselected horizons', async () => {
     const user = userEvent.setup();
     await renderApp();
 
     await toggleOption(user, /^Longo prazo/);
 
-    expect(screen.queryByRole('list', { name: 'Projetos de curto prazo' })).not.toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Projetos de longo prazo' })).toHaveTextContent('Casa');
+    const timeline = within(screen.getByRole('region', { name: 'Linha do tempo' }));
+    expect(timeline.getByRole('list', { name: 'Projetos' })).toHaveTextContent('Casa');
+    expect(timeline.queryByText('Corrida')).not.toBeInTheDocument();
   });
 
   it('filters projects without a category', async () => {

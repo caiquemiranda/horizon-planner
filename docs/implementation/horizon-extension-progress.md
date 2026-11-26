@@ -27,7 +27,7 @@ its acceptance tests pass in CI.
 | 12b   | `feat/remove-lane-column`       | Owner request (only one project list)                | Delivered | #43          | `Timeline.test.tsx`, app flows reading the bars, e2e; checked in Chrome                                            |
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | Delivered | #42          | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | Delivered | #44          | `catalog.test.ts` (catalog, clone), store, sections, statistics, migration, `examplesFlows` (incl. axe), e2e E     |
-| 15    | `feat/project-report`           | REQ-RPT-01–04                                        | In review | —            | `report.test.ts`, `router.test.ts`, `reportFlows` (incl. axe), e2e F; checked in Chrome                            |
+| 15    | `feat/project-report`           | REQ-RPT-01–04                                        | Delivered | #45          | `report.test.ts`, `router.test.ts`, `reportFlows` (incl. axe), e2e F; checked in Chrome                            |
 | 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Pending   | —            | —                                                                                                                  |
 | 17    | `test/project-features-e2e`     | §15                                                  | Pending   | —            | —                                                                                                                  |
 

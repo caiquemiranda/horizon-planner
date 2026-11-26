@@ -78,7 +78,7 @@ Headings use `tracking-tight` and `text-balance`. Never go below 10px.
 ## Spacing, size and radius
 
 - **4px grid.** Paddings and gaps are multiples of 4 (Tailwind units of 1).
-- **Density.** Header 48px, ruler 56px, lane header 32px, project row 40px, bars 28px.
+- **Density.** Header 48px, ruler 56px, project row 40px, bars 28px.
   The pixel values the layout math needs live in `TIMELINE_METRICS` and must match the
   CSS variables.
 - **Radius.** `rounded-md` (8px) for controls and bars, `rounded-lg` (10px) for
