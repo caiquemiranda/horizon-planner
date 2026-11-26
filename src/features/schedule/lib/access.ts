@@ -18,8 +18,15 @@ export interface ScheduleAccess {
 export const FULL_ACCESS: ScheduleAccess = { canEdit: true, reason: null };
 
 export function getScheduleAccess(
-  project: Pick<Project, 'status'> & Partial<Pick<Project, 'deletedAt'>>,
+  project: Pick<Project, 'status'> & Partial<Pick<Project, 'deletedAt' | 'demo'>>,
 ): ScheduleAccess {
+  if (project.demo) {
+    return {
+      canEdit: false,
+      reason:
+        'Projeto de exemplo, com dados fictícios: o cronograma está somente para leitura. Para editar, crie um projeto a partir deste exemplo em Exemplos.',
+    };
+  }
   if (project.deletedAt) {
     return {
       canEdit: false,

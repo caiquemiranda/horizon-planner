@@ -127,7 +127,7 @@ describe('navigation sidebar', () => {
     expect(expand).toHaveAttribute('aria-expanded', 'false');
     // Names stay available to assistive technology, with the count spelled out.
     expect(nav().getByRole('link', { name: 'Ativos, 2 projetos' })).toBeInTheDocument();
-    expect(nav().getAllByRole('link')).toHaveLength(8);
+    expect(nav().getAllByRole('link')).toHaveLength(9);
     expect(window.localStorage.getItem(SIDEBAR_STORAGE_KEY)).toBe('collapsed');
 
     await user.hover(nav().getByRole('link', { name: /^Lixeira/ }));

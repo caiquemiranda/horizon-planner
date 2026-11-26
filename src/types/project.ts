@@ -115,6 +115,11 @@ export interface Project {
    * `null`; only the trash offers permanent deletion.
    */
   deletedAt: ISODateTime | null;
+  /**
+   * A sample project installed from "Exemplos": fictional data, read-only, listed only in
+   * that section and left out of every indicator. Set only by the examples catalog.
+   */
+  demo: boolean;
   /** Manual ordering inside the horizon lane. */
   sortOrder: number;
   createdAt: ISODateTime;
@@ -124,7 +129,7 @@ export interface Project {
 /** Fields the user provides when creating a project. */
 export type ProjectDraft = Omit<
   Project,
-  'id' | 'createdAt' | 'updatedAt' | 'sortOrder' | 'lifecycle' | 'hiddenAt' | 'deletedAt'
+  'id' | 'createdAt' | 'updatedAt' | 'sortOrder' | 'lifecycle' | 'hiddenAt' | 'deletedAt' | 'demo'
 >;
 
 /** Partial update applied to an existing project by the repository. */
@@ -142,7 +147,7 @@ export type ProjectFieldsPatch = Omit<
 
 /** Shape used for JSON export / import and for `localStorage`. */
 export interface HorizonSnapshot {
-  schemaVersion: 3;
+  schemaVersion: 4;
   exportedAt: ISODateTime;
   projects: Project[];
 }

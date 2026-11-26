@@ -6,7 +6,6 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { DataMenu } from '@/features/data-io/components/DataMenu';
-import { useDataActions } from '@/features/data-io/hooks/useDataActions';
 import { ActiveFiltersBar } from '@/features/filters/components/ActiveFiltersBar';
 import { FilterMenu } from '@/features/filters/components/FilterMenu';
 import { useFilteredProjects } from '@/features/filters/hooks/useFilteredProjects';
@@ -19,6 +18,7 @@ import {
 import { NewProjectButton } from '@/features/projects/components/NewProjectButton';
 import { ProjectPanel } from '@/features/projects/components/ProjectPanel';
 import { isInSection, type TimelineSection } from '@/features/projects/lib/sections';
+import { selectOwnProjects } from '@/features/projects/lib/visibility';
 import { selectEditingProjectId, useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { Timeline } from '@/features/timeline/components/Timeline';
@@ -27,7 +27,7 @@ import { TimelineToolbar } from '@/features/timeline/components/TimelineToolbar'
 import { isRangeVisible } from '@/features/timeline/lib/layout';
 import { isoRangeToDays } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
-import { HIDDEN_HREF, PORTFOLIO_HREF, TRASH_HREF } from '@/lib/router';
+import { EXAMPLES_HREF, HIDDEN_HREF, PORTFOLIO_HREF, TRASH_HREF } from '@/lib/router';
 import type { Project } from '@/types/project';
 
 interface PortfolioPageProps {
@@ -59,7 +59,8 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
   const expandedProjectId = useDrawerStore((state) => state.expandedProjectId);
   const clearFilters = useFiltersStore((state) => state.clearAll);
   const filtered = useFilteredProjects(projects, selectedProjectId);
-  const { loadSample } = useDataActions();
+  // Samples live in "Exemplos": with only samples installed, the portfolio is still empty.
+  const ownCount = useMemo(() => selectOwnProjects(allProjects).length, [allProjects]);
 
   /** Brings a newly created project into view when it starts or ends off-screen. */
   const revealProject = useCallback((project: Project) => {
@@ -69,7 +70,7 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
   }, []);
 
   const emptyState =
-    allProjects.length === 0 ? (
+    ownCount === 0 ? (
       <TimelineEmptyState
         action={
           <div className="flex flex-wrap justify-center gap-2">
@@ -77,16 +78,10 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
               <Plus />
               Criar projeto
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                void loadSample();
-              }}
-            >
+            <a href={EXAMPLES_HREF} className={buttonVariants({ size: 'sm', variant: 'outline' })}>
               <FlaskConical />
-              Carregar dados de exemplo
-            </Button>
+              Explorar exemplos
+            </a>
           </div>
         }
       />

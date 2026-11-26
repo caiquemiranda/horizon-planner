@@ -65,6 +65,7 @@ export class InMemoryRepository implements ProjectRepository {
         lifecycle: createInitialLifecycle(parsed.data.status, getTodayIsoDate(now), timestamp),
         hiddenAt: null,
         deletedAt: null,
+        demo: false,
         id: this.generateId(),
         sortOrder: this.nextSortOrder(parsed.data.horizon),
         createdAt: timestamp,
@@ -86,6 +87,8 @@ export class InMemoryRepository implements ProjectRepository {
         ...patch,
         id: current.id,
         sortOrder: current.sortOrder,
+        // A sample stays a sample: only the examples catalog decides it.
+        demo: current.demo,
         createdAt: current.createdAt,
         updatedAt: this.now().toISOString(),
       });

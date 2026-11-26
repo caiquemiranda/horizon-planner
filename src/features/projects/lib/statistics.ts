@@ -6,7 +6,8 @@ import type { ISODate, Project } from '@/types/project';
  *
  * Scope: every project that is not in the trash. Hidden projects count (hiding is a
  * display preference and does not erase history); trashed ones do not, and are counted
- * apart. The app has one local user, so "my" projects are all the projects stored here.
+ * apart. The app has one local user, so "my" projects are all the projects stored here,
+ * except the installed sample projects: their data is fictional and never counts.
  *
  * Indicators are not exclusive categories: a project started and completed in the
  * period counts in both. Never add them up.
@@ -67,7 +68,8 @@ export function computeStatistics(
   const inPeriod = (date: ISODate | null) =>
     date !== null && (from === null || date >= from) && date <= today;
 
-  const counted = projects.filter((project) => project.deletedAt === null);
+  const own = projects.filter((project) => !project.demo);
+  const counted = own.filter((project) => project.deletedAt === null);
   const inProgressProjects = counted.filter((project) => project.status === 'in_progress');
 
   const started = counted.filter((project) => inPeriod(project.lifecycle.startedAt)).length;
@@ -95,6 +97,6 @@ export function computeStatistics(
               inProgressProjects.length,
           ),
     total: counted.length,
-    inTrash: projects.length - counted.length,
+    inTrash: own.length - counted.length,
   };
 }

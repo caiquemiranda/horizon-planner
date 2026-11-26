@@ -15,9 +15,11 @@ import { getPlacement } from './visibility';
  * | Concluídos      | visible and completed                             |
  * | Ocultos         | hidden and not in the trash, any status           |
  * | Lixeira         | in the trash, any status or visibility            |
+ * | Exemplos        | installed sample projects, in no other section    |
  *
  * Ativos, Adiados, Não concluídos and Concluídos never overlap, and together they make
  * Todos. Postponed projects are not counted as active: postponing is a decision to stop.
+ * Sample projects are fictional, so they stay in "Exemplos" only.
  */
 export const PROJECT_SECTIONS = [
   'all',
@@ -27,11 +29,12 @@ export const PROJECT_SECTIONS = [
   'completed',
   'hidden',
   'trash',
+  'examples',
 ] as const;
 export type ProjectSection = (typeof PROJECT_SECTIONS)[number];
 
 /** Sections drawn on the timeline (the others have their own list page). */
-export type TimelineSection = Exclude<ProjectSection, 'hidden' | 'trash'>;
+export type TimelineSection = Exclude<ProjectSection, 'hidden' | 'trash' | 'examples'>;
 
 const STATUSES_BY_SECTION: Record<Exclude<TimelineSection, 'all'>, readonly ProjectStatus[]> = {
   active: ['planned', 'in_progress'],
@@ -42,6 +45,7 @@ const STATUSES_BY_SECTION: Record<Exclude<TimelineSection, 'all'>, readonly Proj
 
 export function isInSection(project: Project, section: ProjectSection): boolean {
   const placement = getPlacement(project);
+  if (section === 'examples') return placement === 'examples';
   if (section === 'trash') return placement === 'trash';
   if (section === 'hidden') return placement === 'hidden';
   if (placement !== 'listed') return false;
@@ -99,6 +103,7 @@ export function searchProjects(projects: readonly Project[], query: string): Pro
 /** The section a project is listed in: its status section, or hidden, or the trash. */
 export function getHomeSection(project: Project): Exclude<ProjectSection, 'all'> {
   for (const section of [
+    'examples',
     'trash',
     'hidden',
     'active',

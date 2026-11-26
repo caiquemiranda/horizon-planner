@@ -5,6 +5,7 @@ import {
   CirclePlay,
   CircleX,
   EyeOff,
+  FlaskConical,
   LayoutDashboard,
   LayoutList,
   type LucideIcon,
@@ -49,12 +50,17 @@ export const SECTION_META = {
   completed: { label: 'Concluídos', icon: CircleCheck },
   hidden: { label: 'Ocultos', icon: EyeOff },
   trash: { label: 'Lixeira', icon: Trash2 },
+  examples: { label: 'Exemplos', icon: FlaskConical },
 } as const satisfies Record<ProjectSection, SectionMeta>;
 
-/** Visible-project sections first, then the places projects are kept out of the lists. */
+/**
+ * Visible-project sections first, then the places projects are kept out of the lists,
+ * then the sample projects, apart from the user's own.
+ */
 const GROUPS: readonly (readonly ProjectSection[])[] = [
   ['all', 'active', 'postponed', 'not_completed', 'completed'],
   ['hidden', 'trash'],
+  ['examples'],
 ];
 
 function pluralize(count: number) {

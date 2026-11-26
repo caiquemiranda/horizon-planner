@@ -10,7 +10,7 @@ import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright-core';
-import { preview } from 'vite';
+import { createServer, preview } from 'vite';
 
 const OUTPUT_DIR = fileURLToPath(new URL('../docs/assets/', import.meta.url));
 const PORT = 4318;
@@ -79,11 +79,25 @@ async function openWorkspace(page) {
     .click();
 }
 
+/**
+ * The test portfolio (`src/test/sampleStorage.ts`) as `localStorage` entries, loaded
+ * through Vite so the TypeScript source is the single definition of the data.
+ * @returns {Promise<[string, string][]>}
+ */
+async function loadSampleStorage() {
+  const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
+  try {
+    const { createSampleStorage } = await vite.ssrLoadModule('/src/test/sampleStorage.ts');
+    const { getTodayIsoDate } = await vite.ssrLoadModule('/src/features/timeline/lib/time.ts');
+    return createSampleStorage(getTodayIsoDate());
+  } finally {
+    await vite.close();
+  }
+}
+
 /** @param {Page} page */
-async function loadSampleData(page) {
-  await page.getByRole('button', { name: 'Carregar dados de exemplo' }).click();
+async function waitForSampleData(page) {
   await page.getByRole('list', { name: 'Projetos de curto prazo' }).waitFor();
-  await page.getByRole('button', { name: 'Fechar aviso' }).click();
 }
 
 /**
@@ -112,6 +126,7 @@ async function launchBrowser() {
 
 async function main() {
   await mkdir(OUTPUT_DIR, { recursive: true });
+  const storage = await loadSampleStorage();
   const server = await preview({ preview: { port: PORT, strictPort: true, open: false } });
   const browser = await launchBrowser();
 
@@ -125,13 +140,18 @@ async function main() {
         reducedMotion: 'reduce',
         locale: 'pt-BR',
       });
-      await context.addInitScript((theme) => {
-        localStorage.setItem('horizon-planner:theme', theme);
-      }, shot.theme);
+      await context.addInitScript(
+        ({ theme, entries }) => {
+          localStorage.setItem('horizon-planner:theme', theme);
+          if (localStorage.getItem('horizon-planner:data')) return;
+          for (const [key, value] of entries) localStorage.setItem(key, value);
+        },
+        { theme: shot.theme, entries: storage },
+      );
 
       const page = await context.newPage();
       await page.goto(`http://localhost:${String(PORT)}/`);
-      await loadSampleData(page);
+      await waitForSampleData(page);
       await shot.arrange(page);
       await page.mouse.move(0, 0);
       await settle(page);

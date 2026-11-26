@@ -68,6 +68,18 @@ describe('migrateSnapshot', () => {
     );
   });
 
+  it('v3 → v4: every stored project is a real one, not a sample', async () => {
+    const { projects } = await validSnapshot();
+    const v3 = projects.map(({ demo: _demo, ...project }) => project);
+    const migrated = migrateSnapshot({
+      schemaVersion: 3,
+      exportedAt: '2026-11-26T12:00:00.000Z',
+      projects: v3,
+    });
+    expect(migrated.schemaVersion).toBe(4);
+    expect(migrated.projects).toEqual(projects.map((project) => ({ ...project, demo: false })));
+  });
+
   describe('v1 → v2: lifecycle backfill', () => {
     /** A project as version 1 stored it: no `lifecycle`. */
     function v1Project(status: string, extra: Record<string, unknown> = {}) {
@@ -158,12 +170,16 @@ describe('migrateSnapshot', () => {
           calls.push(3);
           return { ...data, schemaVersion: 4 };
         }),
+        4: vi.fn((data: Record<string, unknown>) => {
+          calls.push(4);
+          return { ...data, schemaVersion: 5 };
+        }),
       };
 
-      // The current schema does not validate v4, so the final validation fails on purpose:
+      // The current schema does not validate v5, so the final validation fails on purpose:
       // this test only asserts the order in which migrations run.
-      expect(() => migrateSnapshot(snapshot, migrations, 4)).toThrow();
-      expect(calls).toEqual([1, 2, 3]);
+      expect(() => migrateSnapshot(snapshot, migrations, 5)).toThrow();
+      expect(calls).toEqual([1, 2, 3, 4]);
     });
 
     it('fails when a migration step is missing', () => {
