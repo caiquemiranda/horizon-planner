@@ -28,7 +28,9 @@ its acceptance tests pass in CI.
 | 13    | `feat/wbs-import-commit`        | REQ-XLS-03/04/08                                     | Delivered | #42          | `wbsCommit` unit tests (rollback, idempotency, round trip), `importFlows`; checked in Chrome                       |
 | 14    | `feat/sample-projects`          | REQ-DEMO-01                                          | Delivered | #44          | `catalog.test.ts` (catalog, clone), store, sections, statistics, migration, `examplesFlows` (incl. axe), e2e E     |
 | 15    | `feat/project-report`           | REQ-RPT-01–04                                        | Delivered | #45          | `report.test.ts`, `router.test.ts`, `reportFlows` (incl. axe), e2e F; checked in Chrome                            |
-| 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Pending   | —            | —                                                                                                                  |
+| 15a   | `feat/timeline-flat-rows`       | Owner request (no horizon headers on the timeline)   | Delivered | #46          | `Timeline.test.tsx`, filter and project flows, e2e; checked in Chrome                                              |
+| 15b   | `feat/sidebar-filters`          | Owner request (filters and view in the sidebar)      | Delivered | #47          | `filterFlows`, `TimelineViewControls`, `accessibility` (axe), e2e; checked in Chrome (dark)                        |
+| 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Delivered | #48          | `ganttPages.test.ts`, `ReportGantt.test.tsx`, `reportFlows`, e2e G (real A4 PDF); PDF read page by page            |
 | 17    | `test/project-features-e2e`     | §15                                                  | Pending   | —            | —                                                                                                                  |
 
 ## Log
@@ -302,7 +304,7 @@ its acceptance tests pass in CI.
   "Lixeira" ✅; expanded lets you read and find projects ✅; collapsed frees width (1 184 →
   1 384 px) and stays navigable by keyboard, tooltips and search ✅; preference kept ✅;
   choosing a project opens its own workspace ✅; lists and counts follow changes ✅; rows and
-  bars stay aligned (0 px) when toggling ✅. Print: the report (order 16) hides it.
+  bars stay aligned (0 px) when toggling ✅. Print: the report (order 16) hides it ✅.
 - Tests: 798 Vitest tests passing (8 new) and 11 Playwright tests; Chrome check with the
   sample data and with 250 projects (search answered in about 60 ms), no console errors.
 
@@ -481,6 +483,41 @@ its acceptance tests pass in CI.
 - Printing (stylesheet, footer button, segmented Gantt) is order 16.
 - Tests: 892 Vitest tests and 13 Playwright tests passing (scenario F); Chrome check in
   both themes with the samples (in progress and final), no console errors.
+
+### 15a · `feat/timeline-flat-rows` and 15b · `feat/sidebar-filters`
+
+- Owner requests: the timeline lost its horizon headers (one row per project, in the
+  sidebar's order), and every filter and view control moved into the navigation sidebar
+  ("Visualização" and a foldable "Filtros" panel; "Hoje" and a filter button on the
+  collapsed rail). The shortcuts list became a dialog, so `?` works with the rail
+  collapsed. Details in the CHANGELOG.
+
+### 16 · `feat/project-report-print`
+
+- "Imprimir / Salvar em PDF" at the end of the report (and "Imprimir" in its header)
+  calls `window.print()`; a note says to choose "Salvar como PDF" in the dialog. The app
+  does not pick the destination or the file name: that is the browser's (decision 2).
+- Print stylesheet: `@page` A4 with margins and "Página N de M" in the footer margin;
+  header, explorer and buttons hidden; the page scrolls as one document; cards, charts,
+  table rows and Gantt pages are not split, headings stay with their content, the WBS
+  table repeats its header and drops its minimum width; KPI, chart and pending-work grids
+  keep their columns on paper.
+- Paper is always light: the dark tokens, the `dark:` variant and the dark color scheme
+  apply to the screen only, so a dark theme on screen still prints white pages with the
+  chart colors (`print-color-adjust: exact`).
+- Segmented Gantt (`features/report/lib/ganttPages.ts`): pages of at most 36 rows and
+  about six months, cut on the first day of a month, rows balanced across pages. Each
+  page repeats the ruler, the task codes and the legend and says which rows and dates it
+  covers; bars cut by a page edge are clipped with an arrow on that edge. Links between
+  rows on different pages are not drawn and the page says so: they are in the WBS
+  "Predecessoras" column. The screen keeps the whole chart.
+- Footer with the document reference (`RA`/`RF`, project, data date) and the generation
+  time, printed.
+- Validation: e2e scenario G prints the sample industrial project to a real A4 PDF in
+  Chrome with the dark theme on (3 pages: cover, indicators and charts; pending work and
+  WBS; Gantt, notes and footer) and checks the light tokens and hidden controls; the PDF
+  was read page by page. Firefox and Safari print dialogs were not tested (manual check).
+- Tests: 911 Vitest tests and 14 Playwright tests passing.
 
 ## Impediments
 

@@ -57,6 +57,7 @@ Open any project ("Abrir cronograma") to plan it in detail: an editable **task t
 | **Daily check-ins**   | "Atividades do dia" confirms the work planned for a day (or an earlier day) and lists late tasks.                                                    |
 | **Finish forecast**   | Planned finish, forecast from the remaining work and the links, variance in working days with its causes, and an optional baseline.                  |
 | **Expanded view**     | The workspace in a large dialog over the portfolio, without leaving the page.                                                                        |
+| **Project report**    | Progress or final report from the current plan (summary, indicators, charts, WBS, Gantt), printed or saved as an A4 PDF from the browser.            |
 | **Robustness**        | Saved per project with conflict detection across tabs, read-only closed projects, row virtualization for 1 000+ tasks.                               |
 
 Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module.md) · measurements: [`docs/performance.md`](./docs/performance.md) · lifecycle, progress and forecast: [`docs/implementation/`](./docs/implementation/horizon-extension-progress.md).

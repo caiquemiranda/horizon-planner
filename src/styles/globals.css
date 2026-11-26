@@ -3,11 +3,18 @@
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/geist-mono';
 
-@custom-variant dark (&:is(.dark *));
+/* Dark styles are for the screen: printing always uses the light tokens (paper is white). */
+@custom-variant dark {
+  @media screen {
+    &:is(.dark *) {
+      @slot;
+    }
+  }
+}
 
 /*
  * Design tokens
- * Light theme on :root, dark theme (default) on .dark.
+ * Light theme on :root, dark theme (default) on .dark, on screen only.
  * Horizon accents: short = cyan, medium = violet, long = amber.
  */
 :root {
@@ -63,42 +70,44 @@
   --report-done: oklch(0.55 0.13 150);
 }
 
-.dark {
-  --background: oklch(0.13 0.004 286);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.17 0.005 286);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.19 0.006 286);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.93 0 0);
-  --primary-foreground: oklch(0.17 0 0);
-  --secondary: oklch(0.24 0.006 286);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.24 0.006 286);
-  --muted-foreground: oklch(0.7 0.012 286);
-  --subtle-foreground: oklch(0.55 0.012 286);
-  --accent: oklch(0.26 0.008 286);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.7 0.19 22);
-  --destructive-foreground: oklch(0.17 0 0);
-  --border: oklch(1 0 0 / 9%);
-  --border-strong: oklch(1 0 0 / 16%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.55 0.01 286);
+@media screen {
+  .dark {
+    --background: oklch(0.13 0.004 286);
+    --foreground: oklch(0.97 0 0);
+    --card: oklch(0.17 0.005 286);
+    --card-foreground: oklch(0.97 0 0);
+    --popover: oklch(0.19 0.006 286);
+    --popover-foreground: oklch(0.97 0 0);
+    --primary: oklch(0.93 0 0);
+    --primary-foreground: oklch(0.17 0 0);
+    --secondary: oklch(0.24 0.006 286);
+    --secondary-foreground: oklch(0.97 0 0);
+    --muted: oklch(0.24 0.006 286);
+    --muted-foreground: oklch(0.7 0.012 286);
+    --subtle-foreground: oklch(0.55 0.012 286);
+    --accent: oklch(0.26 0.008 286);
+    --accent-foreground: oklch(0.97 0 0);
+    --destructive: oklch(0.7 0.19 22);
+    --destructive-foreground: oklch(0.17 0 0);
+    --border: oklch(1 0 0 / 9%);
+    --border-strong: oklch(1 0 0 / 16%);
+    --input: oklch(1 0 0 / 13%);
+    --ring: oklch(0.55 0.01 286);
 
-  --surface-sunken: oklch(0.11 0.003 286);
-  --surface-raised: oklch(0.15 0.005 286 / 80%);
-  --shadow-popover-value: 0 0 0 1px oklch(1 0 0 / 6%), 0 12px 32px -8px oklch(0 0 0 / 60%);
+    --surface-sunken: oklch(0.11 0.003 286);
+    --surface-raised: oklch(0.15 0.005 286 / 80%);
+    --shadow-popover-value: 0 0 0 1px oklch(1 0 0 / 6%), 0 12px 32px -8px oklch(0 0 0 / 60%);
 
-  --horizon-short: oklch(0.78 0.12 210);
-  --horizon-medium: oklch(0.72 0.17 290);
-  --horizon-long: oklch(0.82 0.15 75);
-  --today: oklch(0.7 0.2 25);
-  /* Dark text: white on this lighter red fails WCAG AA at badge size. */
-  --today-foreground: oklch(0.17 0.02 25);
-  --timeline-grid: oklch(1 0 0 / 5%);
-  --timeline-weekend: oklch(1 0 0 / 2.5%);
-  --report-done: oklch(0.72 0.15 150);
+    --horizon-short: oklch(0.78 0.12 210);
+    --horizon-medium: oklch(0.72 0.17 290);
+    --horizon-long: oklch(0.82 0.15 75);
+    --today: oklch(0.7 0.2 25);
+    /* Dark text: white on this lighter red fails WCAG AA at badge size. */
+    --today-foreground: oklch(0.17 0.02 25);
+    --timeline-grid: oklch(1 0 0 / 5%);
+    --timeline-weekend: oklch(1 0 0 / 2.5%);
+    --report-done: oklch(0.72 0.15 150);
+  }
 }
 
 @theme inline {
@@ -182,8 +191,10 @@
     color-scheme: light;
   }
 
-  html.dark {
-    color-scheme: dark;
+  @media screen {
+    html.dark {
+      color-scheme: dark;
+    }
   }
 
   body {
@@ -250,4 +261,37 @@
     transparent 0 6px,
     color-mix(in oklab, var(--project-color, var(--foreground)) 22%, transparent) 6px 8px
   );
+}
+
+/*
+ * Printing (the project report): A4 pages with numbered footers. The report page adds
+ * `print:` utilities for its own layout; this keeps the paper white and the colors that
+ * carry meaning (bars, swatches, progress) printed.
+ */
+@page {
+  size: A4;
+  margin: 14mm 12mm 16mm;
+
+  @bottom-right {
+    content: 'Página ' counter(page) ' de ' counter(pages);
+    font-size: 8pt;
+    color: #555;
+  }
+}
+
+@media print {
+  /* Beats the inline `color-scheme` of the dark theme, which would darken the page margins. */
+  :root {
+    color-scheme: light !important;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }

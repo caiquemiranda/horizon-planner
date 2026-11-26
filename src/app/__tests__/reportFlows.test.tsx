@@ -1,6 +1,6 @@
 import { act, configure, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
@@ -43,6 +43,10 @@ async function renderAt(hash: string) {
 describe('project report', () => {
   beforeEach(() => {
     configure({ asyncUtilTimeout: 5000 });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('opens from the project page with every section and the whole WBS', async () => {
@@ -108,6 +112,34 @@ describe('project report', () => {
     expect(await screen.findByText(/ainda não tem cronograma/)).toBeInTheDocument();
     expect(screen.getByText('30%')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Cronograma' })).not.toBeInTheDocument();
+  });
+
+  it('ends with "Imprimir / Salvar em PDF", which opens the print dialog', async () => {
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    await renderAt(reportHref(project.id));
+    const article = await screen.findByRole('article');
+    const footer = within(article).getByRole('contentinfo');
+    // The last thing on the page, after the notes.
+    expect(article.lastElementChild).toBe(footer);
+    expect(
+      within(footer).getByText(/No diálogo de impressão, escolha “Salvar como PDF”/),
+    ).toBeInTheDocument();
+    expect(within(footer).getByText(/documento RA-.+ · gerado em/)).toBeInTheDocument();
+
+    await user.click(within(footer).getByRole('button', { name: 'Imprimir / Salvar em PDF' }));
+    expect(print).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Imprimir relatório' }));
+    expect(print).toHaveBeenCalledTimes(2);
+  });
+
+  it('prints the Gantt as pages, besides the whole chart on screen', async () => {
+    await renderAt(reportHref(project.id));
+    const gantt = within(await screen.findByRole('region', { name: 'Cronograma' }));
+    expect(
+      gantt.getByRole('img', { name: /^Gráfico de Gantt de Implantação SDAI/ }),
+    ).toBeInTheDocument();
+    expect(gantt.getByRole('img', { name: /^Parte do gráfico de Gantt/ })).toBeInTheDocument();
   });
 
   it('explains an unknown project', async () => {
