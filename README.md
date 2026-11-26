@@ -28,7 +28,7 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 
 | Area                         | What you get                                                                                                                                                                     |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Interactive timeline**     | Projects rendered as horizontal bars placed chronologically, grouped in collapsible **Short**, **Medium** and **Long-term** lanes.                                               |
+| **Interactive timeline**     | Projects rendered as horizontal bars placed chronologically, one row per project in the sidebar's **Short**, **Medium** and **Long-term** order.                                 |
 | **Fluid macro ↔ micro zoom** | `Ctrl + Scroll` (or trackpad pinch) smoothly transitions from **Years / Semesters / Quarters** down to **Months / Weeks / Days**, always anchored on the point under the cursor. |
 | **Navigation**               | Drag to pan, horizontal scroll, zoom presets and a **Go to today** action with a vertical "today" indicator.                                                                     |
 | **Side drawer**              | Click any bar to open an animated drawer on the right. Create, edit and delete projects without losing the timeline context; edits show on the timeline in real time.            |

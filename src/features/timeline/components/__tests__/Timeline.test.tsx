@@ -68,14 +68,28 @@ describe('Timeline', () => {
     ).toHaveAccessibleDescription('Adiado, 11 – 20 mar 2026, 20% concluído');
   });
 
-  it('groups the bars by horizon', () => {
+  it('orders the rows by horizon, like the sidebar, without headers of its own', () => {
     renderTimeline([
+      makeProject({ title: 'Mestrado', horizon: 'long' }),
       makeProject({ title: 'Curso de inglês', horizon: 'medium' }),
       makeProject({ title: 'Reforma', horizon: 'short' }),
     ]);
 
-    const medium = screen.getByRole('list', { name: 'Projetos de médio prazo' });
-    expect(within(medium).getByText('Curso de inglês')).toBeInTheDocument();
+    const list = screen.getByRole('list', { name: 'Projetos' });
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      expect.stringContaining('Reforma'),
+      expect.stringContaining('Curso de inglês'),
+      expect.stringContaining('Mestrado'),
+    ]);
+    // Grouping and folding live in the sidebar: no lane titles or toggles here.
+    for (const label of ['Curto prazo', 'Médio prazo', 'Longo prazo']) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole('button', { expanded: true })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /vazia/ })).not.toBeInTheDocument();
   });
 
@@ -91,22 +105,6 @@ describe('Timeline', () => {
     expect(
       screen.queryByRole('button', { name: /Ano que vem/, pressed: false }),
     ).not.toBeInTheDocument();
-  });
-
-  it('collapses and expands a lane', async () => {
-    const user = userEvent.setup();
-    renderTimeline([makeProject({ title: 'Reforma', horizon: 'short' })]);
-
-    const toggle = screen.getByRole('button', { name: /Curto prazo/ });
-    await user.click(toggle);
-
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(
-      screen.queryByRole('button', { name: /Reforma/, pressed: false }),
-    ).not.toBeInTheDocument();
-
-    await user.click(toggle);
-    expect(screen.getByRole('button', { name: /Reforma/, pressed: false })).toBeInTheDocument();
   });
 
   it('draws milestones inside the bar', () => {

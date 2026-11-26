@@ -7,8 +7,6 @@ export const TIMELINE_METRICS = {
   rulerHeight: 56,
   /** Top row of the ruler (major ticks). */
   rulerMajorHeight: 24,
-  /** `--lane-header-height` */
-  laneHeaderHeight: 32,
   /** `--row-height` */
   rowHeight: 40,
 } as const;

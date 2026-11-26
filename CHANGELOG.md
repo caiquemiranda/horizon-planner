@@ -65,8 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The timeline has no horizon headers any more: one row per project, in the sidebar's short, medium and long-term order, with a line between horizons. Grouping, folding and selection live in the navigation sidebar only.
 - "Carregar dados de exemplo", which replaced every project with fictional ones, is retired: the sample projects now live in "Exemplos", next to your data.
-- The timeline no longer has a horizon column: the navigation sidebar is the only project list, and the horizon bands keep their title and fold from the timeline itself.
+- The timeline no longer has a horizon column: the navigation sidebar is the only project list.
 - One way to open a schedule from the project panel ("Abrir cronograma", in the large dialog, without leaving the page), and the timeline's project column starts compact since the sidebar lists the projects.
 - Summary and project progress count tasks: every leaf task weighs the same (instead of being weighted by its duration), milestones count only when they are all there is, and 100% means every task is done. The project header shows how many tasks are done. The bars look the same.
 
