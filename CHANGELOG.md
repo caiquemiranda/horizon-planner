@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Filters and view controls moved from the header into the navigation sidebar: "Visualização" (visible period, Hoje, zoom scale, fit, keyboard shortcuts) and a foldable "Filtros" panel with checkboxes, counts, how many projects match and "Limpar filtros". The collapsed rail keeps "Hoje" and a filter button that reopens the panel; the strip of active filters above the timeline is gone. The shortcuts list is now a dialog, so `?` works with the sidebar collapsed.
 - The timeline has no horizon headers any more: one row per project, in the sidebar's short, medium and long-term order, with a line between horizons. Grouping, folding and selection live in the navigation sidebar only.
 - "Carregar dados de exemplo", which replaced every project with fictional ones, is retired: the sample projects now live in "Exemplos", next to your data.
 - The timeline no longer has a horizon column: the navigation sidebar is the only project list.

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
 import { useDrawerStore } from '@/features/projects/store/drawerStore';
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
+import { useSidebarStore } from '@/features/projects/store/sidebarStore';
 import { getTodayIsoDate } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
 import { projectRepository } from '@/services/persistence';
@@ -32,6 +33,7 @@ describe('accessibility', () => {
     useProjectsStore.setState({ projects: [], status: 'idle', error: null });
     useDrawerStore.getState().close();
     useFiltersStore.getState().clearAll();
+    useSidebarStore.setState({ collapsed: false, filtersOpen: false });
     useViewportStore.getState().setViewport({
       startDay: 20_400,
       pxPerDay: 2,
@@ -62,7 +64,7 @@ describe('accessibility', () => {
     await renderApp();
     useFiltersStore.getState().toggleStatus('in_progress');
 
-    await screen.findByRole('region', { name: 'Filtros ativos' });
+    await screen.findByText(/^\d+ de \d+ projetos$/);
     await expectNoAxeViolations();
   });
 
@@ -99,10 +101,10 @@ describe('accessibility', () => {
     await projectRepository.replaceAll(createSampleProjects(getTodayIsoDate()));
     await renderApp();
 
+    // The filters are a panel in the sidebar, unfolded in place.
     await user.click(screen.getByRole('button', { name: /^Filtros/ }));
-    await screen.findByRole('menu');
+    await screen.findAllByRole('checkbox');
     await expectNoAxeViolations();
-    await user.keyboard('{Escape}');
 
     await user.click(screen.getByRole('button', { name: 'Dados' }));
     await screen.findByRole('menu');

@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { Dialog } from 'radix-ui';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -78,6 +78,18 @@ interface SectionNavProps {
   currentProjectId?: UUID | null | undefined;
   /** Called after following a link, e.g. to close the phone drawer. */
   onNavigate?: (() => void) | undefined;
+  /** The page's own controls (view, filters), under the search. */
+  tools?: PageTools | undefined;
+}
+
+/**
+ * Controls a page adds to the sidebar: `expanded` under the search, `collapsed` as icons
+ * in the narrow rail. The portfolio puts its view and filters here, so the sidebar holds
+ * every way of choosing what the timeline shows.
+ */
+export interface PageTools {
+  expanded: ReactNode;
+  collapsed?: ReactNode;
 }
 
 /** Projects shown under an opened section before "Ver todos". */
@@ -99,7 +111,13 @@ const linkClass = (active: boolean, collapsed: boolean) =>
  * their pages and, expanded, list their projects; the search finds any project, hidden
  * and trashed ones included, by its title.
  */
-function SectionNav({ current, collapsed, currentProjectId = null, onNavigate }: SectionNavProps) {
+function SectionNav({
+  current,
+  collapsed,
+  currentProjectId = null,
+  onNavigate,
+  tools,
+}: SectionNavProps) {
   const projects = useProjectsStore((state) => state.projects);
   const counts = useMemo(() => countSections(projects), [projects]);
   const currentProject = currentProjectId
@@ -146,7 +164,7 @@ function SectionNav({ current, collapsed, currentProjectId = null, onNavigate }:
       <DashboardLink current={current} collapsed={collapsed} onNavigate={onNavigate} />
 
       {collapsed ? (
-        <CollapsedTools currentProject={currentProject} />
+        <CollapsedTools currentProject={currentProject} extra={tools?.collapsed} />
       ) : (
         <div className="flex flex-col gap-1.5">
           <label htmlFor={searchId} className="sr-only">
@@ -190,6 +208,10 @@ function SectionNav({ current, collapsed, currentProjectId = null, onNavigate }:
           </p>
         </div>
       )}
+
+      {tools && !collapsed && !searching ? (
+        <div className="flex flex-col gap-3 border-b pb-3">{tools.expanded}</div>
+      ) : null}
 
       {searching && !collapsed ? (
         <ul aria-label="Resultados da busca" className="flex flex-col gap-0.5">
@@ -424,7 +446,13 @@ function ProjectLink({
 }
 
 /** Collapsed rail: the current project and a way to search, without staying stuck in it. */
-function CollapsedTools({ currentProject }: { currentProject: Project | undefined }) {
+function CollapsedTools({
+  currentProject,
+  extra,
+}: {
+  currentProject: Project | undefined;
+  extra?: ReactNode;
+}) {
   const requestSearch = useSidebarStore((state) => state.requestSearch);
   return (
     <div className="flex flex-col items-center gap-1 border-b pb-3">
@@ -463,6 +491,7 @@ function CollapsedTools({ currentProject }: { currentProject: Project | undefine
         </TooltipTrigger>
         <TooltipContent side="right">Buscar projeto</TooltipContent>
       </Tooltip>
+      {extra}
     </div>
   );
 }
@@ -508,9 +537,11 @@ interface NavigationProps {
   current: NavigationTarget | null;
   /** The project open in the workspace, if any. */
   currentProjectId?: UUID | null;
+  /** The page's own controls (see `PageTools`). */
+  tools?: PageTools;
 }
 
-export function NavigationRail({ current, currentProjectId = null }: NavigationProps) {
+export function NavigationRail({ current, currentProjectId = null, tools }: NavigationProps) {
   const collapsed = useSidebarStore((state) => state.collapsed);
   const toggle = useSidebarStore((state) => state.toggleCollapsed);
   const regionId = useId();
@@ -524,7 +555,12 @@ export function NavigationRail({ current, currentProjectId = null }: NavigationP
       )}
     >
       <div id={regionId} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <SectionNav current={current} collapsed={collapsed} currentProjectId={currentProjectId} />
+        <SectionNav
+          current={current}
+          collapsed={collapsed}
+          currentProjectId={currentProjectId}
+          tools={tools}
+        />
       </div>
       <div className={cn('border-t p-2', collapsed && 'flex justify-center')}>
         <Button
@@ -545,7 +581,11 @@ export function NavigationRail({ current, currentProjectId = null }: NavigationP
 }
 
 /** Phone and small tablet: a menu button opening the sections in a drawer. */
-export function NavigationDrawerButton({ current, currentProjectId = null }: NavigationProps) {
+export function NavigationDrawerButton({
+  current,
+  currentProjectId = null,
+  tools,
+}: NavigationProps) {
   const open = useSidebarStore((state) => state.mobileOpen);
   const setOpen = useSidebarStore((state) => state.setMobileOpen);
 
@@ -575,6 +615,7 @@ export function NavigationDrawerButton({ current, currentProjectId = null }: Nav
               current={current}
               collapsed={false}
               currentProjectId={currentProjectId}
+              tools={tools}
               onNavigate={() => {
                 setOpen(false);
               }}

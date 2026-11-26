@@ -187,8 +187,9 @@ describe('visibility and trash flows', () => {
   it('keeps the filters to visible projects', async () => {
     const user = userEvent.setup();
     await renderApp([piano, { ...casa, hiddenAt: AT }]);
-    await user.click(screen.getByRole('button', { name: /Filtros/ }));
-    expect(screen.getByRole('menuitemcheckbox', { name: /^Concluído/ })).toHaveTextContent(/0$/);
+    await user.click(screen.getByRole('button', { name: /^Filtros/ }));
+    // The hidden "Casa" (completed) is not counted in the sidebar's filter panel.
+    expect(screen.getByRole('checkbox', { name: 'Concluído, 0 projetos' })).toBeInTheDocument();
   });
 
   it('opens a hidden project by URL, and a trashed one read-only', async () => {

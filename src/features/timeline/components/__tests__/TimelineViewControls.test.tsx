@@ -1,33 +1,47 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { makeProject } from '@/test/factories';
 import type { ISODate } from '@/types/project';
+import type { Project } from '@/types/project';
 import { ZOOM_LIMITS } from '@/types/timeline';
 
 import { dayToX } from '../../lib/scale';
 import { getTodayDay, isoDateToDay } from '../../lib/time';
 import { ZOOM_STEP_FACTOR } from '../../lib/zoom';
 import { useViewportStore } from '../../store/viewportStore';
-import { TimelineToolbar } from '../TimelineToolbar';
+import { TimelineShortcuts, TimelineViewControls } from '../TimelineViewControls';
 
 const VIEWPORT = { startDay: 20_000, pxPerDay: 10, widthPx: 1000 };
 
-function renderToolbar(projects = [makeProject()]) {
-  return render(
+/** The page wires the sidebar controls and the page-level shortcuts the same way. */
+function Harness({ projects }: { projects: readonly Project[] }) {
+  const [helpOpen, setHelpOpen] = useState(false);
+  return (
     <TooltipProvider>
-      <TimelineToolbar projects={projects} />
-    </TooltipProvider>,
+      <TimelineViewControls
+        projects={projects}
+        onShowShortcuts={() => {
+          setHelpOpen(true);
+        }}
+      />
+      <TimelineShortcuts projects={projects} helpOpen={helpOpen} onHelpOpenChange={setHelpOpen} />
+    </TooltipProvider>
   );
+}
+
+function renderToolbar(projects = [makeProject()]) {
+  return render(<Harness projects={projects} />);
 }
 
 function getViewport() {
   return useViewportStore.getState().viewport;
 }
 
-describe('TimelineToolbar', () => {
+describe('TimelineViewControls', () => {
   beforeEach(() => {
     useViewportStore.getState().setViewport(VIEWPORT);
   });
@@ -135,10 +149,16 @@ describe('TimelineToolbar', () => {
       renderToolbar();
 
       await user.keyboard('?');
-      expect(
-        await screen.findByText('Atalhos de teclado', { selector: 'div' }),
-      ).toBeInTheDocument();
-      expect(screen.getByText('Ajustar todos os projetos')).toBeInTheDocument();
+      const dialog = await screen.findByRole('dialog', { name: 'Atalhos de teclado' });
+      expect(dialog).toHaveTextContent('Ajustar todos os projetos');
+    });
+
+    it('opens the shortcuts help from its button', async () => {
+      const user = userEvent.setup();
+      renderToolbar();
+
+      await user.click(screen.getByRole('button', { name: 'Atalhos de teclado' }));
+      expect(await screen.findByRole('dialog', { name: 'Atalhos de teclado' })).toBeInTheDocument();
     });
 
     it('ignores keys typed in a text field', async () => {

@@ -1,18 +1,18 @@
 import { EyeOff, FlaskConical, Inbox, Plus, SearchX } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { DataMenu } from '@/features/data-io/components/DataMenu';
-import { ActiveFiltersBar } from '@/features/filters/components/ActiveFiltersBar';
-import { FilterMenu } from '@/features/filters/components/FilterMenu';
+import { FilterPanel, FilterRailButton } from '@/features/filters/components/FilterPanel';
 import { useFilteredProjects } from '@/features/filters/hooks/useFilteredProjects';
 import { useFiltersStore } from '@/features/filters/store/filtersStore';
 import {
   NavigationDrawerButton,
   NavigationRail,
+  type PageTools,
   SECTION_META,
 } from '@/features/projects/components/NavigationSidebar';
 import { NewProjectButton } from '@/features/projects/components/NewProjectButton';
@@ -23,7 +23,11 @@ import { selectEditingProjectId, useDrawerStore } from '@/features/projects/stor
 import { useProjectsStore } from '@/features/projects/store/projectsStore';
 import { Timeline } from '@/features/timeline/components/Timeline';
 import { TimelineEmptyState } from '@/features/timeline/components/TimelineEmptyState';
-import { TimelineToolbar } from '@/features/timeline/components/TimelineToolbar';
+import {
+  TimelineRailControls,
+  TimelineShortcuts,
+  TimelineViewControls,
+} from '@/features/timeline/components/TimelineViewControls';
 import { isRangeVisible } from '@/features/timeline/lib/layout';
 import { isoRangeToDays } from '@/features/timeline/lib/time';
 import { useViewportStore } from '@/features/timeline/store/viewportStore';
@@ -61,6 +65,28 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
   const filtered = useFilteredProjects(projects, selectedProjectId);
   // Samples live in "Exemplos": with only samples installed, the portfolio is still empty.
   const ownCount = useMemo(() => selectOwnProjects(allProjects).length, [allProjects]);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // Everything that chooses what the timeline shows lives in the sidebar.
+  const tools: PageTools = {
+    expanded: (
+      <>
+        <TimelineViewControls
+          projects={filtered.projects}
+          onShowShortcuts={() => {
+            setShortcutsOpen(true);
+          }}
+        />
+        <FilterPanel projects={projects} matchCount={filtered.matchCount} />
+      </>
+    ),
+    collapsed: (
+      <>
+        <TimelineRailControls />
+        <FilterRailButton />
+      </>
+    ),
+  };
 
   /** Brings a newly created project into view when it starts or ends off-screen. */
   const revealProject = useCallback((project: Project) => {
@@ -145,7 +171,7 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
         Pular para a linha do tempo
       </a>
       <AppHeader
-        leading={<NavigationDrawerButton current={section} />}
+        leading={<NavigationDrawerButton current={section} tools={tools} />}
         actions={
           <>
             <NewProjectButton />
@@ -153,24 +179,23 @@ export function PortfolioPage({ section }: PortfolioPageProps) {
             <ThemeToggle />
           </>
         }
-      >
-        <FilterMenu projects={projects} />
-        {/* Zoom "fit" and shortcuts act on what is on screen. */}
-        <TimelineToolbar
-          projects={filtered.projects}
-          shortcutsEnabled={expandedProjectId === null}
-        />
-      </AppHeader>
+      />
+      {/* Zoom "fit" and the shortcuts act on what is on screen. */}
+      <TimelineShortcuts
+        projects={filtered.projects}
+        helpOpen={shortcutsOpen}
+        onHelpOpenChange={setShortcutsOpen}
+        enabled={expandedProjectId === null}
+      />
 
       <div className="flex min-h-0 flex-1">
-        <NavigationRail current={section} />
+        <NavigationRail current={section} tools={tools} />
         <main
           id="timeline"
           tabIndex={-1}
           aria-label={SECTION_META[section].label}
           className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface-sunken outline-none"
         >
-          <ActiveFiltersBar matchCount={filtered.matchCount} totalCount={projects.length} />
           <Timeline
             projects={filtered.projects}
             horizons={filtered.horizons}

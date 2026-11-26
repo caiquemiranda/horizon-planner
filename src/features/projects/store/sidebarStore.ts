@@ -14,6 +14,11 @@ interface SidebarState {
   /** Expands the rail and focuses its search field. */
   requestSearch: () => void;
   setMobileOpen: (open: boolean) => void;
+  /** The portfolio's filter panel is unfolded (kept while the rail collapses and expands). */
+  filtersOpen: boolean;
+  setFiltersOpen: (open: boolean) => void;
+  /** Expands the rail with the filter panel open (from the collapsed rail). */
+  requestFilters: () => void;
 }
 
 export type SidebarStore = UseBoundStore<StoreApi<SidebarState>>;
@@ -39,6 +44,14 @@ export function createSidebarStore(storage: Storage | null = getStorage()): Side
     collapsed: readCollapsed(storage),
     mobileOpen: false,
     searchRequest: 0,
+    filtersOpen: false,
+    setFiltersOpen: (filtersOpen) => {
+      set({ filtersOpen });
+    },
+    requestFilters: () => {
+      if (get().collapsed) get().toggleCollapsed();
+      set({ filtersOpen: true });
+    },
     requestSearch: () => {
       if (get().collapsed) get().toggleCollapsed();
       set((state) => ({ searchRequest: state.searchRequest + 1 }));
