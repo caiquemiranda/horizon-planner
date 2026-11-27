@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Browser end-to-end scenarios across features: a WBS from the template through import, the workspace, Excel and CSV export, the report and print; final reports and copies of the samples; switching projects in the explorer; hidden projects' reports; broken or oversized spreadsheets refused without saving.
 - Report printing: "Imprimir / Salvar em PDF" at the end of the report opens the browser's print dialog (choose "Salvar como PDF" there). The report prints as an A4 document with numbered pages, always on white paper, without navigation or buttons; cards and charts are not split, and a long Gantt is cut into pages of rows and months, each with its ruler, codes and legend.
 - Project report ("Relatório" in the project header): its own page with the executive summary, indicators, charts (completion by phase, tasks by state, planned × forecast × actual, milestones), pending work, the whole WBS and a read-only Gantt, all from the current data. Progress report while the project runs, final report once it is closed.
 - "Exemplos": three sample projects with fictional data (an industrial installation in progress, a SaaS launch and a finished retrofit), installed on request, read-only and kept out of the other lists, the timeline, "Meu painel" and backups. "Criar projeto a partir deste exemplo" copies a sample's plan into a new project from a chosen start date, without its progress or history. Data format v4 (migrated automatically).

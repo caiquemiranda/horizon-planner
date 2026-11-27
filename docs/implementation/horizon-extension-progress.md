@@ -31,7 +31,7 @@ its acceptance tests pass in CI.
 | 15a   | `feat/timeline-flat-rows`       | Owner request (no horizon headers on the timeline)   | Delivered | #46          | `Timeline.test.tsx`, filter and project flows, e2e; checked in Chrome                                              |
 | 15b   | `feat/sidebar-filters`          | Owner request (filters and view in the sidebar)      | Delivered | #47          | `filterFlows`, `TimelineViewControls`, `accessibility` (axe), e2e; checked in Chrome (dark)                        |
 | 16    | `feat/project-report-print`     | REQ-PRINT-01–03                                      | Delivered | #48          | `ganttPages.test.ts`, `ReportGantt.test.tsx`, `reportFlows`, e2e G (real A4 PDF); PDF read page by page            |
-| 17    | `test/project-features-e2e`     | §15                                                  | Pending   | —            | —                                                                                                                  |
+| 17    | `test/project-features-e2e`     | §15                                                  | Delivered | #49          | `e2e/features.spec.ts` (scenarios H–L); 19 Playwright tests passing                                                |
 
 ## Log
 
@@ -518,6 +518,37 @@ its acceptance tests pass in CI.
   WBS; Gantt, notes and footer) and checks the light tokens and hidden controls; the PDF
   was read page by page. Firefox and Safari print dialogs were not tested (manual check).
 - Tests: 911 Vitest tests and 14 Playwright tests passing.
+
+### 17 · `test/project-features-e2e`
+
+- `e2e/features.spec.ts`: cross-feature scenarios of the third document (spec §15.1), on
+  the production build in Chrome. With orders 10–16 the addendum-03 plan is complete.
+- Coverage of §15.1:
+  - 1 and 2 (scenario H): the template downloads; a filled WBS of 3 levels and 27 rows
+    with 20 links is previewed, imported and opened; a phase is collapsed; the Excel and
+    CSV exports still carry every task; the report lists the whole WBS and prints a PDF;
+    the exported workbook reads back with the same counts.
+  - 3: scenarios C and F (a confirmation moves progress everywhere; the report shows the
+    workspace's percentage).
+  - 4 and 5 (scenario I): the closed sample gives a final report with its actual finish,
+    no forecast and nothing late, and exports; a copy of the industrial sample reports
+    0% with no check-ins and no actual finish.
+  - 6 (scenario J): from a report to another project and quick hops through the search:
+    only the last project's title and plan (its exact rows) are on screen.
+  - 8: scenario G and `ReportGantt.test.tsx` (pages of rows and months, no controls).
+  - 9 (scenario K, with A): a hidden project keeps its page and report; trashed projects
+    follow the trash policy (A).
+  - 10 (scenarios H and L): a formula-like task name stays text (no formula in the
+    workbook, an apostrophe in the CSV); a broken workbook and a 6 MB CSV are refused
+    with a message and nothing is saved.
+  - 7: measured by hand in order 10 (250 projects, search in about 60 ms), not repeated
+    in CI to keep it stable.
+  - 11: there is no network (data stays in the browser); the commit's rollback is
+    covered by the `wbsCommit` unit tests.
+  - 12: the report and the exports read the same stored plan (scenario H; the forecast
+    rules have their own unit tests).
+- Tests: 19 Playwright tests passing; 911 Vitest tests, unchanged by this branch (one
+  integration test timed out once under full-suite load and passed on its own).
 
 ## Impediments
 
