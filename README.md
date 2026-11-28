@@ -24,22 +24,25 @@ A modern, keyboard-friendly Gantt-style planner that combines the planning power
 
 ## ✨ Features
 
-### MVP (`v0.1.0`)
+### Portfolio
 
 | Area                         | What you get                                                                                                                                                                     |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Interactive timeline**     | Projects rendered as horizontal bars placed chronologically, one row per project in the sidebar's **Short**, **Medium** and **Long-term** order.                                 |
 | **Fluid macro ↔ micro zoom** | `Ctrl + Scroll` (or trackpad pinch) smoothly transitions from **Years / Semesters / Quarters** down to **Months / Weeks / Days**, always anchored on the point under the cursor. |
-| **Navigation**               | Drag to pan, horizontal scroll, zoom presets and a **Go to today** action with a vertical "today" indicator.                                                                     |
+| **Navigation**               | Drag to pan, horizontal scroll, zoom presets and a **Go to today** action with a vertical "today" indicator, from the sidebar's **Visualização** block.                          |
 | **Side drawer**              | Click any bar to open an animated drawer on the right. Create, edit and delete projects without losing the timeline context; edits show on the timeline in real time.            |
 | **Rich project model**       | Title, description, horizon, start/end dates, progress (0–100%), status, color, category and milestones.                                                                         |
 | **Filters**                  | Filter by horizon, category and status from the navigation sidebar, next to the view controls (today, zoom scale, fit).                                                          |
 | **Lifecycle**                | Start, postpone (with an expected resume or revised finish), resume, complete, close without completing and reopen, each with its reason and a kept history.                     |
 | **Sections and sidebar**     | Collapsible sidebar with **Active**, **Postponed**, **Not completed**, **Completed**, **Hidden** and **Trash**, each with its count and its own address.                         |
+| **Project explorer**         | Each section lists its projects by horizon; search any project by title (hidden and trashed ones too); the open project is marked, also in its workspace.                        |
 | **Hide and trash**           | Hide a project from the lists or move it to a restorable trash, both with undo; permanent deletion only from the trash.                                                          |
 | **Meu painel**               | Projects started, completed and not completed in a period, completion rate and current states.                                                                                   |
 | **Persistence**              | Automatic `localStorage` persistence behind a decoupled repository layer, ready to be swapped for a REST/GraphQL API.                                                            |
-| **Portability**              | Schema-validated JSON export / import and opt-in **sample projects** ("Exemplos") for an instant demo.                                                                           |
+| **Spreadsheets**             | Downloadable WBS template; import a project from Excel or CSV with column mapping and a preview of every problem by row before saving; export any project to Excel or CSV.       |
+| **Sample projects**          | "Exemplos": three read-only projects with fictional data (in progress, parallel work, finished), kept out of your lists and metrics; copy one to start a real project.           |
+| **Portability**              | Schema-validated JSON backup and restore of all data.                                                                                                                            |
 | **Theming**                  | Dark mode by default, light mode supported, Geist typography and accessible contrast.                                                                                            |
 
 ### 🗂️ Project planning workspace
@@ -81,20 +84,36 @@ Design and acceptance status: [`docs/planning-module.md`](./docs/planning-module
 
 > Captured from the test portfolio with `npm run screenshots`. Assets live in [`docs/assets/`](./docs/assets); the [capture guide](./docs/assets/README.md) covers naming and the manual GIFs.
 
-<img src="docs/assets/timeline-macro-dark.png" alt="Timeline fitted to all projects, from 2026 to 2029, with the short, medium and long-term lanes" width="100%" />
+**Portfolio timeline.** Every project on one timeline, in the sidebar's horizon order; the view controls and filters live in the sidebar.
 
-<img src="docs/assets/workspace-gantt-dark.png" alt="Project workspace: task table with WBS numbers next to a Gantt chart with summary bars, a milestone and staircase dependency arrows" width="100%" />
+<img src="docs/assets/timeline-macro-dark.png" alt="Timeline fitted to all projects from 2026 to 2029, with the sidebar showing the view controls, the folded filters and the sections with their counts" width="100%" />
 
-|                                          Micro view (weeks / days)                                           |                                               Side drawer (light theme)                                                |
-| :----------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------: |
-| <img src="docs/assets/timeline-micro-dark.png" alt="Timeline zoomed in to weeks around today" width="420" /> | <img src="docs/assets/drawer-edit-light.png" alt="Project drawer open over the timeline in light theme" width="420" /> |
+**Project workspace.** The WBS table next to the Gantt chart, with summary bars, a milestone, dependency arrows and the finish forecast.
+
+<img src="docs/assets/workspace-gantt-dark.png" alt="Project workspace: task table with WBS numbers next to a Gantt chart with summary bars, a milestone and staircase dependency arrows; the sidebar lists the projects by horizon" width="100%" />
+
+**Project report.** A progress or final report from the current plan, ready to print or save as PDF.
+
+<img src="docs/assets/report-dark.png" alt="Project report: executive summary, indicators and charts of the industrial project" width="100%" />
+
+|                                                          Filters in the sidebar                                                           |                                                          Printed report (A4)                                                           |
+| :---------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/assets/sidebar-filters-dark.png" alt="Sidebar filter panel with a status checked and the timeline filtered" width="420" /> | <img src="docs/assets/report-print-light.png" alt="First printed page of the report, on white paper without navigation" width="300" /> |
+
+|                                                               Spreadsheet import                                                               |                                                     Sample projects                                                      |
+| :--------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/assets/import-preview-dark.png" alt="Import preview with the column mapping, the counts and the warnings by row" width="420" /> | <img src="docs/assets/examples-dark.png" alt="Exemplos page with three sample projects and their actions" width="420" /> |
 
 <details>
-<summary>More: light theme, dark drawer and phone layout</summary>
+<summary>More: light theme, micro view, drawer, dashboard and phone layout</summary>
 
 <img src="docs/assets/timeline-macro-light.png" alt="Timeline fitted to all projects in light theme" width="100%" />
 <img src="docs/assets/workspace-gantt-light.png" alt="Project workspace in light theme" width="100%" />
+<img src="docs/assets/report-light.png" alt="Project report in light theme" width="100%" />
+<img src="docs/assets/timeline-micro-dark.png" alt="Timeline zoomed in to weeks around today" width="100%" />
+<img src="docs/assets/drawer-edit-light.png" alt="Project drawer open over the timeline in light theme" width="100%" />
 <img src="docs/assets/drawer-edit-dark.png" alt="Project drawer open over the timeline in dark theme" width="100%" />
+<img src="docs/assets/dashboard-dark.png" alt="Meu painel: projects started, completed and not completed, and current states" width="100%" />
 <p align="center"><img src="docs/assets/timeline-mobile-dark.png" alt="Timeline on a phone-sized screen" width="260" /></p>
 
 </details>
@@ -188,22 +207,27 @@ src/
 │   ├── ui/                 # shadcn/ui primitives (owned code, not a dependency)
 │   └── layout/             # App header, theme toggle
 ├── features/               # Feature-based modules
-│   ├── timeline/           # Canvas, ruler, bars, zoom and pan hooks
+│   ├── timeline/           # Portfolio timeline: ruler, bars, zoom and pan hooks
 │   │   ├── components/
 │   │   ├── hooks/
 │   │   ├── lib/            # ⚙️ Pure scale, ticks and layout engine (fully tested)
 │   │   └── store/
-│   ├── projects/           # Drawer, form, milestones, projects store, zod schemas
+│   ├── projects/           # Drawer, lifecycle, sidebar explorer, dashboard, projects store
 │   ├── filters/            # Sidebar filter panel and filtering logic
+│   ├── schedule/           # ⚙️ Task tree, dependencies, scheduling engine, progress, forecast
+│   ├── workspace/          # Project workspace: WBS table, toolbar, check-ins, export
+│   ├── gantt/              # Gantt chart: bar geometry, drag, connector routing
+│   ├── report/             # Project report read model, page, charts and print layout
 │   ├── examples/           # Sample projects ("Exemplos") and their copy
-│   └── data-io/            # Export and import (JSON, Excel/CSV)
+│   └── data-io/            # Backup (JSON), WBS template, Excel/CSV import and export
 ├── services/
 │   └── persistence/        # Repository contract + localStorage / in-memory implementations
-├── lib/                    # Cross-cutting utilities
+├── lib/                    # Cross-cutting utilities (router, spreadsheet readers/writers)
 ├── types/                  # Shared domain types (Project, Viewport…)
 ├── styles/                 # Tailwind entry and design tokens
 └── test/                   # Test setup and browser API mocks
-scripts/                    # Maintenance scripts (README screenshots)
+scripts/                    # Maintenance scripts (README screenshots, performance)
+e2e/                        # Browser end-to-end tests (Playwright)
 ```
 
 Key architectural decisions are recorded as lightweight ADRs in [`docs/architecture.md`](./docs/architecture.md).
@@ -221,11 +245,18 @@ Visual decisions (colors, typography, spacing, motion and component rules) are d
 ## 🗺️ Roadmap
 
 - [x] Repository setup, tooling and CI
-- [ ] **v0.1.0 (MVP):** interactive timeline, macro/micro zoom, drawer CRUD, filters, localStorage, JSON import/export, sample data
+- [x] MVP: interactive timeline, macro/micro zoom, drawer CRUD, filters, localStorage, JSON import/export, sample data
 - [x] Project planning workspace: WBS table, Gantt chart, dependencies, scheduling engine
 - [x] Drag and resize bars to change dates (in the project workspace)
 - [x] Row virtualization (project workspace)
-- [ ] Critical path (CPM) and baselines
+- [x] Project lifecycle, sections, hidden projects and trash
+- [x] Task-based progress, daily check-ins, finish forecast and baseline
+- [x] Project explorer, with filters and view controls in the sidebar
+- [x] Excel/CSV import and export with a WBS template
+- [x] Sample projects ("Exemplos")
+- [x] Project report with printing / PDF
+- [ ] First tagged release (`v0.1.0`) on `main`
+- [ ] Critical path (CPM)
 - [ ] Undo / redo (command history)
 - [ ] Command palette (`Ctrl + K`)
 - [ ] PWA with offline support

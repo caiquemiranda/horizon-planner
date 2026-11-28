@@ -550,6 +550,85 @@ its acceptance tests pass in CI.
 - Tests: 19 Playwright tests passing; 911 Vitest tests, unchanged by this branch (one
   integration test timed out once under full-suite load and passed on its own).
 
+## Addendum 03 final report
+
+Acceptance of the third document (§12–14), checked on `develop` after #49. "Not
+applicable" items need accounts, which Horizon does not have yet: all data belongs to
+the one person using the browser.
+
+### Reports (§12)
+
+| Criterion                                                                 | State          | Evidence                                                             |
+| ------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------- |
+| `Visualizar relatório` opens the project's own page                       | Done           | `reportFlows`, e2e F                                                 |
+| Running project: progress report with today's data date and pending work  | Done           | `report.test.ts`, e2e F and H                                        |
+| Closed project: final report consistent with status and dates             | Done           | `report.test.ts`, e2e I                                              |
+| A 30% project gets a full status report without pretending it is finished | Done           | `report.test.ts` (progress kind), e2e H                              |
+| Same percentage as the table, the Gantt and the portfolio                 | Done           | `reportFlows`, e2e F                                                 |
+| Summary tasks never counted twice                                         | Done           | `report.test.ts`                                                     |
+| Planned, forecast and actual dates shown apart                            | Done           | `report.test.ts`, e2e I                                              |
+| Phase, state and timeline charts with right totals and legends            | Done           | `report.test.ts`, `ReportCharts` (tables for assistive technology)   |
+| No fake S-curve without history                                           | Done           | Not drawn; the page says why (decision 3)                            |
+| WBS and Gantt include phases collapsed in the workspace                   | Done           | `reportFlows`, e2e F and H                                           |
+| Long Gantt paginated, never cut silently                                  | Done           | `ganttPages.test.ts`, `ReportGantt.test.tsx`                         |
+| Missing data labelled or omitted, no invented metrics                     | Done           | `report.test.ts` (no schedule, no forecast, no baseline)             |
+| `Imprimir / Salvar em PDF` at the end of the page opens the print dialog  | Done           | `reportFlows`, e2e G                                                 |
+| Print hides sidebar, toolbar, filters and the button, keeps the content   | Done           | e2e G and H                                                          |
+| A4 print checks: margins, pages, charts, tables and Gantt                 | Done           | e2e G (real PDF, read page by page); Firefox and Safari by hand only |
+| No report for a user without access                                       | Not applicable | One local user, no accounts or API                                   |
+| The report updates after a real change, no stale cache                    | Done           | `reportFlows` (change saved in another tab)                          |
+
+### Spreadsheets (§13)
+
+| Criterion                                                                 | State          | Evidence                                                   |
+| ------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------- |
+| Download the XLSX template and fill it without breaking its structure     | Done           | e2e H                                                      |
+| Import a new project with 3 WBS levels, milestones and FS links           | Done           | `wbsImport.test.ts`, e2e H                                 |
+| Imported links and dates give a coherent schedule and roll-up             | Done           | `wbsImport.test.ts`, `wbsCommit.test.ts`                   |
+| Preview shows the hierarchy and counts before writing anything            | Done           | `importFlows`, e2e H                                       |
+| Unknown parent: detailed, blocking error                                  | Done           | `wbsImport.test.ts`                                        |
+| Duplicated code, self link and cycles detected                            | Done           | `wbsImport.test.ts`                                        |
+| Invalid date, negative duration and missing required column: clear errors | Done           | `wbsImport.test.ts`                                        |
+| CSV delimiter and encoding kept, accents preserved                        | Done           | `readers.test.ts` (`;`, `,`, tab; UTF-8 and Windows-1252)  |
+| No macros or formulas run; file limits applied                            | Done           | `readers.test.ts` (macros, zip bomb, 5 MB, DOCTYPE), e2e L |
+| Double click and retry never create duplicates                            | Done           | `wbsCommit.test.ts`, `importFlows`                         |
+| A failed commit leaves nothing half imported                              | Done           | `wbsCommit.test.ts`                                        |
+| XLSX export keeps project, tasks, WBS and links                           | Done           | `wbsWorkbook` tests, e2e H (read back)                     |
+| CSV export states its limits and keeps what it can represent              | Done           | Export message, `predecessoras` column                     |
+| Export includes collapsed rows, independent of the viewport               | Done           | e2e H                                                      |
+| Formula injection blocked; text and dates consistent                      | Done           | `csvWriter` tests, e2e H                                   |
+| Round trip export → import as new keeps the supported data                | Done           | `wbsImport.test.ts`, `wbsCommit.test.ts`, e2e H            |
+| No import or export into another user's project                           | Not applicable | One local user, no accounts                                |
+
+### Samples and sidebar (§14)
+
+| Criterion                                                              | State | Evidence                               |
+| ---------------------------------------------------------------------- | ----- | -------------------------------------- |
+| A place to explore sample projects                                     | Done  | "Exemplos", e2e E                      |
+| At least 3 samples, real behaviour, flagged as fictional               | Done  | `catalog.test.ts`, e2e E               |
+| Industrial sample: multi-level WBS, Gantt, links, milestones, progress | Done  | `catalog.test.ts`, e2e E and F         |
+| SaaS sample: parallel work and a schedule view                         | Done  | `catalog.test.ts`                      |
+| Closed sample: final report and Excel export                           | Done  | e2e I                                  |
+| Running sample: progress report with plausible dates and pending work  | Done  | e2e F                                  |
+| Seed is idempotent, never touches real projects                        | Done  | `catalog.test.ts`, store tests         |
+| Samples kept out of real metrics                                       | Done  | statistics and sections tests          |
+| A copy gets new ids and none of the sample's history                   | Done  | `catalog.test.ts`, e2e E and I         |
+| Sidebar reaches every project, including Ocultos and Lixeira           | Done  | `navigationFlows`, e2e A               |
+| Expanded sidebar lists and finds projects                              | Done  | Explorer and search tests, e2e J and K |
+| Collapsed sidebar frees width and stays navigable                      | Done  | e2e A; +200 px measured in order 10    |
+| Collapse preference kept                                               | Done  | e2e A                                  |
+| Choosing a project opens the right one, no mixed data                  | Done  | e2e J, `scheduleStore.test.ts`         |
+| Lists and counts follow add, import, hide, complete and restore        | Done  | e2e A and E, `navigationFlows`         |
+| No sidebar or navigation in print                                      | Done  | e2e G                                  |
+| Sidebar changes keep Gantt alignment, scroll, split, arrows and zoom   | Done  | Playwright alignment check (order 10)  |
+
+### Open points
+
+- A release: `main` still holds the initial commit and `package.json` says `0.0.0`;
+  everything above is in `develop` under `[Unreleased]`.
+- Printing checked in Chrome (automated PDF) only; Firefox and Safari need a manual look.
+- Owner validation (§18) is a manual check, not automated.
+
 ## Impediments
 
 None.

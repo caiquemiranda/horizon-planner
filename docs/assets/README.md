@@ -6,7 +6,7 @@ This folder holds the visual assets used by the main [`README.md`](../../README.
 
 | File                        | Shows                                                            | Captured by           |
 | --------------------------- | ---------------------------------------------------------------- | --------------------- |
-| `timeline-macro-dark.png`   | All projects fitted on screen, the three horizon lanes           | `npm run screenshots` |
+| `timeline-macro-dark.png`   | All projects fitted on screen, sidebar with view controls        | `npm run screenshots` |
 | `timeline-macro-light.png`  | Same view in light theme                                         | `npm run screenshots` |
 | `timeline-micro-dark.png`   | Weeks zoom centered on today, with milestones                    | `npm run screenshots` |
 | `drawer-edit-dark.png`      | Side drawer editing a project, timeline visible behind it        | `npm run screenshots` |
@@ -14,6 +14,13 @@ This folder holds the visual assets used by the main [`README.md`](../../README.
 | `timeline-mobile-dark.png`  | Phone layout (390×844)                                           | `npm run screenshots` |
 | `workspace-gantt-dark.png`  | Project workspace: task table, Gantt chart and dependency arrows | `npm run screenshots` |
 | `workspace-gantt-light.png` | Same view in light theme                                         | `npm run screenshots` |
+| `sidebar-filters-dark.png`  | Sidebar filter panel open with a status checked                  | `npm run screenshots` |
+| `report-dark.png`           | Project report: summary, indicators and charts                   | `npm run screenshots` |
+| `report-light.png`          | Same view in light theme                                         | `npm run screenshots` |
+| `report-print-light.png`    | First printed page of the report (A4, print stylesheet)          | `npm run screenshots` |
+| `import-preview-dark.png`   | Spreadsheet import preview of an exported project                | `npm run screenshots` |
+| `examples-dark.png`         | "Exemplos" with the three sample projects                        | `npm run screenshots` |
+| `dashboard-dark.png`        | "Meu painel" with the test portfolio                             | `npm run screenshots` |
 | `demo-zoom.gif`             | Smooth `Ctrl + Scroll` zoom from macro to micro (optional)       | By hand               |
 | `demo-drawer.gif`           | Clicking a bar and editing progress live (optional)              | By hand               |
 | `social-preview.png`        | 1280×640 image for _Settings → Social preview_ on GitHub         | By hand               |
