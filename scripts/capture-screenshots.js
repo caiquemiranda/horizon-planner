@@ -6,7 +6,7 @@
  * through playwright-core, so no browser download is needed. Set HORIZON_BROWSER to
  * "msedge" or "chrome" to pick one.
  */
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright-core';
@@ -16,8 +16,12 @@ const OUTPUT_DIR = fileURLToPath(new URL('../docs/assets/', import.meta.url));
 const PORT = 4318;
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
+/** An A4 page at 96 dpi, for the printed report. */
+const A4 = { width: 794, height: 1123 };
 /** Sample project opened in the drawer: it has milestones and a description. */
 const DRAWER_PROJECT = 'Reforma da cozinha';
+/** The test portfolio's project with a full schedule. */
+const SCHEDULE_PROJECT = 'Implantação de Sistema Industrial';
 
 /** @typedef {import('playwright-core').Page} Page */
 
@@ -26,6 +30,7 @@ const DRAWER_PROJECT = 'Reforma da cozinha';
  * @property {string} name File name without extension.
  * @property {'dark' | 'light'} theme
  * @property {{ width: number, height: number }} [viewport]
+ * @property {boolean} [print] Captured with the print stylesheet.
  * @property {(page: Page) => Promise<void>} arrange
  */
 
@@ -39,7 +44,30 @@ const SHOTS = [
   { name: 'timeline-mobile-dark', theme: 'dark', viewport: PHONE, arrange: fitAll },
   { name: 'workspace-gantt-dark', theme: 'dark', arrange: openWorkspace },
   { name: 'workspace-gantt-light', theme: 'light', arrange: openWorkspace },
+  { name: 'sidebar-filters-dark', theme: 'dark', arrange: openFilters },
+  { name: 'report-dark', theme: 'dark', arrange: openReport },
+  { name: 'report-light', theme: 'light', arrange: openReport },
+  {
+    name: 'report-print-light',
+    theme: 'light',
+    viewport: A4,
+    print: true,
+    fullPage: true,
+    arrange: openReport,
+  },
+  { name: 'import-preview-dark', theme: 'dark', arrange: previewImport },
+  { name: 'examples-dark', theme: 'dark', arrange: openExamples },
+  { name: 'dashboard-dark', theme: 'dark', arrange: openDashboard },
 ];
+
+/**
+ * A project's bar on the portfolio timeline.
+ * @param {Page} page
+ * @param {string} title
+ */
+function bar(page, title) {
+  return page.getByRole('region', { name: 'Linha do tempo' }).getByRole('button', { name: title });
+}
 
 /** @param {Page} page */
 async function fitAll(page) {
@@ -56,7 +84,7 @@ async function zoomToWeeks(page) {
 async function openDrawer(page) {
   await page.keyboard.press('3');
   await page.keyboard.press('t');
-  await page.locator('li button', { hasText: DRAWER_PROJECT }).click();
+  await bar(page, DRAWER_PROJECT).click();
   await page.getByRole('dialog').getByLabel('Título', { exact: true }).waitFor();
 }
 
@@ -65,8 +93,11 @@ async function openDrawer(page) {
  * @param {Page} page
  */
 async function openWorkspace(page) {
-  await page.locator('li button', { hasText: 'Implantação de Sistema Industrial' }).click();
-  await page.getByRole('link', { name: 'Abrir cronograma' }).click();
+  await page.keyboard.press('f');
+  await bar(page, SCHEDULE_PROJECT).click();
+  // The panel opens the schedule in the large dialog; the full page is one step further.
+  await page.getByRole('button', { name: 'Abrir cronograma' }).click();
+  await page.getByRole('link', { name: 'Abrir página completa' }).click();
   await page.getByRole('treegrid').waitFor();
   await page.locator('[data-link-id]').first().waitFor();
   // Select a task so its row, bar and links are highlighted.
@@ -77,6 +108,74 @@ async function openWorkspace(page) {
     .getByRole('gridcell')
     .nth(1)
     .click();
+}
+
+/**
+ * The sidebar's "Filtros" panel open, with a status checked.
+ * @param {Page} page
+ */
+async function openFilters(page) {
+  await page.keyboard.press('f');
+  await page.getByRole('button', { name: 'Filtros', exact: true }).click();
+  await page.getByRole('checkbox', { name: /^Em andamento,/ }).click();
+  await page.keyboard.press('f');
+}
+
+/**
+ * The industrial project's report, opened from its schedule.
+ * @param {Page} page
+ */
+async function openReport(page) {
+  await openWorkspace(page);
+  await page.getByRole('link', { name: 'Visualizar relatório' }).click();
+  await page.getByRole('region', { name: 'Cronograma' }).waitFor();
+}
+
+/**
+ * The import preview of the industrial project's own Excel export.
+ * @param {Page} page
+ */
+async function previewImport(page) {
+  await openWorkspace(page);
+  const [file] = await Promise.all([
+    page.waitForEvent('download'),
+    (async () => {
+      await page.getByRole('button', { name: /Exportar/ }).click();
+      await page.getByRole('menuitem', { name: /^Excel/ }).click();
+    })(),
+  ]);
+  const buffer = await readFile(await file.path());
+  // A fresh load: no export notice left over the preview.
+  await page.goto(`http://localhost:${String(PORT)}/#/importar`);
+  await page.reload();
+  await page.getByLabel('Arquivo da planilha').setInputFiles({
+    name: file.suggestedFilename(),
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer,
+  });
+  await page.getByRole('region', { name: 'Resumo da importação' }).waitFor();
+}
+
+/**
+ * "Exemplos" with the three sample projects installed.
+ * @param {Page} page
+ */
+async function openExamples(page) {
+  await page.goto(`http://localhost:${String(PORT)}/#/exemplos`);
+  await page.getByRole('button', { name: 'Explorar exemplos' }).click();
+  await page.getByRole('list', { name: 'Projetos de exemplo', exact: true }).waitFor();
+  // The installed samples stay; the notice about them goes.
+  await page.reload();
+  await page.getByRole('list', { name: 'Projetos de exemplo', exact: true }).waitFor();
+}
+
+/**
+ * "Meu painel" with the test portfolio.
+ * @param {Page} page
+ */
+async function openDashboard(page) {
+  await page.goto(`http://localhost:${String(PORT)}/#/painel`);
+  await page.getByText('Projetos concluídos', { exact: true }).waitFor();
 }
 
 /**
@@ -97,7 +196,7 @@ async function loadSampleStorage() {
 
 /** @param {Page} page */
 async function waitForSampleData(page) {
-  await page.getByRole('list', { name: 'Projetos de curto prazo' }).waitFor();
+  await bar(page, SCHEDULE_PROJECT).waitFor({ state: 'attached' });
 }
 
 /**
@@ -139,6 +238,8 @@ async function main() {
         // Animations become instant changes, so every capture is deterministic.
         reducedMotion: 'reduce',
         locale: 'pt-BR',
+        timezoneId: 'America/Sao_Paulo',
+        acceptDownloads: true,
       });
       await context.addInitScript(
         ({ theme, entries }) => {
@@ -154,10 +255,16 @@ async function main() {
       await waitForSampleData(page);
       await shot.arrange(page);
       await page.mouse.move(0, 0);
+      if (shot.print) await page.emulateMedia({ media: 'print' });
       await settle(page);
 
       const path = `${OUTPUT_DIR}${shot.name}.png`;
-      await page.screenshot({ path });
+      // Printed pages flow as one document: keep the first sheet only.
+      const viewport = shot.viewport ?? DESKTOP;
+      await page.screenshot({
+        path,
+        ...(shot.print ? { clip: { x: 0, y: 0, ...viewport } } : {}),
+      });
       console.warn(`✔ ${shot.name}.png`);
       await context.close();
     }

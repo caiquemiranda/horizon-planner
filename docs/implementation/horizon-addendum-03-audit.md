@@ -6,6 +6,10 @@ earlier ones. The specification documents are kept outside the repository. Deliv
 tracked in [`horizon-extension-progress.md`](./horizon-extension-progress.md) (orders 10
 onwards).
 
+> Status: every order of this plan was delivered (#38–#49). The matrix below is the
+> state before the work; the acceptance after it is in the progress file's "Addendum 03
+> final report".
+
 The three documents are read as one cumulative specification: a requirement that appears
 in more than one of them (the sidebar, progress, the forecast) is one feature with the
 union of its criteria, not two implementations.
